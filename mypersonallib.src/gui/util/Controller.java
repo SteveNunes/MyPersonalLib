@@ -288,15 +288,11 @@ public class Controller {
 	 * 											para cima, o item chega ao indice 0.
 	 */
 	public static <T> void changeItemPosFromList(ListView<T> listView, List<T> list, int index, int val) {
-		int max = list.size();
-		if ((val == -1 && index > 0) || (val == 1 && index < max - 1)) {
-			System.out.println("val: " + val + " index: " + index + " max: " + max);
-			listView.getSelectionModel().clearSelection();
-			Misc.moveItemIndex(list, index, val);
-			Controller.setListToListView(listView, list, index + val);
-			int n = (int)(listView.getHeight() / listView.getFixedCellSize() / 2);
-			listView.scrollTo(n);
-		}
+		listView.getSelectionModel().clearSelection();
+		val = Misc.moveItemIndex(list, index, val);
+		Controller.setListToListView(listView, list, index + val);
+		int n = (int)(listView.getHeight() / listView.getFixedCellSize() / 2);
+		listView.scrollTo(n);
 	}
 	
 	public static void addIconToButton(Button button, String imagePath, double imageWidth, double imageHeight, int removeBGColorTolerance)

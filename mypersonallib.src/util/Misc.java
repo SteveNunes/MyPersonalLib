@@ -64,8 +64,10 @@ public class Misc {
 	 * 									para cima, o item chega ao indice 0.
 	 */
 	public static <T> int moveItemIndex(List<T> list, int index, int inc) {
+		if (index >= list.size() || index < 0)
+			throw new IndexOutOfBoundsException();
 		int moved = 0;
-		while (inc != 0 && (index + inc) >= 0 && (index + inc) < list.size()) {
+		while (inc != 0 && ((inc < 0 && index > 0) || (inc > 0 && index < (list.size() - 1)))) {
 			T obj = list.get(index);
 			list.remove(index);
 			list.add(index += inc < 0 ? -1 : 1, obj);

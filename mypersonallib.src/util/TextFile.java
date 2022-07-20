@@ -259,6 +259,9 @@ public class TextFile {
 		lastFoundLine = 0;
 		return result;
 	}
+	
+	public List<String> getAllLines()
+		{ return fileBuffer; }
 
 	/**
 	 * Sobrecarga do m�todo 'findAll(String wildCard)' pnde n�o � preciso informar o
