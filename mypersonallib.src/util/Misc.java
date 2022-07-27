@@ -1,6 +1,5 @@
 package util;
 
-import java.security.SecureRandom;
 import java.util.List;
 
 import javafx.scene.input.Clipboard;
@@ -8,21 +7,33 @@ import javafx.scene.input.ClipboardContent;
 
 public class Misc {
 	
-	public static <T> T notNull(T t1, T t2)
-		{ return t1 == null ? t2 : t1; }
+	/**
+	 * Passado dois objetos, retorna o que não for {@code null}.
+	 * Se ambos objetos não forem {@code null}, é retornado o primeiro objeto.
+	 */
+	public static <T> T notNull(T o1, T o2)
+		{ return o1 == null ? o2 : o1; }
 	
+	/**
+	 * Retorna a {@code String} informada contendo um valor numérico, preenchida
+	 * com zeros á esquerda, até chegar ao total de digitos especificados.<p>
+	 */
 	public static String fillWithZerosAtLeft(String number, int totalDigits) {
 		while (number.length() < totalDigits)
 			number = "0" + number;
 		return number;
 	}
 
-	public static int rand(int n1, int n2) 
-		{ return new SecureRandom().nextInt(n2 - n1 + 1) + n1; }
-
-	public static Boolean iswm(String text, String pattern) 
-		{ return text.matches(("\\Q" + pattern + "\\E").replace("*", "\\E.*\\Q")); }
+	/**
+	 * Retorna {@code true} se o {@code wildcard} especificado for encontrado na {@code String} informada.
+	 */
+	public static Boolean iswm(String text, String wildcard) 
+		{ return text.matches(("\\Q" + wildcard + "\\E").replace("*", "\\E.*\\Q")); }
 	
+	
+	/**
+	 * Converte uma {@code Array} de {@code String} uníca.
+	 */
 	public static String arrayToString(String[] array, int startIndex, int endIndex, String spacing) {
 		StringBuilder result = new StringBuilder(); 
 		for (int n = startIndex; n <= endIndex; n++) {
@@ -33,15 +44,38 @@ public class Misc {
 		return result.toString();
 	}
 	
+	/**
+	 * Sobrecarga do método {@code arrayToString(String[] array, int startIndex, int endIndex, String spacing)}<br>
+	 * que não pede o parâmetro {@code spacing} (É usado o espaço como padrão)
+	 */
 	public static String arrayToString(String[] array, int startIndex, int endIndex)
 		{ return arrayToString(array, startIndex, endIndex, " "); }
 
+	/**
+	 * Sobrecarga do método {@code arrayToString(String[] array, int startIndex, int endIndex, String spacing)}<br>
+	 * que não pede o parâmetro {@code endIndex} (Pega a {@code Array} inteira á partir do índice informado como inciial)
+	 */
 	public static String arrayToString(String[] array, int startIndex, String spacing)
 		{ return arrayToString(array, startIndex, array.length - 1, spacing); }
 
+	/**
+	 * Sobrecarga do método {@code arrayToString(String[] array, int startIndex, int endIndex, String spacing)}<br>
+	 * que não pede os parâmetros {@code endIndex} e {@code spacing}<br>
+	 */
 	public static String arrayToString(String[] array, int startIndex)
 		{ return arrayToString(array, startIndex, array.length - 1); }
 	
+	/**
+	 * Sobrecarga do método {@code arrayToString(String[] array, int startIndex, int endIndex, String spacing)}<br>
+	 * que não pede os parâmetros {@code startIndex}, {@code endIndex} e {@code spacing}<br>
+	 */
+	public static String arrayToString(String[] array)
+		{ return arrayToString(array, 0, array.length - 1); }
+
+	/**
+	 * Coloca a {@code String} informada na área de transferência.
+	 * @param text
+	 */
 	public static void putTextOnClipboard(String text) {
 		ClipboardContent content = new ClipboardContent();
 		content.putString(text);

@@ -7,7 +7,7 @@ import java.util.List;
 public class Encrypter { 
 
 	public static String encrypt(List<String> strings, String password) {
-		int plus = Misc.rand(50, 200);
+		int plus = (int)(int)MyMath.rand(50, 200);
 		StringBuilder result = new StringBuilder();
 		strings = new ArrayList<>(strings);
 		String x = "" + (char)plus + (char)(password.length() + 2000);
@@ -20,13 +20,13 @@ public class Encrypter {
 				if (p == 0 && n < 2)
 					result.append(c);
 				else if (c == ' ')
-					for (int z = 0, z2 = Misc.rand(1, plus / 5); z < z2; z++)
-						result.append((char)Misc.rand(30000, 30999));
+					for (int z = 0, z2 = (int)(int)MyMath.rand(1, plus / 5); z < z2; z++)
+						result.append((char)(int)MyMath.rand(30000, 30999));
 				else
-					result.append((char)Misc.rand((int)c * plus, (int)c * plus + (plus - 1)));
+					result.append((char)(int)MyMath.rand((int)c * plus, (int)c * plus + (plus - 1)));
 			}
-			for (int z = 0, z2 = Misc.rand(1, plus / 5); z < z2; z++)
-				result.append((char)Misc.rand(31000, 31999));
+			for (int z = 0, z2 = (int)(int)MyMath.rand(1, plus / 5); z < z2; z++)
+				result.append((char)(int)MyMath.rand(31000, 31999));
 		}
 		return result.toString();
 	}

@@ -9,7 +9,7 @@ import java.util.List;
  * @author Steve Nunes da Silva
  * 
  *         R�plica das aliases e identifiers do mIRC Scripting (mSL)
- *         relacionadas � manipula��o de arquivos de texto simples.
+ *         relacionadas é manipula��o de arquivos de texto simples.
  */
 
 public class TextFile {
@@ -18,7 +18,7 @@ public class TextFile {
 	private String fileName;
 
 	/**
-	 * M�todos e seus equivalentes em mIRC Scripting:
+	 * Métodos e seus equivalentes em mIRC Scripting:
 	 * 	lines() - $lines()
 	 *  readLine() - $read()
 	 *  replaceLine() - /write -olN
@@ -30,9 +30,9 @@ public class TextFile {
 	 * 
 	 * Extras:
 	 * 	fileName()					- Retorna o nome do arquivo que foi carregado.
-	 * 	loadFileFromDisk()	- Recarrega as informa��es do disco para a mem�ria.
+	 * 	loadFileFromDisk()	- Recarrega as informa��es do disco para a memória.
 	 * 	saveToDisk() 				- Salva toda a informa��o do buffer do arquivo na
-	 * 												mem�ria para o disco. 
+	 * 												memória para o disco. 
 	 * 	findAll() 					- Retorna uma List de Strings com as linhas
 	 * 												encontradas usando um wildCard.
 	 */
@@ -43,10 +43,10 @@ public class TextFile {
 	}
 
 	/**
-	 * Carrega o arquivo do disco pra mem�ria. Esse m�todo � chamado automaticamente
+	 * Carrega o arquivo do disco pra memória. Esse método é chamado automaticamente
 	 * ao instancear um objeto dessa classe, mas se por algum motivo o arquivo for
-	 * alterado em disco ap�s o objeto ter sido instanceado, chame esse m�todo
-	 * novamente para garantir que o conteudo em mem�ria seja o mesmo que o conteudo
+	 * alterado em disco ap�s o objeto ter sido instanceado, chame esse método
+	 * novamente para garantir que o conteudo em memória seja o mesmo que o conteudo
 	 * em disco.
 	 * 
 	 * @param fileName - Caminho completo do arquivo ini. Ex: "C:/Minha pasta/meu
@@ -55,15 +55,15 @@ public class TextFile {
 	public void loadFileFromDisk(String fileName) {
 		this.fileName = fileName;
 		if (new File(fileName).exists())
-			fileBuffer = Files.readAllLinesFromFile(fileName);
+			fileBuffer = MyFiles.readAllLinesFromFile(fileName);
 		else
 			fileBuffer = new ArrayList<>();
 	}
 
 	/**
-	 * Sobrecarga do m�todo 'loadFileFromDisk(String fileName)' onde n�o � preciso
-	 * informar o nome do arquivo, pois depois da primeira chamada desse m�todo, o
-	 * nome do arquivo fica gravado em uma String que � passada como par�metro por
+	 * Sobrecarga do método 'loadFileFromDisk(String fileName)' onde não é preciso
+	 * informar o nome do arquivo, pois depois da primeira chamada desse método, o
+	 * nome do arquivo fica gravado em uma String que é passada como parâmetro por
 	 * essa sobrecarga.
 	 */
 	public void loadFileFromDisk()
@@ -76,19 +76,20 @@ public class TextFile {
 	 * a chamada do mesmo: replaceLine(), insertLine(), addLine(), removeLine()
 	 * 
 	 * @param fileName - Se desejar que o arquivo carregado seja salvo com outro
-	 *                 		nome, especifique o novo nome como par�metro.
+	 *                 		nome, especifique o novo nome como parâmetro.
 	 * 
 	 */
 	public void saveToDisk(String fileName)
-		{ Files.writeAllLinesOnFile(fileBuffer, fileName); }
+		{ MyFiles.writeAllLinesOnFile(fileBuffer, fileName); }
 
 	/**
-	 * Sobrecarga do m�todo 'saveToDisk(String fileName)' onde n�o � preciso
+	 * Sobrecarga do método 'saveToDisk(String fileName)' onde não é preciso
 	 * informar o nome do arquivo, pois o nome do arquivo fica gravado em uma String
-	 * ap�s carregar o arquivo do disco para a mem�ria, e esse nome � passado como
-	 * par�metro por essa sobrecarga.
+	 * ap�s carregar o arquivo do disco para a memória, e esse nome é passado como
+	 * parâmetro por essa sobrecarga.
 	 */
-	public void saveToDisk() { saveToDisk(fileName); }
+	public void saveToDisk()
+		{ saveToDisk(fileName); }
 
 	/**
 	 * @return - O nome do arquivo especificado por �ltimo ao instancear o objeto ou
@@ -104,7 +105,7 @@ public class TextFile {
 	/**
 	 * L� a linha especificada do arquivo.
 	 * 
-	 * @param lineNumber - O n�mero da linha � ser lida.
+	 * @param lineNumber - O n�mero da linha é ser lida.
 	 * 
 	 * @return - A linha especificada do arquivo.
 	 */
@@ -117,8 +118,8 @@ public class TextFile {
 	 * Escreve o texto informado na linha informada, sobreescrevendo o conteudo
 	 * anterior dessa linha.
 	 * 
-	 * @param text       - Texto � ser escrito na linha informada.
-	 * @param lineNumber - Linha onde ser� escrito o texto informado.
+	 * @param text       - Texto é ser escrito na linha informada.
+	 * @param lineNumber - Linha onde será escrito o texto informado.
 	 * @param saveOnDisk - Se especificar 'true', salva o arquivo em disco ap�s a
 	 *                   altera��o.
 	 */
@@ -129,8 +130,8 @@ public class TextFile {
 	}
 
 	/**
-	 * Sobrecarga do m�todo 'replaceLine(String text, int lineNumber, Boolean
-	 * saveOnDisk)' pnde n�o � preciso informar o par�metro 'saveOnDisk' (� passado
+	 * Sobrecarga do método 'replaceLine(String text, int lineNumber, Boolean
+	 * saveOnDisk)' pnde não é preciso informar o parâmetro 'saveOnDisk' (é passado
 	 * o valor 'false' por padr�o)
 	 */
 	public void replaceLine(String text, int lineNumber)
@@ -140,8 +141,8 @@ public class TextFile {
 	 * Insere o texto informado na linha informada, empurrando todas as linhas para
 	 * baixo, incluindo a linha informada.
 	 * 
-	 * @param text       - Texto � ser inserido na linha informada.
-	 * @param lineNumber - Linha onde ser� inserido o texto informado.
+	 * @param text       - Texto é ser inserido na linha informada.
+	 * @param lineNumber - Linha onde será inserido o texto informado.
 	 * @param saveOnDisk - Se especificar 'true', salva o arquivo em disco ap�s a
 	 *                   altera��o.
 	 */
@@ -152,8 +153,8 @@ public class TextFile {
 	}
 
 	/**
-	 * Sobrecarga do m�todo 'insertLine(String text, int lineNumber, Boolean
-	 * saveOnDisk)' pnde n�o � preciso informar o par�metro 'saveOnDisk' (� passado
+	 * Sobrecarga do método 'insertLine(String text, int lineNumber, Boolean
+	 * saveOnDisk)' pnde não é preciso informar o parâmetro 'saveOnDisk' (é passado
 	 * o valor 'false' por padr�o)
 	 */
 	public void insertLine(String text, int lineNumber)
@@ -162,7 +163,7 @@ public class TextFile {
 	/**
 	 * Insere o texto informado ao final do arquivo.
 	 * 
-	 * @param text       - Texto � ser inserido ao final do arquivo.
+	 * @param text       - Texto é ser inserido ao final do arquivo.
 	 * @param saveOnDisk - Se especificar 'true', salva o arquivo em disco ap�s a
 	 *                   altera��o.
 	 */
@@ -178,8 +179,8 @@ public class TextFile {
 	/**
 	 * Remove as linhas especificadas do arquivo, desde 'startLine' at� 'endLine'.
 	 * 
-	 * @param startLine  - Linha inicial da exclus�o
-	 * @param endLine    - Linha final da exclus�o
+	 * @param startLine  - Linha inicial da exclusão
+	 * @param endLine    - Linha final da exclusão
 	 * @param saveOnDisk - Se especificar 'true', salva o arquivo em disco ap�s a
 	 *                   altera��o.
 	 */
@@ -194,24 +195,24 @@ public class TextFile {
 	}
 
 	/**
-	 * Sobrecarga do m�todo 'removeLine(int startLine, int endLine, Boolean
-	 * saveOnDisk)' pnde n�o � preciso informar o par�metro 'saveOnDisk' (� passado
+	 * Sobrecarga do método 'removeLine(int startLine, int endLine, Boolean
+	 * saveOnDisk)' pnde não é preciso informar o parâmetro 'saveOnDisk' (é passado
 	 * o valor 'false' por padr�o)
 	 */
 	public void removeLine(int startLine, int endLine)
 		{ removeLine(startLine, endLine, false); }
 
 	/**
-	 * Sobrecarga do m�todo 'removeLine(int startLine, int endLine, Boolean
-	 * saveOnDisk)' pnde n�o � preciso informar o par�metro 'endLine' (� passado o
+	 * Sobrecarga do método 'removeLine(int startLine, int endLine, Boolean
+	 * saveOnDisk)' pnde não é preciso informar o parâmetro 'endLine' (é passado o
 	 * valor de 'startLine' por padr�o)
 	 */
 	public void removeLine(int lineNumber, Boolean saveOnDisk)
 		{ removeLine(lineNumber, lineNumber, saveOnDisk); }
 
 	/**
-	 * Sobrecarga do m�todo 'removeLine(int lineNumber, Boolean saveOnDisk)' pnde
-	 * n�o � preciso informar o par�metro 'saveOnDisk' (� passado o valor 'false'
+	 * Sobrecarga do método 'removeLine(int lineNumber, Boolean saveOnDisk)' pnde
+	 * não é preciso informar o parâmetro 'saveOnDisk' (é passado o valor 'false'
 	 * por padr�o)
 	 */
 	public void removeLine(int lineNumber)
@@ -231,19 +232,19 @@ public class TextFile {
 	public String find(String wildCard) { return find(wildCard, 1); }
 
 	/**
-	 * Ap�s chamar o m�todo find(), retorna o n�mero da linha onde a �ltima
+	 * Após chamar o método find(), retorna o n�mero da linha onde a �ltima
 	 * ocorr�ncia foi encontrada.
 	 * 
 	 * @return - O n�mero da linha onde a �ltima ocorr�ncia foi encontrada ap�s
-	 *         chamar o m�todo find()
+	 *         chamar o método find()
 	 */
 	public int lastFoundLine() { return lastFoundLine; }
 
 	/**
 	 * Retorna uma List de Strings das linhas onde a ocorr�ncia especificada no
-	 * par�metro 'wildCard' for encontrada.
+	 * parâmetro 'wildCard' for encontrada.
 	 * 
-	 * @param wildCard  - Palavra-chave � ser procurada no arquivo.
+	 * @param wildCard  - Palavra-chave é ser procurada no arquivo.
 	 * @param startLine - Linha inicial da pesquisa.
 	 * 
 	 * @return - Uma List de Strings com as ocorr�ncias encontradas.
@@ -264,8 +265,8 @@ public class TextFile {
 		{ return fileBuffer; }
 
 	/**
-	 * Sobrecarga do m�todo 'findAll(String wildCard)' pnde n�o � preciso informar o
-	 * par�metro 'startLine' (� passado o valor '1' por padr�o)
+	 * Sobrecarga do método 'findAll(String wildCard)' pnde não é preciso informar o
+	 * parâmetro 'startLine' (é passado o valor '1' por padr�o)
 	 */
 	public List<String> findAll(String wildCard)
 		{ return findAll(wildCard, 1); }

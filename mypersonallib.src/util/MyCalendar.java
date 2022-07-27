@@ -6,39 +6,48 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-public class Calendar {
+public class MyCalendar {
 	
-	public static Date stringToDate(String literalDate, String simpleDateFormat) throws Exception
-		{ return new SimpleDateFormat(simpleDateFormat).parse(literalDate); }
-
-	public static String dateToString(Date date, String simpleDateFormat)
-		{ return new SimpleDateFormat(simpleDateFormat).format(date); }
-
-	public final static long YEAR = 31536000000L;
-	public final static long YEAR_BINARY = 31622400000L;
-	public final static long MONTH_JAN = 2678400000L;
-	public final static long MONTH_FEB = 2419200000L;
-	public final static long MONTH_FEB29 = 2505600000L;
-	public final static long MONTH_MAR = 2678400000L;
-	public final static long MONTH_APR = 2592000000L;
-	public final static long MONTH_MAY = 2678400000L;
-	public final static long MONTH_JUN = 2592000000L;
-	public final static long MONTH_JUL = 2678400000L;
-	public final static long MONTH_AUG = 2678400000L;
-	public final static long MONTH_SEP = 2592000000L;
-	public final static long MONTH_OCT = 2678400000L;
-	public final static long MONTH_NOV = 2592000000L;
-	public final static long MONTH_DEC = 2678400000L;
-	public final static long WEEK = 604800000L;
-	public final static long DAY = 86400000L;
-	public final static long HOUR = 3600000L;
-	public final static long MINUTE = 60000L;
-	public final static long SECOND = 1000L;
-	
-	private static long[] dateDistance = new long[7];
+	/*
+	a    AM/PM
+	d    Dia do mês
+	D    Dia do ano
+	E    Dia da semana (Extenso abreviado)
+	EEEE Dia da semana (Extenso completo)
+	F    Dia da semana no m�s (ex: 1 Terça de Dezembro)
+	G    d.C./a.C.
+	h    Hora (formato 12 horas)
+	H    Hora (formato 24 horas)
+	k    Hora (1-24 ao invés de 0-23)
+	K    Hora (0-11 AM/PM)
+	L    ???
+	LLL  fev. (???)
+	LLLL fevereiro (???)
+	m    Minutos
+	M    Mês (Num�rico)
+	MMM  Mês (Extenso abreviado)
+	MMMM Mês (Extenso completo)
+	s    Segundos
+	SSS  Milisegundos do segundo atual
+	u    Dia da semana numérico (1=Segunda, 7=Domingo)
+	w    Semana do ano
+	W    Semana do mês
+	X    Time zone	ISO 8601 time zone	-08; -0800; -08:00
+	y    Ano
+	Y    Ano
+	z    TimeZone no formato "GMT"
+	zzzz TimeZone no formato "Horário do Meridiano de Greenwich"
+	Z    TimeZone no formato "+0000"
+	 */
 	
 	private static Date lastDay = getDateAtMidnight();
 	
+	public static Date stringToDate(String literalDate, String simpleDateFormat) throws Exception
+		{ return new SimpleDateFormat(simpleDateFormat).parse(literalDate); }
+	
+	public static String dateToString(Date date, String simpleDateFormat)
+		{ return new SimpleDateFormat(simpleDateFormat).format(date); }
+
 	public static Boolean dayWasChanged()
 		{ return lastDay.getTime() != getDateAtMidnight().getTime(); }
 
@@ -47,8 +56,10 @@ public class Calendar {
 
 	public static long getOnlyHourTimeFromDate(Date date) {
 		String str = new SimpleDateFormat("HH:mm:ss:SSS").format(date);
-		try { date = new SimpleDateFormat("HH:mm:ss:SSS").parse(str); }
-		catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+		try 
+			{ date = new SimpleDateFormat("HH:mm:ss:SSS").parse(str); }
+		catch (Exception e)
+			{ throw new RuntimeException(e.getMessage()); }
 		return date.getTime();
 	}
 
@@ -57,13 +68,12 @@ public class Calendar {
 	
 	public static Date getDateAtTime(Date date, String time) {
 		String str = new SimpleDateFormat("dd/MM/yyyy").format(date);
-		try { date = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").parse(str + " " + time); }
-		catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+		try
+			{ date = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").parse(str + " " + time); }
+		catch (Exception e)
+			{ throw new RuntimeException(e.getMessage()); }
 		return date;
 	}
-	
-	public static Date getDateAtTime()
-		{ return getDateAtTime(new Date(), "23:59:59"); }
 	
 	public static Date getDateAtMidnight(Date date)
 		{ return getDateAtTime(date, "23:59:59"); }
@@ -152,51 +162,6 @@ public class Calendar {
 	public static int getSeconds()
 		{ return getSeconds(new Date()); }
 	
-	public static void setDateDistance(Date dt1, Date dt2) {
-		long val = Math.abs(dt1.getTime() - dt2.getTime()), v;
-		dateDistance[6] = v = val / 1000 / 60 / 60 / 24 / 365; // Years
-		val -= v * 365 * 24 * 60 * 60 * 1000;
-		dateDistance[5] = v = val / 1000 / 60 / 60 / 24 / 7; // Weeks
-		val -= v * 7 * 24 * 60 * 60 * 1000;
-		dateDistance[4] = v = val / 1000 / 60 / 60 / 24; // Days
-		val -= v * 24 * 60 * 60 * 1000;
-		dateDistance[3] = v = val / 1000 / 60 / 60; // Hours
-		val -= v * 60 * 60 * 1000;
-		dateDistance[2] = v = val / 1000 / 60; // Minutes
-		val -= v * 60 * 1000;
-		dateDistance[1] = v = val / 1000; // Seconds
-		val -= v * 1000;
-		dateDistance[0] = val; // Milliseconds
-		
-	}
-	
-	public static void setDateDistance(Date dt)
-		{ setDateDistance(new Date(System.currentTimeMillis()), dt); }
-	
-	public static void setDateDistance(long millis)
-		{ setDateDistance(new Date(0), new Date(millis)); }
-	
-	public static long getDateDistanceInMillis()
-		{ return dateDistance[0]; }
-	
-	public static long getDateDistanceInSeconds()
-		{ return dateDistance[1]; }
-	
-	public static long getDateDistanceInMinutes()
-		{ return dateDistance[2]; }
-
-	public static long getDateDistanceInHours()
-		{ return dateDistance[3]; }
-	
-	public static long getDateDistanceInDays()
-		{ return dateDistance[4]; }
-
-	public static long getDateDistanceInWeeks()
-		{ return dateDistance[5]; }
-
-	public static long getDateDistanceInYears()
-		{ return dateDistance[6]; }
-	
 	public static Boolean isSameDay(Date dt1, Date dt2)
 		{ return getDay(dt1) == getDay(dt2); }
 	
@@ -206,32 +171,14 @@ public class Calendar {
 			date1 = sdf.parse(sdf.format(date1));
 			date2 = sdf.parse(sdf.format(date2));
 		}
-		catch (Exception e) { e.printStackTrace(); }
+		catch (Exception e)
+			{ e.printStackTrace(); }
 		return date1.equals(date2);
 	}
 	
 	public static Boolean isSameDate(Date date)
 		{ return isSameDate(date, new Date()); }
 
-	public static String getDateDistanceFromDateFormat(String dateFormat) {
-		dateFormat = dateFormat.toLowerCase();
-		if (dateFormat.contains("yyyy"))
-			dateFormat = dateFormat.replace("yyyy", "" + getDateDistanceInYears());
-		if (dateFormat.contains("ww"))
-			dateFormat = dateFormat.replace("ww", "" + getDateDistanceInWeeks());
-		if (dateFormat.contains("dd"))
-			dateFormat = dateFormat.replace("dd", "" + getDateDistanceInDays());
-		if (dateFormat.contains("hh"))
-			dateFormat = dateFormat.replace("hh", "" + getDateDistanceInHours());
-		if (dateFormat.contains("mm"))
-			dateFormat = dateFormat.replace("mm", "" + getDateDistanceInMinutes());
-		if (dateFormat.contains("ss"))
-			dateFormat = dateFormat.replace("ss", "" + getDateDistanceInSeconds());
-		if (dateFormat.contains("ee"))
-			dateFormat = dateFormat.replace("ee", "" + getDateDistanceInMillis());
-		return dateFormat;
-	}
-	
 	/**
 	 * Compara o dia da data informada por parâmetro com o dia da data atual.
 	 * @param date		Data á ser comparada com a data atual

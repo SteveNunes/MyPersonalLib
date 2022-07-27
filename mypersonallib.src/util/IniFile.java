@@ -1,7 +1,5 @@
 package util;
 
-import java.io.FileWriter;
-import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -73,10 +71,7 @@ public class IniFile {
 		iniBody = new LinkedHashMap<String, LinkedHashMap<String, String>>();
 		if (!fileName.isEmpty()) {
 			if (Files.exists(file)) {
-				try
-					{ fileBuffer = Files.readAllLines(file); }
-				catch (Exception e) 
-					{ throw new RuntimeException("Unable to open the file " + fileName); }
+				fileBuffer = MyFiles.readAllLinesFromFile(fileName);
 				String section = "", item, val;
 				for (String s : fileBuffer)
 					if (stringIsSection(s)) {
@@ -154,17 +149,7 @@ public class IniFile {
 
 	public void saveToDisk() {
 		updateFileBuffer();
-		if (!fileBuffer.isEmpty()) {
-			file = Paths.get(fileName);
-			try {
-				PrintWriter printWriter = new PrintWriter(new FileWriter(fileName));
-				for (String s : fileBuffer) 
-					printWriter.println(s);
-				printWriter.close();
-			}
-			catch (Exception e)
-				{ throw new RuntimeException("Unable to open the file " + fileName); }
-		}
+		MyFiles.writeAllLinesOnFile(fileBuffer, fileName);
 	}
 
 	public void write(String iniSection, String iniItem, String value, Boolean saveOnDisk) {

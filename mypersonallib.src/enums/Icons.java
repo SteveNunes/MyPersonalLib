@@ -10,6 +10,7 @@ public enum Icons {
 	ICON_COPY(".\\icons\\copy.png"),
 	ICON_DELETE(".\\icons\\delete.png"),
 	ICON_EDIT(".\\icons\\edit.png"),
+	ICON_ERASER(".\\icons\\eraser.png"),
 	ICON_EXCEL(".\\icons\\excel.png"),
 	ICON_MOVEDOWN(".\\icons\\movedown.png"),
 	ICON_MOVELEFT(".\\icons\\moveleft.png"),
