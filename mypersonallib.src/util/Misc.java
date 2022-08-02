@@ -1,11 +1,37 @@
 package util;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 
 public class Misc {
+	
+	private static Map<String, Map<Long, ?>> uniqueId = new HashMap<>();
+	
+	@SuppressWarnings("unchecked")
+	public static <T> long getUniqueId(T c, Boolean negativeId) {
+		long id = 0;
+		if (!uniqueId.containsKey(c.getClass().toString()))
+			uniqueId.put(c.getClass().toString(), new HashMap<Long, T>());
+		Map<Long, T> m = (Map<Long, T>) uniqueId.get(c.getClass().toString());
+		while ((!negativeId && m.containsKey(++id)) || (negativeId && m.containsKey(--id)));
+		m.put(id, c);
+		return id;
+	}
+	
+	public static <T> long getUniqueId(T c)
+		{ return getUniqueId(c, false); }
+	
+	@SuppressWarnings("unchecked")
+	public static <T> List<T> getUniqueIdListOf(T c) {
+		Map<Long, T> m = (Map<Long, T>) uniqueId.get(c.getClass().toString());
+		return m.values().stream().collect(Collectors.toList());
+	}
 	
 	/**
 	 * Passado dois objetos, retorna o que não for {@code null}.
@@ -111,4 +137,31 @@ public class Misc {
 		return moved;
 	}
 
+}
+
+class Tt1 {
+	int i;
+	Long id;
+	
+	Tt1 (int i) { 
+		this.i = i;
+		id = Misc.getUniqueId(this);
+	}
+
+	@Override
+	public String toString() { return "Tt1 [i=" + i + "] id=" + id + "]"; }
+	
+}
+
+class Tt2 {
+	int i;
+	Long id;
+	
+	Tt2 (int i) { 
+		this.i = i;
+		id = Misc.getUniqueId(this);
+	}
+
+	@Override
+	public String toString() { return "Tt2 [i=" + i + "] id=" + id + "]"; }
 }
