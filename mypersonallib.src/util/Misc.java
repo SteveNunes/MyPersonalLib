@@ -1,6 +1,5 @@
 package util;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +47,25 @@ public class Misc {
 		while (number.length() < totalDigits)
 			number = "0" + number;
 		return number;
+	}
+	
+	/**
+	 * Retorna a string informada com no máximo {@code limitLenght} de letras.
+	 * Se a string for maior que {@code limitLenght}, poe '...' ao final da string.
+	 */
+	public static String limitedString(String string, int limitLenght) {
+		StringBuilder sb = new StringBuilder();
+		for (String s : string.split(" ")) {
+			if (sb.length() + s.length() >= limitLenght) {
+				sb.append("...");
+				return sb.toString();
+			}
+			if (!sb.isEmpty())
+				sb.append(" ");
+			sb.append(s);
+			
+		}
+		return sb.toString();
 	}
 
 	/**

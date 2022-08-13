@@ -177,7 +177,7 @@ public class TextFile {
 		{ addLine(text, false); }
 	
 	/**
-	 * Remove as linhas especificadas do arquivo, desde 'startLine' at� 'endLine'.
+	 * Remove as linhas especificadas do arquivo, desde 'startLine' até 'endLine'.
 	 * 
 	 * @param startLine  - Linha inicial da exclusão
 	 * @param endLine    - Linha final da exclusão

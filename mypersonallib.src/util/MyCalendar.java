@@ -214,10 +214,13 @@ public class MyCalendar {
 	public static int getIntervaloEmDiasEntreDatas(Date date)
 		{ return getIntervaloEmDiasEntreDatas(date, new Date()); }
 	
-	public static String getIntervaloEmDiasEntreDatasStr(Date date, Date date2) {
+	public static String getIntervaloEmDiasEntreDatasStr(Date date, Date date2, Boolean shortName) {
 	  StringBuilder result = new StringBuilder();
 		int gap[] = new int[4];
-		String s[][] = {{"ano", "mes", "semana", "dia"}, {"anos", "meses", "semanas", "dias"}};
+		String s[][][] = {
+				{{"ano", "mes", "sem.", "dia"}, {"anos", "mes.", "sem.", "dias"}},
+				{{"ano", "mes", "semana", "dia"}, {"anos", "meses", "semanas", "dias"}}
+		};
 		gap[3] = getIntervaloEmDiasEntreDatas(date, date2);
 		gap[0] = (gap[3] / 365);
 		gap[3] -= gap[0] * 365;
@@ -231,14 +234,41 @@ public class MyCalendar {
 					result.append(" e ");
 				result.append(gap[n]);
 				result.append(" ");
-				result.append(s[gap[n] > 1 ? 1 : 0][n]);
+				result.append(s[shortName ? 0 : 1][gap[n] > 1 ? 1 : 0][n]);
 				if (n2++ > 0)
 					break;
 			}
 		}
 		return result.isEmpty() ? "Menos de 1 dia" : result.toString();
 	}
+
+	public static String getIntervaloEmDiasEntreDatasStr(Date date, Date date2)
+		{ return getIntervaloEmDiasEntreDatasStr(date, date2, false); }
 	
+	public static void setDayTo(Date date, int day) {
+		try {
+			String dateStr = day + new SimpleDateFormat("/MM/yyyy HH:mm:ss").format(date);
+			date.setTime(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").parse(dateStr).getTime());
+		}
+		catch (Exception e) { }
+	}
+	
+	public static void setMonthTo(Date date, int month) {
+		try {
+			String dateStr = MyCalendar.getDay(date) + "/" + month + new SimpleDateFormat("/yyyy HH:mm:ss").format(date);
+			date.setTime(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").parse(dateStr).getTime());
+		}
+		catch (Exception e) { }
+	}
+	
+	public static void setYearTo(Date date, int year) {
+		try {
+			String dateStr = MyCalendar.getDay(date) + "/" + MyCalendar.getMonth(date) + "/" + year + " " + new SimpleDateFormat("HH:mm:ss").format(date);
+			date.setTime(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").parse(dateStr).getTime());
+		}
+		catch (Exception e) { }
+	}
+
 	public static String getIntervaloEmDiasEntreDatasStr(Date date)
 		{ return getIntervaloEmDiasEntreDatasStr(date, new Date()); }
 	

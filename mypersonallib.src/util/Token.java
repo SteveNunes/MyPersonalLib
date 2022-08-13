@@ -207,7 +207,7 @@ public class Token {
 		{ return add(text, word, " "); }
 	
 	/**
-	 * Pega da String informada, os tokens desde 'startPos' at� 'endPos'.
+	 * Pega da String informada, os tokens desde 'startPos' até 'endPos'.
 	 * 
 	 * @param		text				a String de onde será pego os tokens.
 	 * @param		startPos		a posição inicial de onde será pego os tokens.

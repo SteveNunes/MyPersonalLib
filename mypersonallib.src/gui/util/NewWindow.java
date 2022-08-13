@@ -1,25 +1,26 @@
 package gui.util;
 
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.Window;
 
 public class NewWindow {
 	
 	private FXMLLoader loader;
-	private Stage stage = new Stage();
+	private Stage stage;
 	
 	public NewWindow() {}
 	
-	public <T> NewWindow(Class<? extends T> cLass, Window parentWindow, String fxml) {
+	public <T> NewWindow(Class<? extends T> cLass, Node anyNodeFromParentWindow, String fxml) {
 		try {
 			loader = new FXMLLoader(cLass.getResource(fxml));
 			Pane pane = loader.load();
+			stage = new Stage();
 			stage.setScene(new Scene(pane));
-			stage.initOwner(parentWindow);
+			stage.initOwner(anyNodeFromParentWindow.getScene().getWindow());
 			stage.initModality(Modality.WINDOW_MODAL);
 		}
 		catch (Exception e) {
@@ -28,8 +29,14 @@ public class NewWindow {
 		}
 	}
 	
-	public Stage getStage() { return stage; }
-	public FXMLLoader getLoader() { return loader; }
+	public Stage getStage()
+		{ return stage; }
+	
+	public FXMLLoader getLoader()
+		{ return loader; }
+	
+	public <T> T getController()
+		{ return loader.getController(); }
 	
 }
 

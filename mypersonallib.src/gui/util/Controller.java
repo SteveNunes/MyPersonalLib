@@ -36,7 +36,7 @@ public class Controller {
   private static Map<TableView<?>, TableCell<?, ?>> hoveredTableCell = new HashMap<>();
   private static Map<ListView<?>, ListCell<?>> hoveredListCell = new HashMap<>();
 
-  /** Métodos para obter e definir {@code Index}, {@code Row} e {@code Cell} da
+	/** Métodos para obter e definir {@code Index}, {@code Row} e {@code Cell} da
    * 	ultima linha selecionada em uma {@code TableView} ou {@code ListView}
    */
   public static Integer getHoveredTableViewRowIndex(TableView<?> tableView)
@@ -59,17 +59,16 @@ public class Controller {
 		{ return hoveredListCell.get(listView); }
 	public static void setHoveredListCell(ListView<?> listView, ListCell<?> cell)
 		{ hoveredListCell.put(listView, cell); }
-	
-	private static final String COLOR_FOR_SELECTED_FOCUSED_HOVERED_EVEN = "#6F8FFF";
-	private static final String COLOR_FOR_SELECTED_FOCUSED_HOVERED_ODD = "#5F7FEF";
-	private static final String COLOR_FOR_SELECTED_FOCUSED_EVEN = "#4F6FDF";
-	private static final String COLOR_FOR_SELECTED_FOCUSED_ODD = "#3F5FCF";
-	private static final String COLOR_FOR_SELECTED_HOVERED_EVEN = "#BBBBBB";
-	private static final String COLOR_FOR_SELECTED_HOVERED_ODD = "#AAAAAA";
-	private static final String COLOR_FOR_SELECTED_EVEN = "#999999";
-	private static final String COLOR_FOR_SELECTED_ODD = "#888888";
-	private static final String COLOR_FOR_HOVERED_EVEN = "#FFFE88";
-	private static final String COLOR_FOR_HOVERED_ODD = "#EEFE88";
+	private static final String COLOR_FOR_SELECTED_FOCUSED_HOVERED_EVEN = "#8FAFFF";
+	private static final String COLOR_FOR_SELECTED_FOCUSED_HOVERED_ODD = "#7F9FEF";
+	private static final String COLOR_FOR_SELECTED_FOCUSED_EVEN = "#6F8FDF";
+	private static final String COLOR_FOR_SELECTED_FOCUSED_ODD = "#5F7FCF";
+	private static final String COLOR_FOR_SELECTED_HOVERED_EVEN = "#DDDDDD";
+	private static final String COLOR_FOR_SELECTED_HOVERED_ODD = "#CCCCCC";
+	private static final String COLOR_FOR_SELECTED_EVEN = "#BBBBBB";
+	private static final String COLOR_FOR_SELECTED_ODD = "#AAAAAA";
+	private static final String COLOR_FOR_HOVERED_EVEN = "#FFFEAA";
+	private static final String COLOR_FOR_HOVERED_ODD = "#EEFEAA";
 	private static final String COLOR_FOR_REGULAR_EVEN = "#FFFFFF";
 	private static final String COLOR_FOR_REGULAR_ODD = "#EEEEEE";
 	
