@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import enums.TextMatchType;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 
@@ -68,12 +69,34 @@ public class Misc {
 		return sb.toString();
 	}
 
-	/**
-	 * Retorna {@code true} se o {@code wildcard} especificado for encontrado na {@code String} informada.
-	 */
-	public static Boolean iswm(String text, String wildcard) 
-		{ return text.matches(("\\Q" + wildcard + "\\E").replace("*", "\\E.*\\Q")); }
+	public static Boolean textMatch(String text, String pattern, TextMatchType matchType, Boolean caseSensitive) {
+		if (text == null || text.isEmpty() || pattern == null || pattern.isEmpty())
+			return false;
+		if (matchType == TextMatchType.WILDCARD &&
+				((!caseSensitive && text.toLowerCase().matches(("\\Q" + pattern.toLowerCase() + "\\E").replace("*", "\\E.*\\Q")))) ||
+				 (caseSensitive && text.matches(("\\Q" + pattern + "\\E").replace("*", "\\E.*\\Q"))))
+						return true;
+		if (matchType == TextMatchType.REGEX) {
+			String[] regexChars = {"\\", "+", ".", "*", "[", "]", "{", "}", "(", ")", "?", "^", "$", "|"};
+			String pat = pattern;
+			for (String c : regexChars)
+				pat.replace(c, "\\" + c);
+			if ((!caseSensitive && text.toLowerCase().matches(pat.toLowerCase())) ||
+				  (caseSensitive && text.matches(pat)))
+						return true;
+		}
+		if (matchType == TextMatchType.EXACTLY &&
+				((!caseSensitive && text.toLowerCase().contains(pattern.toLowerCase())) ||
+				 (caseSensitive && text.contains(pattern))))
+						return true;
+		return false;
+	}
+
+	public static Boolean textMatch(String text, String pattern, TextMatchType matchType)
+		{ return textMatch(text, pattern, matchType, true); }
 	
+	public static Boolean textMatch(String text, String pattern)
+		{ return textMatch(text, pattern, TextMatchType.EXACTLY); }
 	
 	/**
 	 * Converte uma {@code Array} de {@code String} uníca.

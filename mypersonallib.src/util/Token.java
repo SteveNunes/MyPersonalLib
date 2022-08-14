@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import enums.TextMatchType;
+
 /**
  * 
  * @author Steve Nunes da Silva
@@ -546,7 +548,7 @@ public class Token {
 		int total = 0;
 		ltokens.clear();
 		for (int n = 0, p = 0; n < ttokens.length; n++)
-			if (Misc.iswm(ttokens[n], wildcard)) {
+			if (Misc.textMatch(ttokens[n], wildcard, TextMatchType.WILDCARD)) {
 				if (pos > 0 && ++p == pos)
 					return ttokens[n];
 				else if (pos == 0) {

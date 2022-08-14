@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import enums.TextMatchType;
+
 /**
  * 
  * @author Steve Nunes da Silva
@@ -222,7 +224,7 @@ public class TextFile {
 		if (startLine < 1) startLine = 1;
 		else if (startLine > lines()) return "";
 		for (int n = startLine - 1; n < lines(); n++)
-			if (n + 1 >= startLine && Misc.iswm(fileBuffer.get(n), wildCard)) {
+			if (n + 1 >= startLine && Misc.textMatch(fileBuffer.get(n), wildCard, TextMatchType.WILDCARD)) {
 				lastFoundLine = n + 1;
 				return fileBuffer.get(n);
 			}
