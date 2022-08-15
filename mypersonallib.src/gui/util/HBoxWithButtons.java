@@ -35,10 +35,11 @@ public class HBoxWithButtons {
 	private double buttonSize;
 	private double buttonSpacing;
 	private EditableHBox editableHBox;
-	private String previewText;
+	
+	public EditableHBox getEditableHBox()
+		{ return editableHBox; }
 	
 	public HBoxWithButtons(HBoxWitnButtonsMode mode) {
-		previewText = "";
 		hBoxText = new HBox();
 		hBoxText.setAlignment(Pos.CENTER_LEFT);
 		hBoxText.getChildren().add(new Text());
@@ -52,7 +53,7 @@ public class HBoxWithButtons {
 	    public void handle(MouseEvent event) {
 	  		if (event.getButton() == MouseButton.PRIMARY && editableHBox != null &&
 	  				(System.currentTimeMillis() - editableHBox.getStartedCTime()) > 50)
-	  					editableHBox.resetBackToText(previewText);
+	  					editableHBox.resetBackToText();
 	    }
 		});
 		setMode(mode);
@@ -106,7 +107,7 @@ public class HBoxWithButtons {
 		if (editMode != HBoxWitnButtonsEditMode.DISABLED)
 			editableHBox = new EditableHBox();
 		else if (editableHBox != null) {
-			editableHBox.resetBackToText(previewText);
+			editableHBox.resetBackToText();
 			editableHBox = null;
 		}
 	}
@@ -209,9 +210,8 @@ public class HBoxWithButtons {
 	public void setText(String text) {
 		if (text == null)
 			return;
-		if (previewText != null && !text.equals(previewText) && editableHBox != null)
-			editableHBox.resetBackToText(previewText);
-		previewText = text;
+		if (editableHBox != null)
+			editableHBox.resetBackToText();
 		if (hBoxText.getChildren().get(0) instanceof Text)
 			((Text) hBoxText.getChildren().get(0)).setText(text);
 		else

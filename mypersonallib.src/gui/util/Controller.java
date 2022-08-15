@@ -1,8 +1,6 @@
 package gui.util;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 import javafx.collections.FXCollections;
@@ -30,35 +28,6 @@ import util.Misc;
 
 public class Controller {
 	
-	private static Map<TableView<?>, Integer> hoveredTableViewRowIndex = new HashMap<>();
-	private static Map<ListView<?>, Integer> hoveredListViewRowIndex = new HashMap<>();
-	private static Map<TableView<?>, TableRow<?>> hoveredTableRow = new HashMap<>();
-  private static Map<TableView<?>, TableCell<?, ?>> hoveredTableCell = new HashMap<>();
-  private static Map<ListView<?>, ListCell<?>> hoveredListCell = new HashMap<>();
-
-	/** Métodos para obter e definir {@code Index}, {@code Row} e {@code Cell} da
-   * 	ultima linha selecionada em uma {@code TableView} ou {@code ListView}
-   */
-  public static Integer getHoveredTableViewRowIndex(TableView<?> tableView)
-  	{ return hoveredTableViewRowIndex.get(tableView); }
-  public static Integer hoverListViewRowIndex(ListView<?> listView)
-  	{ return hoveredListViewRowIndex.get(listView); }
-  public static void setHoveredTableViewRowIndex(TableView<?> tableView, Integer index)
-  	{ hoveredTableViewRowIndex.put(tableView, index); }
-  public static void setHoveredListViewRowIndex(ListView<?> listView, Integer index)
-  	{ hoveredListViewRowIndex.put(listView, index); }
-  public static TableRow<?> getHoveredTableRow(TableView<?> tableView)
-		{ return hoveredTableRow.get(tableView); }
-	public static void setHoveredTableRow(TableView<?> tableView, TableRow<?> row)
-		{ hoveredTableRow.put(tableView, row); }
-  public static TableCell<?, ?> getHoveredTableCell(TableView<?> tableView)
-		{ return hoveredTableCell.get(tableView); }
-	public static void setHoveredTableCell(TableView<?> tableView, TableCell<?, ?> cell)
-		{ hoveredTableCell.put(tableView, cell); }
-  public static ListCell<?> getHoveredListCell(ListView<?> listView)
-		{ return hoveredListCell.get(listView); }
-	public static void setHoveredListCell(ListView<?> listView, ListCell<?> cell)
-		{ hoveredListCell.put(listView, cell); }
 	private static final String COLOR_FOR_SELECTED_FOCUSED_HOVERED_EVEN = "#8FAFFF";
 	private static final String COLOR_FOR_SELECTED_FOCUSED_HOVERED_ODD = "#7F9FEF";
 	private static final String COLOR_FOR_SELECTED_FOCUSED_EVEN = "#6F8FDF";

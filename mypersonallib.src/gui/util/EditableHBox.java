@@ -33,7 +33,7 @@ public class EditableHBox {
 	public long getStartedCTime()
 		{ return startedCTime; }
 	
-	public EditableHBox( ) { }
+	public EditableHBox() {}
 	
 	public EditableHBox(HBox hBox, Double width, String defaultText, Consumer<String> consumerAfterPressingEnter)
 		{ setEditableHBoxThroughTextField(hBox, width, defaultText, consumerAfterPressingEnter); }
@@ -53,7 +53,7 @@ public class EditableHBox {
 	    public void handle(MouseEvent event) {
     		if (event.getButton() == MouseButton.PRIMARY) {
     			if (editHBox != null)
-    				resetBackToText(previewHBoxText);
+    				resetBackToText();
 		    	if (event.getClickCount() == 2) {
 		    		startedCTime = System.currentTimeMillis();
 		    		previewHBoxText = defaultText != null ? defaultText : ((Text) hBox.getChildren().get(0)).getText();
@@ -77,6 +77,8 @@ public class EditableHBox {
 	    	        	}
 	    	        	else
 	    	        		hBox.getChildren().set(0, new Text(previewHBoxText));
+	    	        	textFieldEditHBox = null;
+	    	        	
 	    	        }
 		    	    }
 		    		});
@@ -95,9 +97,9 @@ public class EditableHBox {
 	public void setEditableHBoxThroughTextField(HBox hBox, Consumer<String> consumerAfterPressingEnter)
 		{ setEditableHBoxThroughTextField(hBox, null, null, consumerAfterPressingEnter); }
 	
-	public void resetBackToText(String text) {
+	public void resetBackToText() {
 		if (editHBox != null) {
-			editHBox.getChildren().set(0, new Text(text));
+			editHBox.getChildren().set(0, new Text(previewHBoxText));
 			comboBoxEditHBox = null;
 			editHBox = null;
 			previewHBoxText = null;
@@ -112,7 +114,7 @@ public class EditableHBox {
 	    public void handle(MouseEvent event) {
     		if (event.getButton() == MouseButton.PRIMARY) {
     			if (editHBox != null)
-    				resetBackToText(previewHBoxText);
+    				resetBackToText();
 		    	if (event.getClickCount() == 2) {
 		    		startedCTime = System.currentTimeMillis();
 		    		ComboBox<T> comboBox = new ComboBox<T>();
@@ -134,6 +136,7 @@ public class EditableHBox {
     				else
     					hBox.getChildren().set(0, comboBoxEditHBox);
     				comboBox.show();
+    				comboBoxEditHBox = null;
 		    	}
     		}
 	    }
