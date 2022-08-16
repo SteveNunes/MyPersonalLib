@@ -21,6 +21,7 @@ import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Background;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -293,7 +294,7 @@ public class Controller {
 	 * @return		A imagem com a cor de fundo removida
 	 */
 	
-	public static Image removeBgColor(Image image, int toleranceThreshold) {
+	public static Image removeBgColor(Image image, Color transparentColor, int toleranceThreshold) {
 		int W = (int) image.getWidth();
 		int H = (int) image.getHeight();
 		WritableImage outputImage = new WritableImage(W, H);
@@ -306,18 +307,27 @@ public class Controller {
 				int r = (argb >> 16) & 0xFF;
 				int g = (argb >> 8) & 0xFF;
 				int b = argb & 0xFF;
+				double rr = transparentColor.getRed() - toleranceThreshold;
+				double gg = transparentColor.getGreen() - toleranceThreshold;
+				double bb = transparentColor.getBlue() - toleranceThreshold;
 				if (toleranceThreshold == -1) {
-					if (r == 0 && g == 255 && b == 0)
+					if (r >= rr && g >= gg && b >= bb)
 						argb &= 0x00FFFFFF;
 				}
-				else if (r >= toleranceThreshold && g >= toleranceThreshold && b >= toleranceThreshold)
-					argb &= 0x00FFFFFF;
-	
 				writer.setArgb(x, y, argb);
 			}
 		}
 		return outputImage;
 	}
+
+	public static Image removeBgColor(Image image, int toleranceThreshold)
+		{ return removeBgColor(image, Color.valueOf("#00FF00"), toleranceThreshold); }
+
+	public static Image removeBgColor(Image image, Color transparentColor)
+		{ return removeBgColor(image, transparentColor, 0); }
+
+	public static Image removeBgColor(Image image)
+		{ return removeBgColor(image, Color.WHITE, 0); }
 
 	/* COMO PEGAR AS COORDENADAS DE TELA DE UM NODE
 					Bounds bounds = node.localToScreen(node.getBoundsInLocal());
