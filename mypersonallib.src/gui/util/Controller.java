@@ -286,8 +286,7 @@ public class Controller {
 	/** Remove o branco ou tons similares de branco da imagem (de acordo com o valor
 	 * 	de {@code toleranceThreshold} (Que vai de 0 a 255) Quanto mais próximo de 255,
 	 * 	menos tons de branco serão removidos (Se usar 255, apenas o branco puro será
-	 * 	removido da imagem). Se usar -1, será removido a cor padrão para background
-	 * 	(0x00FF00 (Verde))
+	 * 	removido da imagem). 
 	 * 
 	 * @param image		A imagem a ter a cor de fundo removida
 	 * @param toleranceThreshold		Valor de tolerância
@@ -300,23 +299,21 @@ public class Controller {
 		WritableImage outputImage = new WritableImage(W, H);
 		PixelReader reader = image.getPixelReader();
 		PixelWriter writer = outputImage.getPixelWriter();
-		for (int y = 0; y < H; y++) {
+		for (int y = 0; y < H; y++)
 			for (int x = 0; x < W; x++) {
 				int argb = reader.getArgb(x, y);
-	
 				int r = (argb >> 16) & 0xFF;
 				int g = (argb >> 8) & 0xFF;
 				int b = argb & 0xFF;
-				double rr = transparentColor.getRed() - toleranceThreshold;
-				double gg = transparentColor.getGreen() - toleranceThreshold;
-				double bb = transparentColor.getBlue() - toleranceThreshold;
-				if (toleranceThreshold == -1) {
-					if (r >= rr && g >= gg && b >= bb)
-						argb &= 0x00FFFFFF;
-				}
+				int rr = (int)(255 * transparentColor.getRed());
+				int gg = (int)(255 * transparentColor.getGreen());
+				int bb = (int)(255 * transparentColor.getBlue());
+				if (Math.abs(r - rr) <= toleranceThreshold &&
+						Math.abs(g - gg) <= toleranceThreshold &&
+						Math.abs(b - bb) <= toleranceThreshold)
+					argb &= 0x00FFFFFF;
 				writer.setArgb(x, y, argb);
 			}
-		}
 		return outputImage;
 	}
 
