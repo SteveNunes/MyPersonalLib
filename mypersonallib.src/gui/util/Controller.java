@@ -6,6 +6,7 @@ import java.util.function.Function;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -264,25 +265,53 @@ public class Controller {
 		listView.scrollTo(n);
 	}
 	
-	public static void addIconToButton(Button button, String imagePath, double imageWidth, double imageHeight, int removeBGColorTolerance)
-		{ button.setGraphic(getImageViewFromImagePath(imagePath, imageWidth, imageHeight, removeBGColorTolerance)); }
-	
-	public static ImageView getImageViewFromImagePath(String imagePath, double imageWidth, double imageHeight, int removeBGColorTolerance) {
+	public static ImageView getImageViewFromImagePath(String imagePath, double imageWidth, double imageHeight, Color removeColor, int removeBGColorTolerance) {
 		Image image = new Image(imagePath);
 		ImageView imageView;
 		if (removeBGColorTolerance != -2)
-			imageView = new ImageView(removeBgColor(image, removeBGColorTolerance));
+			imageView = new ImageView(removeBgColor(image, removeColor, removeBGColorTolerance));
 		else imageView = new ImageView(image);
 		imageView.setFitWidth(imageWidth);
 		imageView.setFitHeight(imageHeight);
 	  return imageView;
 	}
 	
+	public static ImageView getImageViewFromImagePath(String imagePath, double imageWidth, double imageHeight, Color removeColor)
+		{ return getImageViewFromImagePath(imagePath, imageWidth, imageHeight, removeColor, 0); }
+	
+	public static ImageView getImageViewFromImagePath(String imagePath, double imageWidth, double imageHeight, int removeBGColorTolerance)
+		{ return getImageViewFromImagePath(imagePath, imageWidth, imageHeight, Color.WHITE, removeBGColorTolerance); }
+	
+	public static ImageView getImageViewFromImagePath(String imagePath, double imageWidth, double imageHeight)
+		{ return getImageViewFromImagePath(imagePath, imageWidth, imageHeight, Color.WHITE, 0); }
+
+	public static void addIconToButton(Button button, String imagePath, double imageWidth, double imageHeight, Color removeColor, int removeBGColorTolerance)
+		{ button.setGraphic(getImageViewFromImagePath(imagePath, imageWidth, imageHeight, removeColor, removeBGColorTolerance)); }
+
+	public static void addIconToButton(Button button, String imagePath, double imageWidht, double imageHeight, Color removeColor)
+		{ addIconToButton(button, imagePath, imageWidht, imageHeight, removeColor, 0); }
+	
+	public static void addIconToButton(Button button, String imagePath, double imageWidht, double imageHeight, int removeBGColorTolerance)
+		{ addIconToButton(button, imagePath, imageWidht, imageHeight, Color.WHITE, removeBGColorTolerance); }
+
 	public static void addIconToButton(Button button, String imagePath, double imageWidht, double imageHeight)
-		{ addIconToButton(button, imagePath, imageWidht, imageHeight, -2); }
+		{ addIconToButton(button, imagePath, imageWidht, imageHeight, Color.WHITE, 0); }
+
 	
+	public static void addIconToButton(Button button, String imagePath, Color removeColor, int removeBGColorTolerance) {
+		Bounds bounds = button.getLayoutBounds();
+		addIconToButton(button, imagePath, bounds.getWidth(), bounds.getHeight(), removeColor, 0);
+	}
 	
+	public static void addIconToButton(Button button, String imagePath, Color removeColor)
+		{ addIconToButton(button, imagePath, removeColor, 0); }
 	
+	public static void addIconToButton(Button button, String imagePath, int removeBGColorTolerance)
+		{ addIconToButton(button, imagePath, Color.WHITE, removeBGColorTolerance); }
+	
+	public static void addIconToButton(Button button, String imagePath)
+		{ addIconToButton(button, imagePath, Color.WHITE, 0); }
+
 	/** Remove o branco ou tons similares de branco da imagem (de acordo com o valor
 	 * 	de {@code toleranceThreshold} (Que vai de 0 a 255) Quanto mais próximo de 255,
 	 * 	menos tons de branco serão removidos (Se usar 255, apenas o branco puro será

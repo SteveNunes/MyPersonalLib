@@ -7,7 +7,7 @@ import java.util.List;
 public class Encrypter { 
 
 	public static String encrypt(List<String> strings, String password) {
-		int plus = (int)(int)MyMath.rand(50, 200);
+		int plus = (int)(int)MyMath.rand(50, 10);
 		StringBuilder result = new StringBuilder();
 		strings = new ArrayList<>(strings);
 		String x = "" + (char)plus + (char)(password.length() + 2000);

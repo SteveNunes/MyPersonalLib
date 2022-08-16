@@ -2,6 +2,7 @@ package enums;
 
 import gui.util.Controller;
 import javafx.scene.image.ImageView;
+import javafx.scene.paint.Color;
 
 public enum Icons {
 
@@ -69,7 +70,7 @@ public enum Icons {
 			imageView.setFitHeight(height);
 			return imageView;
 		}
-		return Controller.getImageViewFromImagePath(icon.getValue(), width, height, 200);
+		return Controller.getImageViewFromImagePath(icon.getValue(), width, height, Color.WHITE, 10);
 	}
 	
 }
