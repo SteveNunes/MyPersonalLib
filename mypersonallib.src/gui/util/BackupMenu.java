@@ -143,12 +143,12 @@ public class BackupMenu {
 		});
   }
 	
-	private void backupSave(String date) {
+	private void backupSave(String date, Boolean silent) {
 		try {
-			if (consumerAntesDeSalvarBackup != null)
+			if (!silent && consumerAntesDeSalvarBackup != null)
 				consumerAntesDeSalvarBackup.accept(null);
 			backup.backupSave(date);
-			if (consumerAposSalvarBackup != null)
+			if (!silent && consumerAposSalvarBackup != null)
 				consumerAposSalvarBackup.accept(null);
 		}
 		catch (Exception ex) {
@@ -161,8 +161,8 @@ public class BackupMenu {
 		menuCarregarBackup.getItems().clear();
 		String sdf = (new SimpleDateFormat("yyyy-MM-dd")).format(new Date());
 		if (!(new File(backupDir + sdf + "\\")).exists())
-			backupSave(sdf);
-		menuItemSalvarBackup.setOnAction(e -> backupSave(sdf));
+			backupSave(sdf, true);
+		menuItemSalvarBackup.setOnAction(e -> backupSave(sdf, false));
 		List<File> dirs = FindFile.findDir(backupDir);
 		for (File f : dirs) {
 			MenuItem menuItem = new MenuItem(f.getName());

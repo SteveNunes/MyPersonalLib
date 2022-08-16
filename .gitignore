@@ -24,6 +24,9 @@ hs_err_pid*
 
 # My Stuffs #
 /bin/
+/src/Backup/
+/src/Config/
+/src/teste*/
 /.settings/
-/mypersonallib.src/teste/
 *.txt
+*.bat
