@@ -268,7 +268,7 @@ public class Controller {
 	public static ImageView getImageViewFromImagePath(String imagePath, double imageWidth, double imageHeight, Color removeColor, int removeBGColorTolerance) {
 		Image image = new Image(imagePath);
 		ImageView imageView;
-		if (removeBGColorTolerance != -2)
+		if (removeBGColorTolerance > -1)
 			imageView = new ImageView(removeBgColor(image, removeColor, removeBGColorTolerance));
 		else imageView = new ImageView(image);
 		imageView.setFitWidth(imageWidth);
@@ -277,25 +277,25 @@ public class Controller {
 	}
 	
 	public static ImageView getImageViewFromImagePath(String imagePath, double imageWidth, double imageHeight, Color removeColor)
-		{ return getImageViewFromImagePath(imagePath, imageWidth, imageHeight, removeColor, 0); }
+		{ return getImageViewFromImagePath(imagePath, imageWidth, imageHeight, removeColor, -1); }
 	
 	public static ImageView getImageViewFromImagePath(String imagePath, double imageWidth, double imageHeight, int removeBGColorTolerance)
 		{ return getImageViewFromImagePath(imagePath, imageWidth, imageHeight, Color.WHITE, removeBGColorTolerance); }
 	
 	public static ImageView getImageViewFromImagePath(String imagePath, double imageWidth, double imageHeight)
-		{ return getImageViewFromImagePath(imagePath, imageWidth, imageHeight, Color.WHITE, 0); }
+		{ return getImageViewFromImagePath(imagePath, imageWidth, imageHeight, Color.WHITE, -1); }
 
 	public static void addIconToButton(Button button, String imagePath, double imageWidth, double imageHeight, Color removeColor, int removeBGColorTolerance)
 		{ button.setGraphic(getImageViewFromImagePath(imagePath, imageWidth, imageHeight, removeColor, removeBGColorTolerance)); }
 
 	public static void addIconToButton(Button button, String imagePath, double imageWidht, double imageHeight, Color removeColor)
-		{ addIconToButton(button, imagePath, imageWidht, imageHeight, removeColor, 0); }
+		{ addIconToButton(button, imagePath, imageWidht, imageHeight, removeColor, -1); }
 	
 	public static void addIconToButton(Button button, String imagePath, double imageWidht, double imageHeight, int removeBGColorTolerance)
 		{ addIconToButton(button, imagePath, imageWidht, imageHeight, Color.WHITE, removeBGColorTolerance); }
 
 	public static void addIconToButton(Button button, String imagePath, double imageWidht, double imageHeight)
-		{ addIconToButton(button, imagePath, imageWidht, imageHeight, Color.WHITE, 0); }
+		{ addIconToButton(button, imagePath, imageWidht, imageHeight, Color.WHITE, -1); }
 
 	
 	public static void addIconToButton(Button button, String imagePath, Color removeColor, int removeBGColorTolerance) {
@@ -334,11 +334,13 @@ public class Controller {
 				int r = (argb >> 16) & 0xFF;
 				int g = (argb >> 8) & 0xFF;
 				int b = argb & 0xFF;
-				int rr = (int)(255 * transparentColor.getRed()) - toleranceThreshold;
-				int gg = (int)(255 * transparentColor.getGreen()) - toleranceThreshold;
-				int bb = (int)(255 * transparentColor.getBlue()) - toleranceThreshold;
-			if (r >= rr && g >= gg && b >= bb)
-					argb &= 0x00FFFFFF;
+				int rr = (int)(255 * transparentColor.getRed());
+				int gg = (int)(255 * transparentColor.getGreen());
+				int bb = (int)(255 * transparentColor.getBlue());
+			if (r >= rr - toleranceThreshold && r <= rr &&
+					g >= gg - toleranceThreshold && g <= gg &&
+					b >= bb - toleranceThreshold && b <= bb)
+						argb &= 0x00FFFFFF;
 				writer.setArgb(x, y, argb);
 			}
 		return outputImage;
