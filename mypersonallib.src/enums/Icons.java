@@ -70,7 +70,7 @@ public enum Icons {
 			imageView.setFitHeight(height);
 			return imageView;
 		}
-		return Controller.getImageViewFromImagePath(icon.getValue(), width, height, Color.WHITE, 10);
+		return Controller.getImageViewFromImagePath(icon.getValue(), width, height, Color.WHITE, 50);
 	}
 	
 }
