@@ -40,6 +40,8 @@ public class Cronometro {
 		{ return pausado; }
 
 	public void setPausado(Boolean b) {
+		if (pausado == b)
+			return;
 		if (pausado = b)
 			dataDaPausa.setTime(System.currentTimeMillis());
 		else
