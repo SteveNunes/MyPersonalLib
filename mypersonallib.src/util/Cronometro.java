@@ -1,14 +1,19 @@
 package util;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import enums.PeriodToMillis;
 
 public class Cronometro {
 	
 	private Boolean pausado = true;
 	private Date dataInicial;
 	private Date dataDaPausa;
+	private SimpleDateFormat sdf;
 
 	public Cronometro() {
+		sdf = new SimpleDateFormat("HH:mm:ss.SSS");
 		pausado = true;
 		dataInicial = new Date();
 		dataDaPausa = new Date();
@@ -19,6 +24,14 @@ public class Cronometro {
 		if (pausado)
 			duration -= System.currentTimeMillis() - dataDaPausa.getTime();
 		return duration;
+	}
+	
+	public String getDuracaoStr()
+		{ return sdf.format(new Date(getDuracao() + PeriodToMillis.HOUR.getValue() * 3)); }
+	
+	public String getDuracaoStr(String simpleDateFormat) {
+		sdf.applyPattern(simpleDateFormat);
+		return getDuracaoStr();
 	}
 	
 	public Date getDataInicial()
