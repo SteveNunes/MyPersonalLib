@@ -334,13 +334,17 @@ public class Controller {
 				int r = (argb >> 16) & 0xFF;
 				int g = (argb >> 8) & 0xFF;
 				int b = argb & 0xFF;
-				int rr = (int)(255 * transparentColor.getRed());
-				int gg = (int)(255 * transparentColor.getGreen());
-				int bb = (int)(255 * transparentColor.getBlue());
-			if (r >= rr - toleranceThreshold && r <= rr &&
-					g >= gg - toleranceThreshold && g <= gg &&
-					b >= bb - toleranceThreshold && b <= bb)
-						argb &= 0x00FFFFFF;
+				int rr = (int)(transparentColor.getRed() * 255);
+				int gg = (int)(transparentColor.getGreen() * 255);
+				int bb = (int)(transparentColor.getBlue() * 255);
+				int r2 = (rr - toleranceThreshold) < 0 ? 0 : rr - toleranceThreshold;
+				int g2 = (gg - toleranceThreshold) < 0 ? 0 : gg - toleranceThreshold;
+				int b2 = (bb - toleranceThreshold) < 0 ? 0 : bb - toleranceThreshold;
+				int r3 = (rr + toleranceThreshold) > 255 ? 255 : rr + toleranceThreshold;
+				int g3 = (gg + toleranceThreshold) > 255 ? 255 : gg + toleranceThreshold;
+				int b3 = (bb + toleranceThreshold) > 255 ? 255 : bb + toleranceThreshold;
+				if (r <= r3 && r >= r2 && g <= g3 && g >= g2 && b <= b3 && b >= b2)
+					argb &= 0x00FFFFFF;
 				writer.setArgb(x, y, argb);
 			}
 		return outputImage;

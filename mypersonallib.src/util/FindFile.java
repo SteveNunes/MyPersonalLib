@@ -45,6 +45,8 @@ public abstract class FindFile {
 	}
 
 	private static List<File> findAny(String path, String filter, int deep, FindFileEnum fft) {
+		path = path.replace('\\', '/');
+		filter = filter.replace('\\', '/');
 		File[] dirs = new File(path).listFiles(File::isDirectory), temp1 = null;
 		List<File> result = new ArrayList<>(), temp2 = null;
 		if (fft == FindFileEnum.ALL || fft == FindFileEnum.DIR)
@@ -59,7 +61,7 @@ public abstract class FindFile {
 		}
 		if (--deep != 0) {
 			for (int n = 0; dirs != null && n < dirs.length; n++) {
-				temp2 = findAny(dirs[n].toString() + "\\", filter, deep, fft);
+				temp2 = findAny(dirs[n].toString() + "/", filter, deep, fft);
 				for (File f : temp2) 
 					result.add(f);
 			}
