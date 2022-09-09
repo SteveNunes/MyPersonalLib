@@ -63,24 +63,27 @@ public class Position {
 		incY(incY);
 	}
 	
-	public void incPositionByDirection(Direction direction) {
+	public void incPositionByDirection(Direction direction, int val) {
 		if (direction == Direction.LEFT)
-			incX(-1);
+			incX(-val);
 		else if (direction == Direction.RIGHT)
-			incX(1);
+			incX(val);
 		else if (direction == Direction.UP)
-			incY(-1);
+			incY(-val);
 		else if (direction == Direction.DOWN)
-			incY(1);
+			incY(val);
 		else if (direction == Direction.TOP_LEFT)
-			incPosition(-1, -1);
+			incPosition(-val, -val);
 		else if (direction == Direction.TOP_RIGHT)
-			incPosition(1, -1);
+			incPosition(val, -val);
 		else if (direction == Direction.DOWN_LEFT)
-			incPosition(-1, 1);
+			incPosition(-val, val);
 		else 
-			incPosition(1, 1);
+			incPosition(val, val);
 	}
+	
+	public void incPositionByDirection(Direction direction)
+		{ incPositionByDirection(direction, 1); }
 	
 	public Boolean colidedWith(Position position)
 		{ return this.equals(position); }
