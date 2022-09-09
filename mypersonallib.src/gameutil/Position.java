@@ -76,7 +76,7 @@ public class Position {
 			incPosition(-1, -1);
 		else if (direction == Direction.TOP_RIGHT)
 			incPosition(1, -1);
-		else if (direction == Direction.BOTTOM_LEFT)
+		else if (direction == Direction.DOWN_LEFT)
 			incPosition(-1, 1);
 		else 
 			incPosition(1, 1);
