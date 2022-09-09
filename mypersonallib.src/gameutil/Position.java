@@ -8,16 +8,32 @@ public class Position {
 
 	private int x;
 	private int y;
+	private int tileSize;
 	
 	public Position()
-		{ this(0, 0); }
+		{ this(0, 0, 1); }
+	
+	public Position(int x, int y, int tileSize) {
+		this.x = x;
+		this.y = y;
+		this.tileSize = tileSize;
+	}
 	
 	public Position(int x, int y)
-		{ setPosition(x, y); }
+		{ this(x, y, 1); }
+
+	public Position(Position position, int tileSize)
+		{ this(position.getX(), position.getY(), tileSize); }
 	
 	public Position(Position position)
-		{ setPosition(position); }
+		{ this(position.getX(), position.getY(), position.getTileSize()); }
+
+	public int getTileSize()
+		{ return tileSize; }
 	
+	public void setTileSize(int size)
+		{ tileSize = size; }
+
 	public int getX()
 		{ return x; }
 	
@@ -85,8 +101,14 @@ public class Position {
 	public void incPositionByDirection(Direction direction)
 		{ incPositionByDirection(direction, 1); }
 	
-	public Boolean colidedWith(Position position)
-		{ return this.equals(position); }
+	public int getDX()
+		{ return (getX() + (tileSize / 2)) / tileSize; }
+	
+	public int getDY()
+		{ return (getY() + (tileSize / 2)) / tileSize; }
+	
+	public Boolean isOnSameTile(Position position)
+		{ return position.getDX() == getDX() && position.getDY() == getDY(); }
 
 	@Override
 	public int hashCode()
