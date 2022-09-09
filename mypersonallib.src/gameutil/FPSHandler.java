@@ -44,7 +44,7 @@ public class FPSHandler {
 	/**
 	 * Call this method on your main loop every frame.
 	 */
-	private void fpsCounter() {
+	public void fpsCounter() {
 		if (gameCyclesPerSecond > 0) {
 			while (System.currentTimeMillis() < nextCicleAt)
 				KeyHandler.runItOnMainLoopEveryFrame();
@@ -70,7 +70,7 @@ public class FPSHandler {
 	 * Only update your screen when this method returns {@code true},
 	 * otherwise, just update game stuffs without any drawning. 
 	 */
-	private Boolean ableToDraw()
+	public Boolean ableToDraw()
 		{ return gameFrameSkip == 0 || frameSkip >= gameFrameSkip; }
 
 }
