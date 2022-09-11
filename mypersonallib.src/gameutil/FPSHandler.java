@@ -53,11 +53,11 @@ public class FPSHandler {
 			nextCicleAt += 1000 / gameCyclesPerSecond;
 		}
 		frameSkip++;
-		elapsedFrames++;
 		cps++;
-		if (ableToDraw()) {
+		if (++frameSkip > gameFrameSkip) {
 			frameSkip = 0;
 			fps++;
+			elapsedFrames++;
 		}
 		if (System.currentTimeMillis() >= fpsTimer) {
 			fpsTimer += 1000;

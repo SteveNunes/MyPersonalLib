@@ -13,6 +13,9 @@ public class Misc {
 	
 	private static Map<String, Map<Long, ?>> uniqueId = new HashMap<>();
 	
+	public static Boolean alwaysTrue()
+		{ return true; }
+	
 	@SuppressWarnings("unchecked")
 	public static <T> long getUniqueId(T c, Boolean negativeId) {
 		long id = 0;
