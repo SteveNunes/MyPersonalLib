@@ -15,17 +15,19 @@ public class KeyHandler {
 	private static Map<KeyEvent, Integer> repeatKeys = new HashMap<>();
 	private static int repeatDelay = -1;
 	private static Consumer<KeyCode> onPressedKeyCall;
+	private static Consumer<KeyCode> onHoldingKeyCall;
 	
 	public static void setRepatKeyDelay(int delay)
 		{ repeatDelay = delay; }
 	
-	public static void keyPressedEventHandler(KeyEvent e, Consumer<KeyCode> onKeyPressEvent) {
+	public static void keyPressedEventHandler(KeyEvent e, Consumer<KeyCode> onKeyPressEvent, Consumer<KeyCode> onHoldingKeyEvent) {
 		KeyCode keyCode = e.getCode();
 		if (repeatDelay != -1)
 			repeatKeys.put(e, 0);
 		pressedKeys.add(keyCode);
 		onPressedKeyCall = onKeyPressEvent;
-		onKeyPressEvent.accept(keyCode);
+		onHoldingKeyCall = onHoldingKeyEvent;
+		onPressedKeyCall.accept(keyCode);
 	}
 
 	public static void keyReleasedEventHandler(KeyEvent e, Consumer<KeyCode> onKeyReleaseEvent) {
@@ -44,7 +46,7 @@ public class KeyHandler {
 			return;
 		for (KeyEvent e : repeatKeys.keySet()) {
 			if (repeatKeys.get(e) >= repeatDelay)
-				onPressedKeyCall.accept(e.getCode());
+				onHoldingKeyCall.accept(e.getCode());
 			else
 				repeatKeys.put(e, repeatKeys.get(e) + 1);
 		}
