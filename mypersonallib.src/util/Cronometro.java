@@ -12,12 +12,15 @@ public class Cronometro {
 	private Date dataDaPausa;
 	private SimpleDateFormat sdf;
 
-	public Cronometro() {
-		sdf = new SimpleDateFormat("HH:mm:ss.SSS");
+	public Cronometro(String formato) {
+		sdf = new SimpleDateFormat(formato);
 		pausado = true;
 		dataInicial = new Date();
 		dataDaPausa = new Date();
 	}
+	
+	public Cronometro()
+		{ this("HH:mm:ss.SSS"); }
 	
 	public long getDuracao() {
 		long duration = System.currentTimeMillis() - dataInicial.getTime();
