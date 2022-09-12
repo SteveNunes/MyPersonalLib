@@ -1,7 +1,5 @@
 package gameutil;
 
-import java.util.function.Consumer;
-
 public class FPSHandler {
 
 	private int gameCyclesPerSecond;
@@ -46,12 +44,8 @@ public class FPSHandler {
 	/**
 	 * Call this method on your main loop every frame.
 	 */
-	public void fpsCounter(Consumer<?> consumerWhileWaitingForFPS) {
+	public void fpsCounter() {
 		if (gameCyclesPerSecond > 0) {
-			if (consumerWhileWaitingForFPS != null)
-				while (System.currentTimeMillis() < nextCicleAt)
-					consumerWhileWaitingForFPS.accept(null);
-			else
 				try
 					{ Thread.sleep(nextCicleAt - System.currentTimeMillis()); }
 				catch (Exception e) {}
@@ -65,16 +59,13 @@ public class FPSHandler {
 			elapsedFrames++;
 		}
 		if (System.currentTimeMillis() >= fpsTimer) {
-			fpsTimer += 1000;
+			fpsTimer = System.currentTimeMillis() + 1000;
 			currentFPS = fps;
 			currentCPS = cps;
 			fps = 0;
 			cps = 0;
 		}
 	}
-	
-	public void fpsCounter()
-		{ fpsCounter(null); }
 	
 	/*
 	 * Only update your screen when this method returns {@code true},
