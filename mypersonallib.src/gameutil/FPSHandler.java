@@ -28,7 +28,7 @@ public class FPSHandler {
 		currentCPS = 0;
 	}
 
-	public void setFPS(int fps)
+	public void setCPS(int fps)
 		{ gameCyclesPerSecond = fps; }
 
 	public void setFrameSkip(int frameSkip)
