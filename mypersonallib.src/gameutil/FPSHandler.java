@@ -68,6 +68,9 @@ public class FPSHandler {
 		}
 	}
 	
+	public void fpsCounter()
+		{ fpsCounter(e -> {}); }
+	
 	/*
 	 * Only update your screen when this method returns {@code true},
 	 * otherwise, just update game stuffs without any drawning. 

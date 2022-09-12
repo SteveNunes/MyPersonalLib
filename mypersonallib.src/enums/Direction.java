@@ -30,6 +30,9 @@ public enum Direction {
 	public static Direction getReverseDirection(Direction direction)
 		{ return getClockwiseDirection(direction, 4); }
 	
+	public Direction getReverseDirection()
+		{ return getReverseDirection(this); }
+
 	public static Direction getClockwiseDirection(Direction direction, int inc) {
 		int p = direction.getValue() + inc;
 		while (p > 7)
@@ -38,9 +41,6 @@ public enum Direction {
 			p += 8;
 		return listOfAll.get(p);
 	}
-
-	public Direction getReverseDirection()
-		{ return getReverseDirection(this); }
 
 	public Direction getClockwiseDirection(int inc)
 		{ return getClockwiseDirection(this, inc); }
