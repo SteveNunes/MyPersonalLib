@@ -48,13 +48,18 @@ public class FPSHandler {
 	 */
 	public void fpsCounter(Consumer<?> consumerWhileWaitingForFPS) {
 		if (gameCyclesPerSecond > 0) {
-			while (System.currentTimeMillis() < nextCicleAt)
-				consumerWhileWaitingForFPS.accept(null);
+			if (consumerWhileWaitingForFPS != null)
+				while (System.currentTimeMillis() < nextCicleAt)
+					consumerWhileWaitingForFPS.accept(null);
+			else
+				try
+					{ Thread.sleep(nextCicleAt - System.currentTimeMillis()); }
+				catch (Exception e) {}
 			nextCicleAt += 1000 / gameCyclesPerSecond;
 		}
 		frameSkip++;
 		cps++;
-		if (++frameSkip > gameFrameSkip) {
+		if (gameFrameSkip == 0 || ++frameSkip > gameFrameSkip) {
 			frameSkip = 0;
 			fps++;
 			elapsedFrames++;
@@ -69,7 +74,7 @@ public class FPSHandler {
 	}
 	
 	public void fpsCounter()
-		{ fpsCounter(e -> {}); }
+		{ fpsCounter(null); }
 	
 	/*
 	 * Only update your screen when this method returns {@code true},
