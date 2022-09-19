@@ -30,18 +30,6 @@ import javafx.util.Pair;
 
 public class Alerts {
 	
-	private static Optional<ButtonType> alert(String title, String header, String content, AlertType type, Boolean showAndWait) {
-		Alert alert = new Alert(type);
-		alert.setTitle(title);
-		if (header != null)
-			alert.setHeaderText(header);
-		alert.setContentText(content);
-		if (showAndWait)
-			return alert.showAndWait();
-		alert.show();
-		return null;
-	}
-
 	/**
 	 * Função para criar janelas de alerta, que retornam um {@code Optional} com informações sobre o botão que o usuário pressionou nessa janela. O fluxo do programa é interrompido enquanto a janela estiver aberta.
 	 * @param title					Título da janela.
@@ -50,9 +38,15 @@ public class Alerts {
 	 * @param type					Tipo de alerta (Consultar o {@code enum AlertType} para mais informações.
 	 * @return							um tipo {@code Optional} contendo informações sobre o botão clicado (Ok, Cancel, etc) 
 	 */
-	public static Optional<ButtonType> showAndWait(String title, String header, String content, AlertType type)
-		{ return alert(title, header, content, type, true); }
-	
+	public static Optional<ButtonType> createAlert(String title, String header, String content, AlertType type) {
+		Alert alert = new Alert(type);
+		alert.setTitle(title);
+		if (header != null)
+			alert.setHeaderText(header);
+		alert.setContentText(content);
+		return alert.showAndWait();
+	}
+
 	/**
 	 * Sobrecarga do método {@code showAndWait(String title, String header, String content, AlertType type)}
 	 * que dispensa o parâmetro {@code header}
@@ -60,28 +54,8 @@ public class Alerts {
 	 * @param content				Texto da janela.
 	 * @param type					Tipo de alerta (Consultar o {@code enum AlertType} para mais informações.
 	 */
-	public static Optional<ButtonType> showAndWait(String title, String content, AlertType type)
-		{ return alert(title, null, content, type, true); }
-
-	/**
-	 * Função para criar janelas de alerta sem retorno. O fluxo do programa não é interrompido enquanto a janela estiver aberta.
-	 * @param title					Título da janela.
-	 * @param header				Cabeçalho da janela (opcional, informe {@code null} para janela sem cabeçalho.
-	 * @param content				Texto da janela.
-	 * @param type					Tipo de alerta (Consultar o {@code enum AlertType} para mais informações.
-	 */
-	public static void show(String title, String header, String content, AlertType type) 
-		{ alert(title, header, content, type, false); }
-
-	/**
-	 * Sobrecarga do método {@code show(String title, String header, String content, AlertType type)}
-	 * que dispensa o parâmetro {@code header}
-	 * @param title					Título da janela.
-	 * @param content				Texto da janela.
-	 * @param type					Tipo de alerta (Consultar o {@code enum AlertType} para mais informações.
-	 */
-	public static void show(String title, String content, AlertType type) 
-		{ alert(title, null, content, type, false); }
+	public static Optional<ButtonType> createAlert(String title, String content, AlertType type)
+		{ return createAlert(title, null, content, type); }
 
 	/**
 	 * Cria uma janela de confirmação, que retorna {@code true} se o usuário clicar em 'Ok'
@@ -90,7 +64,7 @@ public class Alerts {
 	 * @param content				Texto da janela.
 	 */
 	public static Boolean confirmation(String title, String header, String content)
-		{ return showAndWait(title, header, content, AlertType.CONFIRMATION).get() == ButtonType.OK; }
+		{ return createAlert(title, header, content, AlertType.CONFIRMATION).get() == ButtonType.OK; }
 
 	/**
 	 * Sobrecarga do método {@code confirmation(String title, String header, String content)}
@@ -99,7 +73,7 @@ public class Alerts {
 	 * @param content				Texto da janela.
 	 */
 	public static Boolean confirmation(String title, String content)
-		{ return showAndWait(title, content, AlertType.CONFIRMATION).get() == ButtonType.OK; }
+		{ return createAlert(title, content, AlertType.CONFIRMATION).get() == ButtonType.OK; }
 
 	/**
 	 * Cria uma janela de erro
@@ -108,7 +82,7 @@ public class Alerts {
 	 * @param content				Texto da janela.
 	 */
 	public static void error(String title, String header, String content)
-		{ show(title, header, content, AlertType.ERROR); }
+		{ createAlert(title, header, content, AlertType.ERROR); }
 	
 	/**
 	 * Sobrecarga do método {@code error(String title, String header, String content)}
@@ -117,7 +91,7 @@ public class Alerts {
 	 * @param content				Texto da janela.
 	 */
 	public static void error(String title, String content)
-		{ show(title, content, AlertType.ERROR); }
+		{ createAlert(title, content, AlertType.ERROR); }
 	
 	public static void exception(String title, String header, String content, Exception ex) {
 		Alert alert = new Alert(AlertType.ERROR);
@@ -151,7 +125,7 @@ public class Alerts {
 	 * @param content				Texto da janela.
 	 */
 	public static void information(String title, String header, String content)
-		{ show(title, header, content, AlertType.INFORMATION); }
+		{ createAlert(title, header, content, AlertType.INFORMATION); }
 	
 	/**
 	 * Sobrecarga do método {@code information(String title, String header, String content)}
@@ -160,7 +134,7 @@ public class Alerts {
 	 * @param content				Texto da janela.
 	 */
 	public static void information(String title, String content)
-		{ show(title, content, AlertType.INFORMATION); }
+		{ createAlert(title, content, AlertType.INFORMATION); }
 
 	/**
 	 * Cria uma janela de alerta
@@ -169,7 +143,7 @@ public class Alerts {
 	 * @param content				Texto da janela.
 	 */
 	public static void warning(String title, String header, String content)
-		{ show(title, header, content, AlertType.WARNING); }
+		{ createAlert(title, header, content, AlertType.WARNING); }
 	
 	/**
 	 * Sobrecarga do método {@code warning(String title, String header, String content)}
@@ -178,7 +152,7 @@ public class Alerts {
 	 * @param content				Texto da janela.
 	 */
 	public static void warning(String title, String content)
-		{ show(title, content, AlertType.WARNING); }
+		{ createAlert(title, content, AlertType.WARNING); }
 
 	/**
 	 * Cria uma janela de mensagem simples (sem botões)
@@ -187,7 +161,7 @@ public class Alerts {
 	 * @param content				Texto da janela.
 	 */
 	public static void msg(String title, String header, String content)
-		{ show(title, header, content, AlertType.NONE); }
+		{ createAlert(title, header, content, AlertType.NONE); }
 	
 	/**
 	 * Sobrecarga do método {@code msg(String title, String header, String content)}
@@ -196,7 +170,7 @@ public class Alerts {
 	 * @param content				Texto da janela.
 	 */
 	public static void msg(String title, String content)
-		{ show(title, content, AlertType.NONE); }
+		{ createAlert(title, content, AlertType.NONE); }
 
 	/**
 	 * Abre uma caixa para que  usuário entre com um valor
