@@ -115,18 +115,29 @@ public class IniFile {
 		String section = "", item, value, line;
 		for (int l = 0, lmax = fileBuffer.size(); l < lmax; l++) {
 			line = fileBuffer.get(l);
-			if (stringIsSection(line)) {
+			if (line.isEmpty()) {
 				insertMissingItens(section, newFileBuffer, addeds);
+				if (getItemList(section).isEmpty())
+					newFileBuffer.remove(newFileBuffer.size() - 1);
+			}
+			if (stringIsSection(line)) {
+				if (newFileBuffer.size() == 1 && newFileBuffer.get(0).isEmpty())
+					newFileBuffer.remove(0);
+				else if (newFileBuffer.size() > 1 && getItemList(section).isEmpty())
+					for (int n = 0; n < 2; n++)
+						newFileBuffer.remove(newFileBuffer.size() - 1);
 				section = getSectionFromString(line);
-				if (isSection(section)) {
-					newFileBuffer.add(line);
-					addeds.put(section, new ArrayList<>());
-				}
-				else {
-					section = line = "";
-					while (++l < lmax && !stringIsSection(line = fileBuffer.get(l)));
-					if (stringIsSection(line))
-						l--;
+				if (!getItemList(section).isEmpty()) {
+					if (isSection(section)) {
+						newFileBuffer.add(line);
+						addeds.put(section, new ArrayList<>());
+					}
+					else {
+						section = line = "";
+						while (++l < lmax && !stringIsSection(line = fileBuffer.get(l)));
+						if (stringIsSection(line))
+							l--;
+					}
 				}
 			}
 			else if (!section.isEmpty() && stringIsItem(line)) {
@@ -143,7 +154,8 @@ public class IniFile {
 		}
 		insertMissingItens(section, newFileBuffer, addeds);
 		for (String sec : getSectionList())
-			insertMissingItens(sec, newFileBuffer, addeds);
+			if (!getItemList(sec).isEmpty())
+				insertMissingItens(sec, newFileBuffer, addeds);
 		fileBuffer = new ArrayList<>(newFileBuffer);
 	}
 
