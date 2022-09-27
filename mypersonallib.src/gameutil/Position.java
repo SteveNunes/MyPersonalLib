@@ -6,20 +6,20 @@ import enums.Direction;
 
 public class Position {
 
-	private int x;
-	private int y;
+	private double x;
+	private double y;
 	private int tileSize;
 	
 	public Position()
 		{ this(0, 0, 1); }
 	
-	public Position(int x, int y, int tileSize) {
+	public Position(double x, double y, int tileSize) {
 		this.x = x;
 		this.y = y;
 		this.tileSize = tileSize;
 	}
 	
-	public Position(int x, int y)
+	public Position(double x, double y)
 		{ this(x, y, 1); }
 
 	public Position(Position position, int tileSize)
@@ -34,34 +34,34 @@ public class Position {
 	public void setTileSize(int size)
 		{ tileSize = size; }
 
-	public int getX()
+	public double getX()
 		{ return x; }
 	
-	public int getY()
+	public double getY()
 		{ return y; }
 	
-	public void setX(int x)
+	public void setX(double x)
 		{ this.x = x; }
 	
-	public void setY(int y)
+	public void setY(double y)
 		{ this.y = y; }
 	
-	public void decX(int value)
+	public void decX(double value)
 		{ setX(getX() - value); }
 	
-	public void decY(int value)
+	public void decY(double value)
 		{ setY(getY() - value); }
 	
-	public void incX(int value)
+	public void incX(double value)
 		{ setX(getX() + value); }
 	
-	public void incY(int value)
+	public void incY(double value)
 		{ setY(getY() + value); }
 	
 	public Position getPosition()
 		{ return this; }
 
-	public void setPosition(int x, int y) {
+	public void setPosition(double x, double y) {
 		setX(x);
 		setY(y);
 	}
@@ -69,17 +69,17 @@ public class Position {
 	public void setPosition(Position position)
 		{ setPosition(position.getX(), position.getY()); }
 	
-	public void decPosition(int incX, int incY) {
+	public void decPosition(double incX, double incY) {
 		decX(incX);
 		decY(incY);
 	}
 
-	public void incPosition(int incX, int incY) {
+	public void incPosition(double incX, double incY) {
 		incX(incX);
 		incY(incY);
 	}
 	
-	public void incPositionByDirection(Direction direction, int val) {
+	public void incPositionByDirection(Direction direction, double val) {
 		if (direction == Direction.LEFT)
 			incX(-val);
 		else if (direction == Direction.RIGHT)
@@ -101,10 +101,10 @@ public class Position {
 	public void incPositionByDirection(Direction direction)
 		{ incPositionByDirection(direction, 1); }
 	
-	public int getDX()
+	public double getDX()
 		{ return (getX() + (tileSize / 2)) / tileSize; }
 	
-	public int getDY()
+	public double getDY()
 		{ return (getY() + (tileSize / 2)) / tileSize; }
 	
 	public Boolean isOnSameTile(Position position)

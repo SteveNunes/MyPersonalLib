@@ -78,11 +78,11 @@ public class GameTools {
    * @param pts - Quantidade de pontos para desenhar o circulo
    * @param pos - O ponto do circulo desejado. Ex: Se {@code qts} for {@code 10}, será calculado {@code 10} pontos separados igualmente de forma á formar o circulo desejado. Então, {@code pos 2} retorna a coordenada do segundo ponto usado para formar o circulo.
   */
-	public static double[] circleDot(double x, double y, double r, int pts, int pos) {
+	public static Position circleDot(double x, double y, double r, int pts, int pos) {
 	  double dis = 2 * Math.PI / pts;
 	  double co = Math.cos(pos * dis);
 	  double si = Math.sin(pos * dis);
-	  return new double[] {co * r, si * r};
+	  return new Position(co * r, si * r);
 	}
 	
   /** Informe as coordenadas {@code x, y} do centro da elipse, e seu raio  para retornar
@@ -91,11 +91,11 @@ public class GameTools {
    * @param pts - Quantidade de pontos para desenhar a elipse
    * @param pos - O ponto da elipse desejado. Ex: Se {@code qts} for {@code 10}, será calculado {@code 10} pontos separados igualmente de forma á formar a elipse desejada. Então, {@code pos 2} retorna a coordenada do segundo ponto usado para formar a elipse.
   */
-	public static double[] ellipseDot(double x, double y, double rw, double rh, int pts, int pos) {
+	public static Position ellipseDot(double x, double y, double rw, double rh, int pts, int pos) {
 	  double dis = 2 * Math.PI / pts;
 	  double co = Math.cos(pos * dis);
 	  double si = Math.sin(pos * dis);
-	  return new double[] {co * rw, si * rh};
+	  return new Position(co * rw, si * rh);
 	}
 	
 	/**
@@ -105,14 +105,14 @@ public class GameTools {
 	 * @param y coordenada y do círculo
 	 * @param r raio do círculo
 	 */
-	public static int[] getRandCoordFromACircle(int x, int y, int r) {
+	public static Position getRandCoordFromACircle(int x, int y, int r) {
 		int xx, yy;
 	  do {
 	  	xx = (int)MyMath.rand(x - r, x + r);
 	  	yy = (int)MyMath.rand(y - r, y + r);
 	  }
 	  while (!coordIsInCircle(xx, yy, x, y, r));
-	  return new int[] {xx, yy};
+	  return new Position(xx, yy);
 	}
 	
 	/**
@@ -123,14 +123,14 @@ public class GameTools {
 	 * @param rw raio horizontal da elipse
 	 * @param rh raio vertical da elipse
 	 */
-	public static int[] getRandCoordFromAnEllipse(int x, int y, int rw, int rh) {
+	public static Position getRandCoordFromAnEllipse(int x, int y, int rw, int rh) {
 		int xx, yy;
 	  do {
 	  	xx = (int)MyMath.rand(x - rw, x + rw);
 	  	yy = (int)MyMath.rand(y - rh, y + rh);
 	  }
 	  while (!coordIsInEllipse(xx, yy, x, y, rw, rh));
-	  return new int[] {xx, yy};
+	  return new Position(xx, yy);
 	}
 	
 	/**
@@ -141,21 +141,21 @@ public class GameTools {
 	 * @param w largura do retângulo
 	 * @param h altura do retângulo
 	 */
-	public static int[] getRandCoordFromAnRect(int x, int y, int w, int h) {
+	public static Position getRandCoordFromAnRect(int x, int y, int w, int h) {
 		int xx, yy;
 	  do {
 	  	xx = (int)MyMath.rand(x - w, x + w);
 	  	yy = (int)MyMath.rand(y - h, y + h);
 	  }
 	  while (!coordIsInRect(xx, yy, x, y, w, h));
-	  return new int[] {xx, yy};
+	  return new Position(xx, yy);
 	}
 	
   /*
    * Retorna valores {@x, y} de incremento para que um objeto nas coordenadas {@code x1, y1}
    * chegue até as coordenadas {@code x2, y2} no total de {@code frames}
    */
-	public static double[] incrementForGoToCoord(double x1, double y1, double x2, double y2, double frames) {
+	public static Position incrementForGoToCoord(double x1, double y1, double x2, double y2, double frames) {
 	  double x = (x2 - x1) / 100;
 	  double y = (y2 - y1) / 100;
 	  while ((x != 0 && Math.abs(x) < frames) || (y != 0 && Math.abs(y) < frames)) {
@@ -166,7 +166,7 @@ public class GameTools {
 	  	x -= x / 10;
 	  	y -= y / 10;
 	  }
-	  return new double[] {x, y};
+	  return new Position(x, y);
 	}
 	
 }
