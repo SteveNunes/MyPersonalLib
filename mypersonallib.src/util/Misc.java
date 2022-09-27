@@ -1,5 +1,6 @@
 package util;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,96 @@ import javafx.scene.input.ClipboardContent;
 public class Misc {
 	
 	private static Map<String, Map<Long, ?>> uniqueId = new HashMap<>();
+	
+	/**
+	 *  Converte long decimal em IP
+	 */
+	public static long IPToLong(String ip) {
+		String[] split = ip.split("\\.");
+	  long longIP = 0;
+		for (int n = 0; n < split.length; n++)
+			longIP += Long.parseLong(split[n]) * Math.pow(256, (3 - n));
+		return longIP;
+	}
+	
+	/**
+	 * Converte IP em long decimal
+	 */
+	public static String longToIP(long longIP) {
+		String ip = "" + (longIP / 256 / 256 / 256) + "." + (longIP / 256 / 256 % 256) + ".";
+	  ip += (longIP / 256 % 256) + "." + (longIP % 256);
+	  return ip;
+	}
+	
+	/**
+	 * Clone de $strip do mIRC Scripting
+	 */
+	public static String mircStrip(String text) {
+	  StringBuilder result = new StringBuilder();
+	  int ignore = 0;
+	  List<Character> strips = Arrays.asList((char)2, (char)3, (char)15, (char)29, (char)30, (char)31);
+	  for (int n = 0; n < text.length(); n++) {
+	  	char c = text.charAt(n);
+	    if (c == (char)3) ignore = ignore == 0 ? 1 : -1;
+	    else if (ignore != 0) {
+	      if (ignore == 1 && c == ',')
+	      	ignore = 2;
+	      else if (!Character.isDigit(c))
+	      	ignore = 0;
+	    }
+	    if (ignore == 0 && !strips.contains(c))
+	    	result.append(c);
+	    else if (ignore == -1)
+	    	ignore = 0;
+	  }
+	  return result.toString();
+	}
+	
+  /**
+   * Codifica/Decodifica uma palavra/codigo baseado em uma palavra chave
+   * 
+   * @param palavra a palavra á ser codificada/descodificada
+   * @param opcao 0 - Codificar, 1 - Descodificar	
+   * @param chave a palavra-chave para codificar/descodificar a palavra	
+   */
+	public static String vigenere(String palavra, int opcao, String chave) {
+	  while (chave.length() < palavra.length())
+	  	chave += chave;
+	  StringBuilder resultado = new StringBuilder();
+	  for(int n = 0, n2 = 0, pos; n < palavra.length(); n++) {
+	  	char c1 = palavra.charAt(n);
+    	int z1 = Character.isUpperCase(c1) ? 65 : 97;
+	    if(c1 != ' ') {
+		  	char c2 = chave.charAt(n2++);
+	    	int z2 = Character.isUpperCase(c2) ? 65 : 97;
+	      pos = opcao == 0 ? (c1 - z1) + (c2 - z2) :
+	      	(c1 - z1) - (c2 - z2);
+	      if (pos > 25)
+	      	pos -= 26;
+	      if (pos < 0)
+	      	pos += 26;
+	      resultado.append((char)(z1 + pos));
+	    }
+	    else
+	    	resultado.append(' ');
+	  }
+	  return resultado.toString();
+	}
+	
+	public static Boolean isPrimo(long n)
+		{ return (n == 2 || n == 3 || n == 5 || n == 7 || (n > 9 && n % 2 > 0 && n % 3 > 0 && n % 5 > 0 && n % 7 > 0)); }
+
+	/**
+	 * Retorna a porcentagem de num
+	 */
+	public static double porcent(double num, double porcent)
+		{ return ((num / 100) * porcent); }
+	
+	/**
+	 * Retorna quantos porcentos de {@code num2} equivale {@code num1}
+	 */
+	public static double getPorcentFrom(double num1,double num2)
+		{ return ((num1 / num2) * 100); }
 	
 	public static Boolean alwaysTrue()
 		{ return true; }
