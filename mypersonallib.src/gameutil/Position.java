@@ -289,7 +289,7 @@ public class Position {
    * @param pts - Quantidade de pontos para desenhar o circulo
    * @param pos - O ponto do circulo desejado. Ex: Se {@code qts} for {@code 10}, será calculado {@code 10} pontos separados igualmente de forma á formar o circulo desejado. Então, {@code pos 2} retorna a coordenada do segundo ponto usado para formar o circulo.
   */
-	public static Position circleDot(double x, double y, double r, int pts, int pos) {
+	public static Position circleDot(double x, double y, double r, int pts, long pos) {
 	  double dis = 2 * Math.PI / pts;
 	  double co = Math.cos(pos * dis);
 	  double si = Math.sin(pos * dis);
@@ -302,16 +302,13 @@ public class Position {
    * @param pts - Quantidade de pontos para desenhar a elipse
    * @param pos - O ponto da elipse desejado. Ex: Se {@code qts} for {@code 10}, será calculado {@code 10} pontos separados igualmente de forma á formar a elipse desejada. Então, {@code pos 2} retorna a coordenada do segundo ponto usado para formar a elipse.
   */
-	public static Position ellipseDot(double x, double y, double rw, double rh, int pts, int pos) {
+	public static Position ellipseDot(double x, double y, double rw, double rh, int pts, long pos) {
 	  double dis = 2 * Math.PI / pts;
 	  double co = Math.cos(pos * dis);
 	  double si = Math.sin(pos * dis);
 	  return new Position(co * rw, si * rh);
 	}
 
-	
-	
-	
 	@Override
 	public int hashCode()
 		{ return Objects.hash(x, y); }
@@ -319,7 +316,7 @@ public class Position {
 	@Override
 	public boolean equals(Object obj) {
 		Position other = (Position) obj;
-		return obj != null && y == other.y && x == other.x;
+		return obj != null && (int)y == (int)other.y && (int)x == (int)other.x;
 	}
 
 	public static Boolean equals(Position position1, Position position2)
