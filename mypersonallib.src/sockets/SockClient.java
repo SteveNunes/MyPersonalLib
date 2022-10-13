@@ -21,7 +21,10 @@ public class SockClient {
 	@SuppressWarnings("unused")
 	private SocketEvents socketEvents;
 
-	public SockClient(Socket socket, String socketName, SocketEvents socketEvents) throws IOException {
+	public SockClient(Socket socket, String socketName, SocketEvents socketEvents) throws IOException
+		{ newSocket(socket, socketName, socketEvents);	}
+	
+	private void newSocket(Socket socket, String socketName, SocketEvents socketEvents) throws IOException {
   	this.socketName = socketName;
 		this.socketEvents = socketEvents;
 		this.socket = socket;
@@ -67,20 +70,26 @@ public class SockClient {
 	public SockClient(Socket socket, SocketEvents socketEvents) throws IOException
 		{ this(socket, null, socketEvents); }
 	
-	public void linkToSockServer(SockServer sockServer)
-		{ linkedToServer = sockServer; }
-	
-	public SockClient(String ip, int port, String socketName, SocketEvents socketEvents) throws IOException {
-		this(new Socket(ip, port), socketName, socketEvents);
-		if (socket.isConnected() && socketEvents.getOnSocketOpen() != null)
-			socketEvents.getOnSocketOpen().accept(this);
-		else if (!socket.isConnected() && socketEvents.getOnSocketOpenError() != null)
-			socketEvents.getOnSocketOpenError().accept(this, new IOException("Unable to connect to the server"));
+	public SockClient(String ip, int port, String socketName, SocketEvents socketEvents) {
+		try {
+			newSocket(new Socket(ip, port), socketName, socketEvents);
+			if (socketEvents.getOnSocketOpen() != null)
+				socketEvents.getOnSocketOpen().accept(this);
+		}
+		catch (IOException e) {
+			if (socketEvents.getOnSocketOpenError() != null)
+				socketEvents.getOnSocketOpenError().accept(this, new IOException("Unable to connect to the server"));
+			else
+				throw new RuntimeException("Unable to connect to the server (IP=" + ip + ", port=" + port + ")");
+		}
 	}
 	
-	public SockClient(String ip, int port, SocketEvents socketEvents) throws IOException
+	public SockClient(String ip, int port, SocketEvents socketEvents)
 		{ this(ip, port, null, socketEvents); }
 	
+	public void linkToSockServer(SockServer sockServer)
+		{ linkedToServer = sockServer; }
+
 	public String getSocketName()
 		{ return socketName; }
 	
