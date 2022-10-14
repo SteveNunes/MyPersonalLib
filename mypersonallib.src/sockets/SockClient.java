@@ -11,7 +11,6 @@ import java.util.List;
 
 public class SockClient {
 	
-	@SuppressWarnings("unused")
 	private List<String> dataToSend;
 	private InputStreamReader imputStreamReader;
 	private PrintStream printStream;
@@ -37,6 +36,7 @@ public class SockClient {
 		new Thread() {
 			@Override
 	    public void run() {
+				
 				BufferedReader reader = new BufferedReader(imputStreamReader);
 				while (true) {
 					try {

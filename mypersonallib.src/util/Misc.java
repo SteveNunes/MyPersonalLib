@@ -1,5 +1,8 @@
 package util;
 
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +17,15 @@ public class Misc {
 	
 	private static Map<String, Map<Long, ?>> uniqueId = new HashMap<>();
 	
+	public static byte[] charArrayToBytes(char[] chars) {
+	  CharBuffer charBuffer = CharBuffer.wrap(chars);
+	  ByteBuffer byteBuffer = Charset.forName("UTF-8").encode(charBuffer);
+	  byte[] bytes = Arrays.copyOfRange(byteBuffer.array(),
+	            byteBuffer.position(), byteBuffer.limit());
+	  Arrays.fill(byteBuffer.array(), (byte) 0);
+	  return bytes;
+	}
+
 	/**
 	 *  Converte long decimal em IP
 	 */
