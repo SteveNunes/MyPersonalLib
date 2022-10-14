@@ -111,11 +111,11 @@ public class Misc {
 		{ return ((num / 100) * porcent); }
 	
 	/**
-	 * Retorna quantos porcentos de {@code num2} equivale {@code num1}
+	 * Retorna a porcentagem de um valor baseado na parte desse valor
 	 */
-	public static double getPorcentFrom(double num1,double num2)
-		{ return ((num1 / num2) * 100); }
-	
+	public static double getPorcentFrom(double sliceValue, double wholeValue)
+		{ return sliceValue / wholeValue * 100; }
+
 	public static Boolean alwaysTrue()
 		{ return true; }
 	
