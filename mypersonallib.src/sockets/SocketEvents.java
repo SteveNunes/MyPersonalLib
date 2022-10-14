@@ -13,7 +13,6 @@ public class SocketEvents {
 	private Consumer<SockClient> onSocketAccept;
 	private BiConsumer<SockClient, Exception> onSocketAcceptError;
 	private BiConsumer<SockClient, String> onSocketRead;
-	private BiConsumer<SockClient, Exception> onSocketReadError;
 	
 	public SocketEvents() {
 		onSocketOpen = null;
@@ -22,7 +21,6 @@ public class SocketEvents {
 		onSocketAccept = null;
 		onSocketAcceptError = null;
 		onSocketRead = null;
-		onSocketReadError = null;
 	}
 	
 	public void setOnSocketListenErrorEvent(BiConsumer<ServerSocket, Exception> consumer)
@@ -46,9 +44,6 @@ public class SocketEvents {
 	public void setOnSocketReadEvent(BiConsumer<SockClient, String> consumer)
 		{ onSocketRead = consumer; }
 
-	public void setOnSocketReadErrorEvent(BiConsumer<SockClient, Exception> consumer)
-		{ onSocketReadError = consumer; }
-
 	public BiConsumer<ServerSocket, Exception> getOnSocketListenError()
 		{ return onSocketListenError; }
 
@@ -70,7 +65,4 @@ public class SocketEvents {
 	public BiConsumer<SockClient, String> getOnSocketRead()	
 		{ return onSocketRead; }
 	
-	public BiConsumer<SockClient, Exception> getOnSocketReadError()	
-		{ return onSocketReadError; }
-
 }

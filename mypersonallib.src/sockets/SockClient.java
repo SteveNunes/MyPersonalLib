@@ -54,12 +54,10 @@ public class SockClient {
 							socketEvents.getOnSocketRead().accept(sockClient, data);
 					}
 					catch (Exception e) {
-						if (socketEvents.getOnSocketReadError() != null)
-							socketEvents.getOnSocketReadError().accept(sockClient, e);
-						else {
-							System.err.println("Error on reading data at socket: " + sockClient);
-							e.printStackTrace();
-						}
+						if (socketEvents.getOnSocketClose() != null)
+							socketEvents.getOnSocketClose().accept(sockClient);
+						else
+							System.err.println("Socket: " + sockClient + " was disconnected from the server");
 						break;
 					}
 				}
