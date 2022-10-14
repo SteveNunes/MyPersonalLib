@@ -1,20 +1,19 @@
 package sockets;
 
-import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class SocketEvents {
 
-	private BiConsumer<ServerSocket, IOException> onSocketListenError;
+	private BiConsumer<ServerSocket, Exception> onSocketListenError;
 	private Consumer<SockClient> onSocketOpen;
-	private BiConsumer<SockClient, IOException> onSocketOpenError;
+	private BiConsumer<SockClient, Exception> onSocketOpenError;
 	private Consumer<SockClient> onSocketClose;
 	private Consumer<SockClient> onSocketAccept;
-	private BiConsumer<SockClient, IOException> onSocketAcceptError;
+	private BiConsumer<SockClient, Exception> onSocketAcceptError;
 	private BiConsumer<SockClient, String> onSocketRead;
-	private BiConsumer<SockClient, IOException> onSocketReadError;
+	private BiConsumer<SockClient, Exception> onSocketReadError;
 	
 	public SocketEvents() {
 		onSocketOpen = null;
@@ -26,13 +25,13 @@ public class SocketEvents {
 		onSocketReadError = null;
 	}
 	
-	public void setOnSocketListenErrorEvent(BiConsumer<ServerSocket, IOException> consumer)
+	public void setOnSocketListenErrorEvent(BiConsumer<ServerSocket, Exception> consumer)
 		{ onSocketListenError = consumer; }
 
 	public void setOnSocketOpenEvent(Consumer<SockClient> consumer)
 		{ onSocketOpen = consumer; }
 	
-	public void setOnSocketOpenErrorEvent(BiConsumer<SockClient, IOException> consumer)
+	public void setOnSocketOpenErrorEvent(BiConsumer<SockClient, Exception> consumer)
 		{ onSocketOpenError = consumer; }
 
 	public void setOnSocketCloseEvent(Consumer<SockClient> consumer)
@@ -41,22 +40,22 @@ public class SocketEvents {
 	public void setOnSocketAcceptEvent(Consumer<SockClient> consumer)
 		{ onSocketAccept = consumer; }
 
-	public void setOnSocketAcceptErrorEvent(BiConsumer<SockClient, IOException> consumer)
+	public void setOnSocketAcceptErrorEvent(BiConsumer<SockClient, Exception> consumer)
 		{ onSocketAcceptError = consumer; }
 
 	public void setOnSocketReadEvent(BiConsumer<SockClient, String> consumer)
 		{ onSocketRead = consumer; }
 
-	public void setOnSocketReadErrorEvent(BiConsumer<SockClient, IOException> consumer)
+	public void setOnSocketReadErrorEvent(BiConsumer<SockClient, Exception> consumer)
 		{ onSocketReadError = consumer; }
 
-	public BiConsumer<ServerSocket, IOException> getOnSocketListenError()
+	public BiConsumer<ServerSocket, Exception> getOnSocketListenError()
 		{ return onSocketListenError; }
 
 	public Consumer<SockClient> getOnSocketOpen()
 		{ return onSocketOpen; }
 	
-	public BiConsumer<SockClient, IOException> getOnSocketOpenError()
+	public BiConsumer<SockClient, Exception> getOnSocketOpenError()
 		{ return onSocketOpenError; }
 
 	public Consumer<SockClient> getOnSocketClose()
@@ -65,13 +64,13 @@ public class SocketEvents {
 	public Consumer<SockClient> getOnSocketAccept()
 		{ return onSocketAccept; }
 	
-	public BiConsumer<SockClient, IOException> getOnSocketAcceptError()
+	public BiConsumer<SockClient, Exception> getOnSocketAcceptError()
 		{ return onSocketAcceptError; }
 
 	public BiConsumer<SockClient, String> getOnSocketRead()	
 		{ return onSocketRead; }
 	
-	public BiConsumer<SockClient, IOException> getOnSocketReadError()	
+	public BiConsumer<SockClient, Exception> getOnSocketReadError()	
 		{ return onSocketReadError; }
 
 }

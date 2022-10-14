@@ -52,7 +52,7 @@ public class SockServer {
 	    public void run() {
 				try
 					{ serverSocket = new ServerSocket(serverPort); }
-				catch (IOException e) {
+				catch (Exception e) {
 					if (socketEvents.getOnSocketListenError() != null)
 						socketEvents.getOnSocketListenError().accept(serverSocket, e);
 					else {
@@ -77,7 +77,7 @@ public class SockServer {
 						if (socketEvents.getOnSocketAccept() != null)
 							socketEvents.getOnSocketAccept().accept(sockClient);
 					}
-					catch (IOException e) {
+					catch (Exception e) {
 						if (socketEvents.getOnSocketAcceptError() != null)
 							socketEvents.getOnSocketAcceptError().accept(sockClient, e);
 						else {

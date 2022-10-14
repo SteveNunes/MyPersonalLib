@@ -53,7 +53,7 @@ public class SockClient {
 						else if (socketEvents.getOnSocketRead() != null)
 							socketEvents.getOnSocketRead().accept(sockClient, data);
 					}
-					catch (IOException e) {
+					catch (Exception e) {
 						if (socketEvents.getOnSocketReadError() != null)
 							socketEvents.getOnSocketReadError().accept(sockClient, e);
 						else {
