@@ -89,6 +89,12 @@ public class SockServer {
 				isListening = false;
 	    }
 		}.start();
+		if (serverSocket != null && !serverSocket.isClosed()) {
+			try
+				{ serverSocket.close(); }
+			catch (IOException e)
+				{ e.printStackTrace(); }
+		}
 	}
 
   public void stopListening()

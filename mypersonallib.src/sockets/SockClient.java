@@ -63,6 +63,8 @@ public class SockClient {
 				}
 			}
 		}.start();
+		if (sockClient.getSocket() != null && !sockClient.getSocket().isClosed())
+			sockClient.getSocket().close();
 	}
 
 	public SockClient(Socket socket, SocketEvents socketEvents) throws IOException
