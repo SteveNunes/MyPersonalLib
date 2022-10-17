@@ -1,6 +1,10 @@
 package sockets;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.net.ServerSocket;
 import java.net.Socket;
 
 public class SimpleFileSender {
@@ -25,43 +29,68 @@ public class SimpleFileSender {
 	public Boolean hasError()
 		{ return error; }
 	
-  public SimpleFileSender(String ip, int port, int sendBufferSize, String filePath) {
+	public SimpleFileSender() {
+    finished = false;
+    error = false;
+  	sentBytes = 0;
+	}
+	
+	// Construtor onde o fornecedor aguarda a conexão de quem vai receber o arquivo
+	public SimpleFileSender(int listenPort, String filePath, int bufferSize) {
+		this();
+		new Thread() {
+			@Override
+			public void run() {
+		  	try (ServerSocket serverSocket = new ServerSocket(listenPort))
+		  		{ initTransfer(serverSocket.accept(), filePath, bufferSize); }
+		  	catch (Exception e)
+		  		{ e.printStackTrace(); }
+			}
+		}.start();
+	}	
+	
+	// Construtor onde o fornecedor se conecta á quem vai receber o arquivo
+	public SimpleFileSender(String ip, int port, String filePath, int bufferSize) {
+		this();
+		new Thread() {
+			@Override
+			public void run() {
+		  	try
+					{ initTransfer(new Socket(ip, port), filePath, bufferSize); }
+				catch (Exception e)
+					{ e.printStackTrace(); }
+			}
+		}.start();
+	}
+
+	private void initTransfer(Socket socket, String filePath, int bufferSize) {
     file = new File(filePath);
     if (!file.exists()) {
     	error = true;
     	throw new RuntimeException("File not exists - \"" + filePath + "\"");
     }
-    finished = false;
-    error = false;
-  	sentBytes = 0;
-    
-		new Thread() {
-			@Override
-	    public void run() {
-			  try (Socket socket = new Socket(ip, port)) {
-			  	DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-			    DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-			    FileInputStream fileInputStream = new FileInputStream(file);
-			    int bytes = 0;
-			    byte[] buffer = new byte[sendBufferSize];
-			    dataOutputStream.writeBytes(sendBufferSize + " " + file.length() + " " + file.getName() + "\n");  
-			    while ((bytes = fileInputStream.read(buffer)) != -1) {
-			    	sentBytes += bytes;
-			    	dataOutputStream.write(buffer, 0, bytes);
-			    	dataOutputStream.flush();
-			    }
-			    fileInputStream.close();
-			    dataOutputStream.close();
-			    dataInputStream.close();
-			  }
-		    catch (Exception e) {
-			  	error = true;
-			  	e.printStackTrace();
-		    }
-		    finished = true;
-		    error = error || sentBytes < file.length();
-			}
-  	}.start();
+	  try {
+	  	DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+	    DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+	    FileInputStream fileInputStream = new FileInputStream(file);
+	    int bytes = 0;
+	    byte[] buffer = new byte[bufferSize];
+	    dataOutputStream.writeBytes(bufferSize + " " + file.length() + " " + file.getName() + "\n");  
+	    while ((bytes = fileInputStream.read(buffer)) != -1) {
+	    	sentBytes += bytes;
+	    	dataOutputStream.write(buffer, 0, bytes);
+	    	dataOutputStream.flush();
+	    }
+	    fileInputStream.close();
+	    dataOutputStream.close();
+	    dataInputStream.close();
+	  }
+    catch (Exception e) {
+	  	error = true;
+	  	e.printStackTrace();
+    }
+    finished = true;
+    error = error || sentBytes < file.length();
   }
 
 }
