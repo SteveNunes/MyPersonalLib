@@ -92,4 +92,9 @@ public class SimpleFileReceiver {
     error = error || receivedBytes < fileSize;
   }
 
+	public void waitUntilTransferEnds() {
+		while (!finished)
+			Misc.sleep(50);
+	}
+
 }

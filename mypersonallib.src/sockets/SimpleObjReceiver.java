@@ -5,6 +5,8 @@ import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import util.Misc;
+
 public class SimpleObjReceiver {
 
 	private Object object;
@@ -66,5 +68,10 @@ public class SimpleObjReceiver {
     }
     finished = true;
   }
+	
+	public void waitUntilTransferEnds() {
+		while (!finished)
+			Misc.sleep(50);
+	}
 
 }

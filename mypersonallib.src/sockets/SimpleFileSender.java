@@ -7,6 +7,8 @@ import java.io.FileInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import util.Misc;
+
 public class SimpleFileSender {
 	
   private long sentBytes;
@@ -92,5 +94,10 @@ public class SimpleFileSender {
     finished = true;
     error = error || sentBytes < file.length();
   }
+
+	public void waitUntilTransferEnds() {
+		while (!finished)
+			Misc.sleep(50);
+	}
 
 }
