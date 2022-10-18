@@ -2,10 +2,11 @@ package sockets;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import util.Misc;
 
 public class SockServer {
 	
@@ -15,7 +16,6 @@ public class SockServer {
   private Boolean isClosed;
   private Boolean isListening;
   private String socketName;
-  @SuppressWarnings("unused")
 	private SocketEvents socketEvents;
   
   public SockServer(int listeningPort, String socketName, SocketEvents socketEvents) throws IOException {
@@ -36,8 +36,8 @@ public class SockServer {
 	
 	void wasDisconnected(SockClient client) {
 		if (clients.contains(client)) {
-			if (socketEvents.getOnSocketClose() != null)
-				socketEvents.getOnSocketClose().accept(client);
+			if (socketEvents.getOnSocketDisconnect() != null)
+				socketEvents.getOnSocketDisconnect().accept(client);
 			clients.remove(client);
 		}
 	}
@@ -55,10 +55,8 @@ public class SockServer {
 				catch (Exception e) {
 					if (socketEvents.getOnSocketListenError() != null)
 						socketEvents.getOnSocketListenError().accept(serverSocket, e);
-					else {
-						System.err.println("Unable to create listener socket at port " + serverPort);
+					else
 						e.printStackTrace();
-					}
 					return;
 				  /*
 					 * server.bind(new InetSocketAddress("192.168.0.1", 0));
@@ -68,23 +66,14 @@ public class SockServer {
 				  */
 				}
 				while(!isClosed && isListening) {
-					SockClient sockClient = null;
 					try {
-						Socket client = serverSocket.accept();
-						sockClient = new SockClient(client, socketEvents);
+						SockClient sockClient = new SockClient(serverSocket.accept(), socketEvents);
 						sockClient.linkToSockServer(thisServer);
 						clients.add(sockClient);
 						if (socketEvents.getOnSocketAccept() != null)
 							socketEvents.getOnSocketAccept().accept(sockClient);
 					}
-					catch (Exception e) {
-						if (socketEvents.getOnSocketAcceptError() != null)
-							socketEvents.getOnSocketAcceptError().accept(sockClient, e);
-						else {
-							System.err.println("Unable to accept socket: " + sockClient);
-							e.printStackTrace();
-						}
-					}
+					catch (Exception e) {}
 				}
 				isListening = false;
 	    }
@@ -104,9 +93,7 @@ public class SockServer {
   	if (!isClosed) {
   		isClosed = true;
   		while (isListening) // Aguarda a thread de listening parar
-				try
-  				{ Thread.sleep(100); }
-				catch (Exception e) {}
+  			Misc.sleep(100);
   		for (SockClient sc : clients)
   			sc.close();
   		clients.clear();

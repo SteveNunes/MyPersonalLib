@@ -1,5 +1,7 @@
 package gameutil;
 
+import util.Misc;
+
 public class FPSHandler {
 
 	private int gameCyclesPerSecond;
@@ -46,9 +48,7 @@ public class FPSHandler {
 	 */
 	public void fpsCounter() {
 		if (gameCyclesPerSecond > 0) {
-				try
-					{ Thread.sleep(nextCicleAt - System.currentTimeMillis()); }
-				catch (Exception e) {}
+			Misc.sleep(nextCicleAt - System.currentTimeMillis());
 			nextCicleAt += 1000 / gameCyclesPerSecond;
 		}
 		frameSkip++;

@@ -17,6 +17,13 @@ public class Misc {
 	
 	private static Map<String, Map<Long, ?>> uniqueId = new HashMap<>();
 	
+	public static void sleep(long millis) {
+		try
+			{ Thread.sleep(millis); }
+		catch (Exception e)
+			{ e.printStackTrace(); }
+	}
+	
 	public static byte[] charArrayToBytes(char[] chars) {
 	  CharBuffer charBuffer = CharBuffer.wrap(chars);
 	  ByteBuffer byteBuffer = Charset.forName("UTF-8").encode(charBuffer);

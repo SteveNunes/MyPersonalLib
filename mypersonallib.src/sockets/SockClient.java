@@ -12,64 +12,18 @@ import java.util.List;
 public class SockClient {
 	
 	private List<String> dataToSend;
-	private InputStreamReader imputStreamReader;
 	private PrintStream printStream;
 	private Socket socket;
 	private SockServer linkedToServer;
 	private String socketName;
-	@SuppressWarnings("unused")
 	private SocketEvents socketEvents;
 
 	public SockClient(Socket socket, String socketName, SocketEvents socketEvents) throws IOException
-		{ newSocket(socket, socketName, socketEvents);	}
+		{ newSocket(socket, socketName, socketEvents); }
 	
-	private void newSocket(Socket socket, String socketName, SocketEvents socketEvents) throws IOException {
-  	this.socketName = socketName;
-		this.socketEvents = socketEvents;
-		this.socket = socket;
-		dataToSend = new ArrayList<>();
-		linkedToServer = null;
-		imputStreamReader = new InputStreamReader(socket.getInputStream());
-		printStream = new PrintStream(socket.getOutputStream());
-		SockClient sockClient = this;
-		
-		new Thread() {
-			@Override
-	    public void run() {
-				
-				BufferedReader reader = new BufferedReader(imputStreamReader);
-				while (true) {
-					try {
-						String data = reader.readLine();
-						if (data == null) {
-							if (linkedToServer != null)
-								linkedToServer.wasDisconnected(sockClient);
-							else if (socketEvents.getOnSocketClose() != null)
-								socketEvents.getOnSocketClose().accept(sockClient);
-							else
-								System.err.println("Socket: " + sockClient + " was disconnected from the server");
-							break;
-						}
-						else if (socketEvents.getOnSocketRead() != null)
-							socketEvents.getOnSocketRead().accept(sockClient, data);
-					}
-					catch (Exception e) {
-						if (socketEvents.getOnSocketClose() != null)
-							socketEvents.getOnSocketClose().accept(sockClient);
-						else
-							System.err.println("Socket: " + sockClient + " was disconnected from the server");
-						break;
-					}
-				}
-			}
-		}.start();
-		if (sockClient.getSocket() != null && !sockClient.getSocket().isClosed())
-			sockClient.getSocket().close();
-	}
-
 	public SockClient(Socket socket, SocketEvents socketEvents) throws IOException
 		{ this(socket, null, socketEvents); }
-	
+
 	public SockClient(String ip, int port, String socketName, SocketEvents socketEvents) {
 		try {
 			newSocket(new Socket(ip, port), socketName, socketEvents);
@@ -78,15 +32,53 @@ public class SockClient {
 		}
 		catch (IOException e) {
 			if (socketEvents.getOnSocketOpenError() != null)
-				socketEvents.getOnSocketOpenError().accept(this, new IOException("Unable to connect to the server"));
+				socketEvents.getOnSocketOpenError().accept(this, e);
 			else
-				throw new RuntimeException("Unable to connect to the server (IP=" + ip + ", port=" + port + ")");
+				e.printStackTrace();
 		}
 	}
 	
 	public SockClient(String ip, int port, SocketEvents socketEvents)
 		{ this(ip, port, null, socketEvents); }
 	
+	private void newSocket(Socket socket, String socketName, SocketEvents socketEvents) throws IOException {
+  	this.socketName = socketName;
+		this.socketEvents = socketEvents;
+		this.socket = socket;
+		dataToSend = new ArrayList<>();
+		linkedToServer = null;
+		BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+		printStream = new PrintStream(socket.getOutputStream());
+		SockClient sockClient = this;
+		new Thread() {
+			@Override
+	    public void run() {
+				while (true) {
+					try {
+						String data = reader.readLine();
+						if (data == null) {
+							disconnected(sockClient);
+							break;
+						}
+						else if (socketEvents.getOnSocketRead() != null)
+							socketEvents.getOnSocketRead().accept(sockClient, data);
+					}
+					catch (Exception e) {
+						disconnected(sockClient);
+						break;
+					}
+				}
+			}
+		}.start();
+	}
+
+	private void disconnected(SockClient sockClient) {
+		if (linkedToServer != null)
+			linkedToServer.wasDisconnected(sockClient);
+		else if (socketEvents.getOnSocketDisconnect() != null)
+			socketEvents.getOnSocketDisconnect().accept(sockClient);
+	}
+
 	public void linkToSockServer(SockServer sockServer)
 		{ linkedToServer = sockServer; }
 
@@ -110,9 +102,6 @@ public class SockClient {
 
 	public Socket getSocket()
 		{ return socket; }
-	
-	public PrintStream  getPrintStream()
-		{ return printStream; }
 	
 	public void appendDataToSend(String data) 
 		{ dataToSend.add(data); }
