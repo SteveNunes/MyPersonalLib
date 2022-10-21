@@ -27,11 +27,11 @@ public class SockClient {
 	public SockClient(String ip, int port, String socketName, SocketEvents socketEvents) {
 		try {
 			newSocket(new Socket(ip, port), socketName, socketEvents);
-			if (socketEvents.getOnSocketOpen() != null)
+			if (socketEvents != null && socketEvents.getOnSocketOpen() != null)
 				socketEvents.getOnSocketOpen().accept(this);
 		}
 		catch (IOException e) {
-			if (socketEvents.getOnSocketOpenError() != null)
+			if (socketEvents != null && socketEvents.getOnSocketOpenError() != null)
 				socketEvents.getOnSocketOpenError().accept(this, e);
 			else
 				e.printStackTrace();
@@ -57,14 +57,14 @@ public class SockClient {
 					try {
 						String data = reader.readLine();
 						if (data == null) {
-							disconnected(sockClient);
+							disconnected(sockClient, new RuntimeException(sockClient + " - connection close by the otherside"));
 							break;
 						}
-						else if (socketEvents.getOnSocketRead() != null)
+						if (socketEvents != null && socketEvents.getOnSocketRead() != null)
 							socketEvents.getOnSocketRead().accept(sockClient, data);
 					}
 					catch (Exception e) {
-						disconnected(sockClient);
+						disconnected(sockClient, e);
 						break;
 					}
 				}
@@ -72,11 +72,11 @@ public class SockClient {
 		}.start();
 	}
 
-	private void disconnected(SockClient sockClient) {
+	private void disconnected(SockClient sockClient, Exception e) {
 		if (linkedToServer != null)
-			linkedToServer.wasDisconnected(sockClient);
-		else if (socketEvents.getOnSocketDisconnect() != null)
-			socketEvents.getOnSocketDisconnect().accept(sockClient);
+			linkedToServer.wasDisconnected(sockClient, e);
+		else if (socketEvents != null && socketEvents.getOnSocketDisconnect() != null)
+			socketEvents.getOnSocketDisconnect().accept(sockClient, e);
 	}
 
 	public void linkToSockServer(SockServer sockServer)

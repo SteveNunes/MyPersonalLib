@@ -20,8 +20,7 @@ public class Misc {
 	public static void sleep(long millis) {
 		try
 			{ Thread.sleep(millis); }
-		catch (Exception e)
-			{ e.printStackTrace(); }
+		catch (Exception e) {}
 	}
 	
 	public static byte[] charArrayToBytes(char[] chars) {

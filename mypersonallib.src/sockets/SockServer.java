@@ -34,10 +34,10 @@ public class SockServer {
 	public void setSocketName(String socketName)
 		{ this.socketName = socketName; }
 	
-	void wasDisconnected(SockClient client) {
+	void wasDisconnected(SockClient client, Exception e) {
 		if (clients.contains(client)) {
-			if (socketEvents.getOnSocketDisconnect() != null)
-				socketEvents.getOnSocketDisconnect().accept(client);
+			if (socketEvents != null && socketEvents.getOnSocketDisconnect() != null)
+				socketEvents.getOnSocketDisconnect().accept(client, e);
 			clients.remove(client);
 		}
 	}
@@ -53,7 +53,7 @@ public class SockServer {
 				try
 					{ serverSocket = new ServerSocket(serverPort); }
 				catch (Exception e) {
-					if (socketEvents.getOnSocketListenError() != null)
+					if (socketEvents != null && socketEvents.getOnSocketListenError() != null)
 						socketEvents.getOnSocketListenError().accept(serverSocket, e);
 					else
 						e.printStackTrace();
@@ -70,7 +70,7 @@ public class SockServer {
 						SockClient sockClient = new SockClient(serverSocket.accept(), socketEvents);
 						sockClient.linkToSockServer(thisServer);
 						clients.add(sockClient);
-						if (socketEvents.getOnSocketAccept() != null)
+						if (socketEvents != null && socketEvents.getOnSocketAccept() != null)
 							socketEvents.getOnSocketAccept().accept(sockClient);
 					}
 					catch (Exception e) {}

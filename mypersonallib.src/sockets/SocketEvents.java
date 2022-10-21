@@ -9,7 +9,7 @@ public class SocketEvents {
 	private BiConsumer<ServerSocket, Exception> onSocketListenError;
 	private Consumer<SockClient> onSocketOpen;
 	private BiConsumer<SockClient, Exception> onSocketOpenError;
-	private Consumer<SockClient> onSocketDisconnect;
+	private BiConsumer<SockClient, Exception> onSocketDisconnect;
 	private Consumer<SockClient> onSocketAccept;
 	private BiConsumer<SockClient, String> onSocketRead;
 	
@@ -30,7 +30,7 @@ public class SocketEvents {
 	public void setOnSocketOpenErrorEvent(BiConsumer<SockClient, Exception> consumer)
 		{ onSocketOpenError = consumer; }
 
-	public void setOnSocketDisconnectEvent(Consumer<SockClient> consumer)
+	public void setOnSocketDisconnectEvent(BiConsumer<SockClient, Exception> consumer)
 		{ onSocketDisconnect = consumer; }
 
 	public void setOnSocketAcceptEvent(Consumer<SockClient> consumer)
@@ -48,7 +48,7 @@ public class SocketEvents {
 	public BiConsumer<SockClient, Exception> getOnSocketOpenError()
 		{ return onSocketOpenError; }
 
-	public Consumer<SockClient> getOnSocketDisconnect()
+	public BiConsumer<SockClient, Exception> getOnSocketDisconnect()
 		{ return onSocketDisconnect; }
 	
 	public Consumer<SockClient> getOnSocketAccept()
