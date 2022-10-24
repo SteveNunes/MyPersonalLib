@@ -16,6 +16,7 @@ public class SockClient {
 	private Socket socket;
 	private SockServer linkedToServer;
 	private String socketName;
+	private String mark;
 	private SocketEvents socketEvents;
 
 	public SockClient(Socket socket, String socketName, SocketEvents socketEvents) throws IOException
@@ -78,6 +79,12 @@ public class SockClient {
 		else if (socketEvents != null && socketEvents.getOnSocketDisconnect() != null)
 			socketEvents.getOnSocketDisconnect().accept(sockClient, e);
 	}
+
+  public String getMark()
+		{ return mark; }
+	
+	public void setMark(String mark)
+		{ this.mark = mark; }
 
 	public void linkToSockServer(SockServer sockServer)
 		{ linkedToServer = sockServer; }

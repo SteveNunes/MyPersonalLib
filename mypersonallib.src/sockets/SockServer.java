@@ -10,6 +10,7 @@ import util.Misc;
 
 public class SockServer {
 	
+	private String mark;
 	private List<SockClient> clients = new ArrayList<>();
 	private ServerSocket serverSocket;
 	private int serverPort;
@@ -29,6 +30,12 @@ public class SockServer {
 
   public SockServer(int listeningPort, SocketEvents serverSocketEvents, SocketEvents newClientSocketEvents) throws IOException
   	{ this(listeningPort, null, serverSocketEvents, newClientSocketEvents); }
+  
+  public String getMark()
+  	{ return mark; }
+  
+  public void setMark(String mark)
+  	{ this.mark = mark; }
   
 	public String getSocketName()
 		{ return socketName; }
