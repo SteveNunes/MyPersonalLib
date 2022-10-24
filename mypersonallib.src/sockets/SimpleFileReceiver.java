@@ -2,6 +2,7 @@ package sockets;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -71,7 +72,9 @@ public class SimpleFileReceiver {
   		String[] split = dataInputStream.readLine().split(" ");
       int bufferSize = Integer.parseInt(split[0]);
       fileSize = Long.parseLong(split[1]);
-      FileOutputStream fileOutputStream = new FileOutputStream(receiveFileFolder + Misc.arrayToString(split, 2));
+      String filePath = receiveFileFolder + Misc.arrayToString(split, 2);
+      new File(new File(filePath).getParent() + "\\").mkdirs();
+      FileOutputStream fileOutputStream = new FileOutputStream(filePath);
       byte[] buffer = new byte[bufferSize];
       
       while (receivedBytes < fileSize &&
