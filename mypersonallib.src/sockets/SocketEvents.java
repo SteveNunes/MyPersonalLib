@@ -19,6 +19,7 @@ public class SocketEvents {
 		onSocketDisconnect = null;
 		onSocketAccept = null;
 		onSocketRead = null;
+		onSocketListenError = null;
 	}
 	
 	public void setOnSocketListenErrorEvent(BiConsumer<ServerSocket, Exception> consumer)

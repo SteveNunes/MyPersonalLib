@@ -16,17 +16,19 @@ public class SockServer {
   private Boolean isClosed;
   private Boolean isListening;
   private String socketName;
-	private SocketEvents socketEvents;
+	private SocketEvents serverSocketEvents;
+	private SocketEvents newClientSocketEvents;
   
-  public SockServer(int listeningPort, String socketName, SocketEvents socketEvents) throws IOException {
+  public SockServer(int listeningPort, String socketName, SocketEvents serverSocketEvents, SocketEvents newClientSocketEvents) throws IOException {
   	this.socketName = socketName;
-		this.socketEvents = socketEvents;
+		this.serverSocketEvents = serverSocketEvents;
+		this.newClientSocketEvents = newClientSocketEvents;
 		serverPort = listeningPort;
 		startListening();
 	}
 
-  public SockServer(int listeningPort, SocketEvents socketEvents) throws IOException
-  	{ this(listeningPort, null, socketEvents); }
+  public SockServer(int listeningPort, SocketEvents serverSocketEvents, SocketEvents newClientSocketEvents) throws IOException
+  	{ this(listeningPort, null, serverSocketEvents, newClientSocketEvents); }
   
 	public String getSocketName()
 		{ return socketName; }
@@ -36,8 +38,8 @@ public class SockServer {
 	
 	void wasDisconnected(SockClient client, Exception e) {
 		if (clients.contains(client)) {
-			if (socketEvents != null && socketEvents.getOnSocketDisconnect() != null)
-				socketEvents.getOnSocketDisconnect().accept(client, e);
+			if (serverSocketEvents != null && serverSocketEvents.getOnSocketDisconnect() != null)
+				serverSocketEvents.getOnSocketDisconnect().accept(client, e);
 			clients.remove(client);
 		}
 	}
@@ -53,8 +55,8 @@ public class SockServer {
 				try
 					{ serverSocket = new ServerSocket(serverPort); }
 				catch (Exception e) {
-					if (socketEvents != null && socketEvents.getOnSocketListenError() != null)
-						socketEvents.getOnSocketListenError().accept(serverSocket, e);
+					if (serverSocketEvents != null && serverSocketEvents.getOnSocketListenError() != null)
+						serverSocketEvents.getOnSocketListenError().accept(serverSocket, e);
 					else
 						e.printStackTrace();
 					return;
@@ -67,11 +69,11 @@ public class SockServer {
 				}
 				while(!isClosed && isListening) {
 					try {
-						SockClient sockClient = new SockClient(serverSocket.accept(), socketEvents);
+						SockClient sockClient = new SockClient(serverSocket.accept(), newClientSocketEvents);
 						sockClient.linkToSockServer(thisServer);
 						clients.add(sockClient);
-						if (socketEvents != null && socketEvents.getOnSocketAccept() != null)
-							socketEvents.getOnSocketAccept().accept(sockClient);
+						if (serverSocketEvents != null && serverSocketEvents.getOnSocketAccept() != null)
+							serverSocketEvents.getOnSocketAccept().accept(sockClient);
 					}
 					catch (Exception e) {}
 				}
@@ -92,6 +94,7 @@ public class SockServer {
 	public void closeServer() throws IOException {
   	if (!isClosed) {
   		isClosed = true;
+  		serverSocket.close();
   		while (isListening) // Aguarda a thread de listening parar
   			Misc.sleep(100);
   		for (SockClient sc : clients)
