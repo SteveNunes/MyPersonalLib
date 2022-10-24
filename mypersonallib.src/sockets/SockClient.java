@@ -46,6 +46,7 @@ public class SockClient {
   	this.socketName = socketName;
 		this.socketEvents = socketEvents;
 		this.socket = socket;
+		mark = null;
 		dataToSend = new ArrayList<>();
 		linkedToServer = null;
 		BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));

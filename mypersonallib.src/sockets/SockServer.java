@@ -24,6 +24,7 @@ public class SockServer {
   	this.socketName = socketName;
 		this.serverSocketEvents = serverSocketEvents;
 		this.newClientSocketEvents = newClientSocketEvents;
+		mark = null;
 		serverPort = listeningPort;
 		startListening();
 	}
@@ -110,6 +111,15 @@ public class SockServer {
   	}
   }
 	  
+  public void closeClient(SockClient sock) {
+  	if (clients.contains(sock)) {
+  		try
+  			{ sock.getSocket().close(); }
+  		catch (Exception e) {}
+  		clients.remove(sock);
+  	}
+  }
+  
   public ServerSocket getServerSocket()
   	{ return serverSocket; }
   
@@ -136,7 +146,7 @@ public class SockServer {
 	  	for (SockClient sock : clients)
 	  		sendDataTo(sock, data);
   }
-
+  
 	@Override
 	public String toString()
 		{ return "[SockServer name=" + socketName + "]"; }
