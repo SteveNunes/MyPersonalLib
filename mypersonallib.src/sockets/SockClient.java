@@ -52,6 +52,7 @@ public class SockClient {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		printStream = new PrintStream(socket.getOutputStream());
 		SockClient sockClient = this;
+
 		new Thread() {
 			@Override
 	    public void run() {
