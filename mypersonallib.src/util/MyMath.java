@@ -4,10 +4,18 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MyMath {
 	
 	public static String shortNumber(BigInteger num, int afterComma, String[] abreviations) {
+		if (num.signum() == 0)
+			return "0";
+		Boolean isNegative = num.signum() == -1; 
+		if (isNegative)
+			num = new BigInteger(num.toString().substring(1));
 		int c = 0;
 		BigInteger div = new BigInteger("1000");
 		BigInteger div2 = new BigInteger("0");
@@ -17,26 +25,35 @@ public class MyMath {
 			c++;
 		}
 		if (div2.equals(new BigInteger("0")))
-			return num.toString();
+			return (isNegative ? "-" : "") + num.toString();
+		List<Character> lets = new ArrayList<>(Arrays.asList('a', (char)('a' - 1)));
 		String let;
 		if (c < abreviations.length)
 			let = abreviations[c];
 		else {
+			let = "";
 			int n = abreviations.length;
-			char c1 = 'a', c2 = 'a' - 1;
 			while (n++ <= c) {
-				if (++c2 == 'z') {
-					c2 = 'a';
-					c1++;
+				int p = lets.size() - 1;
+				lets.set(p, (char)(lets.get(p) + 1));
+				while (p >= 0 && lets.get(p) > 'z') {
+					lets.set(p, 'a');
+					if (p == 0)
+						lets.add(0, 'a');
+					else {
+						p--;
+						lets.set(p, (char)(lets.get(p) + 1));
+					}
 				}
 			}
-			let = "" + c1 + c2;
+			for (Character ch : lets)
+				let += ch;
 		}
 		String f = "#,###";
 		while (--afterComma >= 0)
 			f += f.length() == 5 ? ".0" : "0";
 		DecimalFormat df = new DecimalFormat(f);
-		return df.format(new BigDecimal(num).divide(new BigDecimal(div2))) + let;
+		return (isNegative ? "-" : "") + df.format(new BigDecimal(num).divide(new BigDecimal(div2))) + let;
 	}
 	
 	public static String shortNumber(BigInteger num, int afterComma)

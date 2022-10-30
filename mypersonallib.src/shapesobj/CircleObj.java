@@ -1,7 +1,6 @@
 package shapesobj;
 
 import gameutil.Position;
-import util.MyMath;
 
 public class CircleObj extends Position {
 	
