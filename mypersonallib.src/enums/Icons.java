@@ -9,6 +9,7 @@ public enum Icons {
 	ICON_BLANK(""),
 	ICON_CALENDAR("/icons/calendar.png"),
 	ICON_COPY("/icons/copy.png"),
+	ICON_CLIPBOARD("/icons/clipboard.png"),
 	ICON_DELETE("/icons/delete.png"),
 	ICON_EDIT("/icons/edit.png"),
 	ICON_ERASER("/icons/eraser.png"),

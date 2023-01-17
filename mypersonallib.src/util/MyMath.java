@@ -10,6 +10,10 @@ import java.util.List;
 
 public class MyMath {
 	
+	//Clone da função map() do código do arduino
+	public static long mapValue(long value, long inMin, long inMax, long outMin, long outMax)
+  	{ return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin; };
+
 	public static String shortNumber(BigInteger num, int afterComma, String[] abreviations) {
 		if (num.signum() == 0)
 			return "0";

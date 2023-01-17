@@ -12,15 +12,21 @@ public class Cronometro {
 	private Date dataDaPausa;
 	private SimpleDateFormat sdf;
 
-	public Cronometro(String formato) {
+	public Cronometro(String formato, Date dataInicial, Date dataDaPausa, Boolean pausado) {
 		sdf = new SimpleDateFormat(formato);
-		pausado = true;
-		dataInicial = new Date();
-		dataDaPausa = new Date();
+		this.pausado = pausado;
+		this.dataInicial = dataInicial == null ? new Date() : new Date(dataInicial.getTime());
+		this.dataDaPausa = dataDaPausa == null ? new Date() : new Date(dataDaPausa.getTime());
 	}
+
+	public Cronometro(String formato, Date dataInicial)
+		{ this(formato, dataInicial, null, null); }
 	
+	public Cronometro(String formato)
+		{ this(formato, null, null, true); }
+
 	public Cronometro()
-		{ this("HH:mm:ss.SSS"); }
+		{ this("HH:mm:ss.SSS", null, null, true); }
 	
 	public long getDuracao() {
 		long duration = System.currentTimeMillis() - dataInicial.getTime();
@@ -41,14 +47,20 @@ public class Cronometro {
 		{ return dataInicial; }
 	
 	public void setDataInicial(Date data)
-		{ dataInicial = data; }
+		{ dataInicial.setTime(data.getTime()); }
+
+	public void setDataInicial(long millis)
+		{ setDataInicial(new Date(millis)); }
 
 	public Date getDataDePausa()
 		{ return dataDaPausa; }
 	
 	public void setDataDePausa(Date data)
-		{ this.dataDaPausa = data; }
+		{ dataDaPausa.setTime(data.getTime()); }
 	
+	public void setDataDePausa(long millis)
+		{ setDataDePausa(new Date(millis)); }
+
 	public Boolean isResetado()
 		{ return pausado && dataDaPausa.getTime() == dataInicial.getTime(); }
 
