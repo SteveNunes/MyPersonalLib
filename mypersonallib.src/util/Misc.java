@@ -90,7 +90,7 @@ public class Misc {
 	  for(int n = 0, n2 = 0, pos; n < palavra.length(); n++) {
 	  	char c1 = palavra.charAt(n);
     	int z1 = Character.isUpperCase(c1) ? 65 : 97;
-	    if(c1 != ' ') {
+	    if (c1 != ' ') {
 		  	char c2 = chave.charAt(n2++);
 	    	int z2 = Character.isUpperCase(c2) ? 65 : 97;
 	      pos = opcao == 0 ? (c1 - z1) + (c2 - z2) :

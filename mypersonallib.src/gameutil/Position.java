@@ -308,6 +308,8 @@ public class Position {
 	  double si = Math.sin(pos * dis);
 	  return new Position(co * rw, si * rh);
 	}
+	
+	
 
 	@Override
 	public int hashCode()

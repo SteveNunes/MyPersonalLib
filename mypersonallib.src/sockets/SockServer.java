@@ -75,7 +75,7 @@ public class SockServer {
 					 * Só deve ser usado quando necessário (ainda não sei o caso)
 				  */
 				}
-				while(!isClosed && isListening) {
+				while (!isClosed && isListening) {
 					try {
 						SockClient sockClient = new SockClient(serverSocket.accept(), newClientSocketEvents);
 						sockClient.linkToSockServer(thisServer);
