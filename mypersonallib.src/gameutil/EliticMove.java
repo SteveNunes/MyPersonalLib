@@ -34,10 +34,10 @@ public class EliticMove {
 	 * Sobrecarga do construtor que não pede o parâmetro {@code linkedPosition}. 
 	 */
 	public EliticMove(Position centerPosition, DirectionOrientation orientation, double radiusW, double radiusH, double speed)
-		{ this(new Position(), centerPosition, orientation, radiusW, radiusH, speed); }
+		{ this(new Position(centerPosition.getX(), centerPosition.getY() - radiusH), centerPosition, orientation, radiusW, radiusH, speed); }
 
 	public void move() {
-		angle += speed;
+		angle += orientation == DirectionOrientation.CLOCKWISE ? speed : -speed;
 		currentPosition.setX(centerPosition.getX() + radiusW * Math.cos(Math.toRadians(angle)));
 		currentPosition.setY(centerPosition.getY() + radiusH * Math.sin(Math.toRadians(angle)));
 	}

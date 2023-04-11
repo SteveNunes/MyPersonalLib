@@ -9,7 +9,7 @@ public class RectangleMove {
 	
 	private Direction direction;
 	private DirectionOrientation orientation;
-	private Position position, topLeftStartPosition;
+	private Position tPos, position, topLeftStartPosition;
 	private double width, height, speed;
 	
 	/**
@@ -28,45 +28,47 @@ public class RectangleMove {
 	 */
 	public RectangleMove(Position linkedPosition, Direction initialDirection, DirectionOrientation orientation, Position topLeftStartPosition, double areaWidth, double areaHeight, double speed) {
 		if (!Arrays.asList(Direction.LEFT, Direction.UP, Direction.RIGHT, Direction.DOWN).contains(initialDirection))
-			throw new RuntimeException("'initialDirection must be LEFT/UP/RIGHT/DOWN'");
+			throw new RuntimeException("'initialDirection' must be 'LEFT/UP/RIGHT/DOWN'");
+		if (speed < 0)
+			throw new RuntimeException("'speed' must be equal or higher than 0");
 		position = linkedPosition;
+		this.orientation = orientation;
+		direction = initialDirection;
 		this.topLeftStartPosition = topLeftStartPosition;
 		width = areaWidth;
 		height = areaHeight;
+		tPos = new Position(linkedPosition.getX() - topLeftStartPosition.getX(),
+												linkedPosition.getY() - topLeftStartPosition.getY());
 		this.speed = speed;
-		direction = initialDirection;
-		this.orientation = orientation;
 	}
 	
 	/**
 	 * Sobrecarga do construtor que não pede o parâmetro {@code linkedPosition}. 
 	 */
 	public RectangleMove(Direction initialDirection, DirectionOrientation orientation, Position topLeftStartPosition, double areaWidth, double areaHeight, double speed)
-		{ this(new Position(), initialDirection, orientation, topLeftStartPosition, areaWidth, areaHeight, speed); }
+		{ this(new Position(topLeftStartPosition), initialDirection, orientation, topLeftStartPosition, areaWidth, areaHeight, speed); }
 	
 	public void move() {
-		if (direction == Direction.RIGHT && (position.getX() + speed) > (topLeftStartPosition.getX() + width))
-			direction = Direction.DOWN;
-		if (direction == Direction.DOWN && (position.getY() + speed) > (topLeftStartPosition.getY() + height))
-			direction = Direction.LEFT;
-		if (direction == Direction.LEFT && (position.getX() - speed) < topLeftStartPosition.getX())
-			direction = Direction.UP;
-		if (direction == Direction.UP && (position.getY() - speed) < topLeftStartPosition.getY())
-			direction = Direction.RIGHT;
-		position.incPositionByDirection(direction, speed);
+		tPos.incPositionByDirection(direction, speed);
+		if (tPos.getX() > width || tPos.getX() < 0 ||
+				tPos.getY() > height || tPos.getY() < 0) {
+					tPos.incPositionByDirection(direction.getReverseDirection(), speed);
+					direction = direction.getClockwiseDirection(orientation == DirectionOrientation.CLOCKWISE ? -2 : 2);
+		}
+		position.setPosition(topLeftStartPosition.getX() + tPos.getX(),
+												 topLeftStartPosition.getY() + tPos.getY());
 	}
 	
 	public Direction getDirection()
 		{ return direction; }
 
-	public void setDirection(Direction direction)
-		{ this.direction = direction; }
-
 	public DirectionOrientation getOrientation()
 		{ return orientation; }
 
-	public void setOrientation(DirectionOrientation orientation)
-		{ this.orientation = orientation; }
+	public void setOrientation(DirectionOrientation orientation) {
+		this.orientation = orientation;
+		speed = -speed;
+	}
 
 	public Position getTopLeftStartPosition()
 		{ return topLeftStartPosition; }

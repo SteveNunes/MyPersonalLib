@@ -5,12 +5,12 @@ import java.util.List;
 
 public enum DirectionOrientation {
 	CLOCKWISE(0),
-	COUNTER_CLOCKWISE(1);
+	REVERSE_CLOCKWISE(1);
 	
 	final int value;
 	
 	final static List<DirectionOrientation> listOfAll = 
-		Arrays.asList(CLOCKWISE, COUNTER_CLOCKWISE);
+		Arrays.asList(CLOCKWISE, REVERSE_CLOCKWISE);
 	
 	DirectionOrientation(int val)
 		{ value = val; }
@@ -22,7 +22,7 @@ public enum DirectionOrientation {
 		{ return listOfAll; }
 	
 	public static DirectionOrientation getReverseDirectionType(DirectionOrientation orientation)
-		{ return orientation == CLOCKWISE ? COUNTER_CLOCKWISE : CLOCKWISE; }
+		{ return orientation == CLOCKWISE ? REVERSE_CLOCKWISE : CLOCKWISE; }
 	
 	public DirectionOrientation getReverseDirectionType()
 		{ return getReverseDirectionType(this); }
