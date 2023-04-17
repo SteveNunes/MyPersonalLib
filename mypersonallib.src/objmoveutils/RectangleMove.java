@@ -1,0 +1,73 @@
+package objmoveutils;
+
+import enums.DirectionOrientation;
+
+public class RectangleMove extends MoveBetweenDots {
+	
+	/**
+	 * 
+	 * @param outputPosition - {@code Position} pertencente á um objeto externo, que será atualizado
+	 * 	de maneira á fazer com que esse objeto externo realize um movimento retângular
+	 * @param orientation - Forma de progresso entre as coordenadas (Horário/Anti-horário)
+	 * @param topLeftStartPosition - {@code Position} referente ao canto superior esquerdo, de onde
+	 * 	iniciará a movimentação retângular. Se esse {@code Position} pertencer á um objeto externo,
+	 * 	as coordenadas processadas relativas ao {@code Position} desse objeto externo, mesmo que ele
+	 * 	se mova. Caso contrário, será {@code Position} absoluta da janela.
+	 * @param width - Largura do retângulo de movimento á partir da posição inicial
+	 * @param height - Altura do retângulo de movimento á partir da posição inicial
+	 * @param speedInFrames - Velocidade em frames que o objeto levará para realizar o movimento
+	 * 	retângular completo.
+	 * @param resetAfterFullCycle - {@code true} se o objeto deve repetir o ciclo após chegar
+	 * 	na coordenada final.
+	 */
+	public RectangleMove(Position outputPosition, DirectionOrientation orientation, Position topLeftStartPosition, int width, int height, int speedInFrames, Boolean resetAfterFullCycle) {
+		super(outputPosition, orientation, topLeftStartPosition, speedInFrames, resetAfterFullCycle);
+		addDot(new Position(topLeftStartPosition));
+		addDot(new Position(topLeftStartPosition, width, 0));
+		addDot(new Position(topLeftStartPosition, width, height));
+		addDot(new Position(topLeftStartPosition, 0, height));
+	}
+	
+	/**
+	 * Sobrecarga do construtor que não pede o parâmetro {@code outputPosition}. 
+	 */
+	public RectangleMove(DirectionOrientation orientation, Position topLeftStartPosition, int width, int height, int speedInFrames, Boolean resetAfterFullCycle)
+		{ this(new Position(topLeftStartPosition), orientation, topLeftStartPosition, width, height, speedInFrames, resetAfterFullCycle); }
+	
+	/**
+	 * Sobrecarga do construtor que não pede o parâmetro {@code resetAfterFullCycle}. 
+	 */
+	public RectangleMove(Position outputPosition, DirectionOrientation orientation, Position topLeftStartPosition, int width, int height, int speedInFrames)
+		{ this(outputPosition, orientation, topLeftStartPosition, width, height, speedInFrames, true); }
+	
+	/**
+	 * Sobrecarga do construtor que não pede os parâmetros {@code outputPosition} e {@code resetAfterFullCycle}. 
+	 */
+	public RectangleMove(DirectionOrientation orientation, Position topLeftStartPosition, int width, int height, int speedInFrames)
+		{ this(new Position(topLeftStartPosition), orientation, topLeftStartPosition, width, height, speedInFrames, true); }
+	
+	/**
+	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
+	 */
+	public RectangleMove(Position outputPosition, DirectionOrientation orientation, double topLeftX, double topLeftY, int width, int height, int speedInFrames, Boolean resetAfterFullCycle)
+		{ this(outputPosition, orientation, new Position(topLeftX, topLeftY), width, height, speedInFrames, resetAfterFullCycle); }
+	
+	/**
+	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
+	 */
+	public RectangleMove(DirectionOrientation orientation, double topLeftX, double topLeftY, int width, int height, int speedInFrames, Boolean resetAfterFullCycle)
+		{ this(new Position(topLeftX, topLeftY), orientation, new Position(topLeftX, topLeftY), width, height, speedInFrames, resetAfterFullCycle); }
+	
+	/**
+	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
+	 */
+	public RectangleMove(Position outputPosition, DirectionOrientation orientation, double topLeftX, double topLeftY, int width, int height, int speedInFrames)
+		{ this(outputPosition, orientation, new Position(topLeftX, topLeftY), width, height, speedInFrames, true); }
+	
+	/**
+	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
+	 */
+	public RectangleMove(DirectionOrientation orientation, double topLeftX, double topLeftY, int width, int height, int speedInFrames)
+		{ this(new Position(topLeftX, topLeftY), orientation, new Position(topLeftX, topLeftY), width, height, speedInFrames, true); }
+	
+}

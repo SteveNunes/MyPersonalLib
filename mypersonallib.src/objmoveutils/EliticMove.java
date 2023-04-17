@@ -1,4 +1,4 @@
-package gameutil;
+package objmoveutils;
 
 import enums.DirectionOrientation;
 
@@ -34,8 +34,20 @@ public class EliticMove {
 	 * Sobrecarga do construtor que não pede o parâmetro {@code linkedPosition}. 
 	 */
 	public EliticMove(Position centerPosition, DirectionOrientation orientation, double radiusW, double radiusH, double speed)
-		{ this(new Position(centerPosition.getX(), centerPosition.getY() - radiusH), centerPosition, orientation, radiusW, radiusH, speed); }
+		{ this(new Position(centerPosition.getX(), centerPosition.getY()), centerPosition, orientation, radiusW, radiusH, speed); }
 
+	/**
+	 * Sobrecarga do construtor que não pede o parâmetro {@code linkedPosition}. 
+	 */
+	public EliticMove(Position linkedPosition, double centerX, double centerY, DirectionOrientation orientation, double radiusW, double radiusH, double speed)
+		{ this(linkedPosition, new Position(centerX, centerY), orientation, radiusW, radiusH, speed); }
+
+	/**
+	 * Sobrecarga do construtor que não pede o parâmetro {@code linkedPosition}. 
+	 */
+	public EliticMove(double centerX, double centerY, DirectionOrientation orientation, double radiusW, double radiusH, double speed)
+		{ this(new Position(centerX, centerY), new Position(centerX, centerY), orientation, radiusW, radiusH, speed); }
+	
 	public void move() {
 		angle += orientation == DirectionOrientation.CLOCKWISE ? speed : -speed;
 		currentPosition.setX(centerPosition.getX() + radiusW * Math.cos(Math.toRadians(angle)));

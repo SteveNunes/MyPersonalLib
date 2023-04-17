@@ -1,4 +1,4 @@
-package gameutil;
+package objmoveutils;
 
 import java.util.Objects;
 
@@ -27,11 +27,32 @@ public class Position {
 	public Position(double x, double y)
 		{ this(x, y, 1); }
 
+	public Position(double x, double y, double incrementalX, double incrementalY, int tileSize)
+		{ this(x + incrementalX, y + incrementalY, tileSize); }
+	
+	public Position(double x, double y, double incrementalX, double incrementalY)
+		{ this(x + incrementalX, y + incrementalY, 1); }
+
 	public Position(Position position, int tileSize)
 		{ this(position.getX(), position.getY(), tileSize); }
 	
 	public Position(Position position)
 		{ this(position.getX(), position.getY(), position.getTileSize()); }
+
+	public Position(Position position, Position incrementalPosition, int tileSize) {
+		this(position.getX() + incrementalPosition.getX(),
+				 position.getY() + incrementalPosition.getY(), tileSize);
+	}
+
+	public Position(Position position, Position incrementalPosition)
+		{ this(position, incrementalPosition, position.getTileSize()); }
+	
+	public Position(Position position, double incrementalX, double incrementalY, int tileSize)
+		{ this(position.getX() + incrementalX, position.getY() + incrementalY, tileSize); }
+	
+	public Position(Position position, double incrementalX, double incrementalY)
+		{ this(position, incrementalX, incrementalY, position.getTileSize()); }
+	
 
 	public int getTileSize()
 		{ return tileSize; }
@@ -83,6 +104,9 @@ public class Position {
 		incX(incX);
 		incY(incY);
 	}
+	
+	public void incPosition(Position posWithIncrements)
+		{ incPosition(posWithIncrements.getX(), posWithIncrements.getY()); }
 	
 	public void incPositionByDirection(Direction direction, double val) {
 		if (direction == Direction.LEFT)
@@ -259,16 +283,8 @@ public class Position {
    * chegue até as coordenadas {@code x2, y2} no total de {@code frames}
    */
 	public static Position getIncrementForGoToCoordinate(double x1, double y1, double x2, double y2, int frames) {
-	  double x = (x2 - x1) / 100;
-	  double y = (y2 - y1) / 100;
-	  while ((x != 0 && Math.abs(x) < frames) || (y != 0 && Math.abs(y) < frames)) {
-	  	x += x / 10;
-	  	y += y / 10;
-	  }
-	  while ((x != 0 && Math.abs(x) > frames) || (y != 0 && Math.abs(y) > frames)) {
-	  	x -= x / 10;
-	  	y -= y / 10;
-	  }
+	  double x = (x2 - x1) / frames;
+	  double y = (y2 - y1) / frames;
 	  return new Position(x, y);
 	}
 	

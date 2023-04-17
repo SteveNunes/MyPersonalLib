@@ -1,6 +1,6 @@
 package shapesobj;
 
-import gameutil.Position;
+import objmoveutils.Position;
 
 public class RectangleObj extends Position {
 	
