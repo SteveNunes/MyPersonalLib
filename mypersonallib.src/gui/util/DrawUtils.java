@@ -74,6 +74,6 @@ public class DrawUtils {
 	}
 	
 	public static void drawPolygon(ObservableList<Node> childrens, List<Double> points, Color strokeColor, int strokeWidth, Color fillColor)
-		{ drawPolygon(childrens, points, strokeColor, strokeWidth, fillColor); }
+		{ drawPolygon(childrens, points, strokeColor, strokeWidth, fillColor, 1, 0); }
 	
 }
