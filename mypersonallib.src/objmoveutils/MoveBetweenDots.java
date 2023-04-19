@@ -9,7 +9,7 @@ public class MoveBetweenDots {
 	
 	private List<Position> dots;
 	private DirectionOrientation orientation;
-	private Position pos, inc, position, startPosition, outputPosition;
+	private Position pos, inc, position, startPosition;
 	private int dotIndex, speedInFrames, currentFrame;
 	private Boolean resetAfterFullCycle, cycleWasCompleted;
 	
@@ -40,7 +40,6 @@ public class MoveBetweenDots {
 		this.startPosition = startPosition;
 		this.orientation = orientation;
 		this.speedInFrames = speedInFrames;
-		this.outputPosition = outputPosition;
 		this.resetAfterFullCycle = resetAfterFullCycle;
 		dotIndex = 0;
 		currentFrame = speedInFrames;
@@ -51,7 +50,7 @@ public class MoveBetweenDots {
 	 * Sobrecarga do construtor que não pede o parâmetro {@code outputPosition}. 
 	 */
 	public MoveBetweenDots(DirectionOrientation orientation, Position startPosition, int speedInFrames, Boolean resetAfterFullCycle)
-		{ this(new Position(startPosition), orientation, startPosition, speedInFrames, resetAfterFullCycle); }
+		{ this(new Position(), orientation, startPosition, speedInFrames, resetAfterFullCycle); }
 	
 	/**
 	 * Sobrecarga do construtor que não pede o parâmetro {@code resetAfterFullCycle}. 
@@ -63,7 +62,7 @@ public class MoveBetweenDots {
 	 * Sobrecarga do construtor que não pede os parâmetros {@code outputPosition} e {@code resetAfterFullCycle}. 
 	 */
 	public MoveBetweenDots(DirectionOrientation orientation, Position startPosition, int speedInFrames)
-		{ this(new Position(startPosition), orientation, startPosition, speedInFrames, true); }
+		{ this(new Position(), orientation, startPosition, speedInFrames, true); }
 
 	/**
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
@@ -75,7 +74,7 @@ public class MoveBetweenDots {
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
 	 */
 	public MoveBetweenDots(DirectionOrientation orientation, double startX, double startY, int speedInFrames, Boolean resetAfterFullCycle)
-		{ this(new Position(startX, startY), orientation, new Position(startX, startY), speedInFrames, resetAfterFullCycle); }
+		{ this(new Position(), orientation, new Position(startX, startY), speedInFrames, resetAfterFullCycle); }
 	
 	/**
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
@@ -87,7 +86,7 @@ public class MoveBetweenDots {
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
 	 */
 	public MoveBetweenDots(DirectionOrientation orientation, double startX, double startY, int speedInFrames)
-		{ this(new Position(startX, startY), orientation, new Position(startX, startY), speedInFrames, true); }
+		{ this(new Position(), orientation, new Position(startX, startY), speedInFrames, true); }
 
 	public void move() {
 		checkError();
@@ -111,10 +110,9 @@ public class MoveBetweenDots {
 	
 	public void removeDot(Position dotPosition) {
 		dots.remove(dotPosition);
-		if (dotIndex >= dots.size()) {
+		if (dotIndex >= dots.size())
 			dotIndex = dots.isEmpty() ? 0 : dotIndex - 1;
-			setCoordTo(dotIndex);
-		}
+		setCoordTo(dotIndex);
 	}
 	
 	public void addDot(double x, double y)
@@ -138,16 +136,13 @@ public class MoveBetweenDots {
 
 	private void setCoordTo(int index) {
 		checkError();
-		pos.setPosition(getCurrentDot());
 		dotIndex = index;
+		pos.setPosition(getCurrentDot());
 		dotIndex = getNextDotCoordIndex();
 		inc = Position.getIncrementForGoToCoordinate(pos, getCurrentDot(), speedInFrames);
-		if (index != dotIndex && dotIndex == (orientation == DirectionOrientation.CLOCKWISE ? 0 : dots.size() - 1)) {
-			if (resetAfterFullCycle)
-				resetCycle();
-			else
-				cycleWasCompleted = true;
-		}
+		if (!resetAfterFullCycle && index != dotIndex &&
+				dotIndex == (orientation == DirectionOrientation.CLOCKWISE ? 0 : dots.size() - 1))
+					cycleWasCompleted = true;
 	}
 	
 	private void checkError() {
@@ -155,11 +150,6 @@ public class MoveBetweenDots {
 			throw new RuntimeException("You must add at least 2 dots using the 'addDot()' method");
 	}
 	
-	private void resetCycle() {
-		// TODO Auto-generated method stub
-		
-	}
-
 	public DirectionOrientation getOrientation()
 		{ return orientation; }
 
@@ -190,18 +180,18 @@ public class MoveBetweenDots {
 		{ return position; }
 
 	public Position getOutputPosition()
-		{ return outputPosition; }
+		{ return position; }
 
 	public void setOutputPosition(Position position)
-		{ outputPosition = position; }
+		{ this.position = position; }
 	
 	public void removeOutputPosition()
-		{ outputPosition = new Position(outputPosition); }
+		{ position = new Position(position); }
 	
 	public double getOutputX()
-		{ return outputPosition.getX(); }
+		{ return position.getX(); }
 	
 	public double getOutputY()
-		{ return outputPosition.getY(); }
+		{ return position.getY(); }
 	
 }

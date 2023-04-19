@@ -22,17 +22,17 @@ public class RectangleMove extends MoveBetweenDots {
 	 */
 	public RectangleMove(Position outputPosition, DirectionOrientation orientation, Position topLeftStartPosition, int width, int height, int speedInFrames, Boolean resetAfterFullCycle) {
 		super(outputPosition, orientation, topLeftStartPosition, speedInFrames, resetAfterFullCycle);
-		addDot(new Position(topLeftStartPosition));
-		addDot(new Position(topLeftStartPosition, width, 0));
-		addDot(new Position(topLeftStartPosition, width, height));
-		addDot(new Position(topLeftStartPosition, 0, height));
+		addDot(new Position());
+		addDot(new Position(width, 0));
+		addDot(new Position(width, height));
+		addDot(new Position(0, height));
 	}
 	
 	/**
 	 * Sobrecarga do construtor que não pede o parâmetro {@code outputPosition}. 
 	 */
 	public RectangleMove(DirectionOrientation orientation, Position topLeftStartPosition, int width, int height, int speedInFrames, Boolean resetAfterFullCycle)
-		{ this(new Position(topLeftStartPosition), orientation, topLeftStartPosition, width, height, speedInFrames, resetAfterFullCycle); }
+		{ this(new Position(), orientation, topLeftStartPosition, width, height, speedInFrames, resetAfterFullCycle); }
 	
 	/**
 	 * Sobrecarga do construtor que não pede o parâmetro {@code resetAfterFullCycle}. 
@@ -56,7 +56,7 @@ public class RectangleMove extends MoveBetweenDots {
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
 	 */
 	public RectangleMove(DirectionOrientation orientation, double topLeftX, double topLeftY, int width, int height, int speedInFrames, Boolean resetAfterFullCycle)
-		{ this(new Position(topLeftX, topLeftY), orientation, new Position(topLeftX, topLeftY), width, height, speedInFrames, resetAfterFullCycle); }
+		{ this(new Position(), orientation, new Position(topLeftX, topLeftY), width, height, speedInFrames, resetAfterFullCycle); }
 	
 	/**
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
@@ -68,6 +68,6 @@ public class RectangleMove extends MoveBetweenDots {
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
 	 */
 	public RectangleMove(DirectionOrientation orientation, double topLeftX, double topLeftY, int width, int height, int speedInFrames)
-		{ this(new Position(topLeftX, topLeftY), orientation, new Position(topLeftX, topLeftY), width, height, speedInFrames, true); }
+		{ this(new Position(), orientation, new Position(topLeftX, topLeftY), width, height, speedInFrames, true); }
 	
 }

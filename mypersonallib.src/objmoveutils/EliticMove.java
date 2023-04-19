@@ -10,7 +10,7 @@ public class EliticMove {
 
 	/**
 	 * 
-	 * @param linkedPosition - {@code Position} do objeto que será atualizado á cada chamada
+	 * @param outputPosition - {@code Position} do objeto que será atualizado á cada chamada
 	 * 													do método {@code move()}, fazendo ele realizar um movimento
 	 * 													circular em torno de {@code centerPosition}
 	 * @param centerPosition - Coordenada central onde o objeto ficará circulando em torno de.
@@ -21,33 +21,21 @@ public class EliticMove {
 	 * @param radiusH - Raio vertical da área circular onde o objeto ficará circulando
 	 * @param speed - Velocidade de movimentação do objeto
 	 */
-	public EliticMove(Position linkedPosition, Position centerPosition, DirectionOrientation orientation, double radiusW, double radiusH, double speed) {
+	public EliticMove(Position outputPosition, Position centerPosition, DirectionOrientation orientation, double radiusW, double radiusH, double speed) {
 		this.centerPosition = centerPosition;
 		this.orientation = orientation;
-		currentPosition = linkedPosition;
+		currentPosition = outputPosition;
 		this.radiusW = radiusW;
 		this.radiusH = radiusH;
 		this.speed = speed;
 	}
 
 	/**
-	 * Sobrecarga do construtor que não pede o parâmetro {@code linkedPosition}. 
+	 * Sobrecarga do construtor que não pede o parâmetro {@code outputPosition}. 
 	 */
 	public EliticMove(Position centerPosition, DirectionOrientation orientation, double radiusW, double radiusH, double speed)
 		{ this(new Position(centerPosition.getX(), centerPosition.getY()), centerPosition, orientation, radiusW, radiusH, speed); }
 
-	/**
-	 * Sobrecarga do construtor que não pede o parâmetro {@code linkedPosition}. 
-	 */
-	public EliticMove(Position linkedPosition, double centerX, double centerY, DirectionOrientation orientation, double radiusW, double radiusH, double speed)
-		{ this(linkedPosition, new Position(centerX, centerY), orientation, radiusW, radiusH, speed); }
-
-	/**
-	 * Sobrecarga do construtor que não pede o parâmetro {@code linkedPosition}. 
-	 */
-	public EliticMove(double centerX, double centerY, DirectionOrientation orientation, double radiusW, double radiusH, double speed)
-		{ this(new Position(centerX, centerY), new Position(centerX, centerY), orientation, radiusW, radiusH, speed); }
-	
 	public void move() {
 		angle += orientation == DirectionOrientation.CLOCKWISE ? speed : -speed;
 		currentPosition.setX(centerPosition.getX() + radiusW * Math.cos(Math.toRadians(angle)));

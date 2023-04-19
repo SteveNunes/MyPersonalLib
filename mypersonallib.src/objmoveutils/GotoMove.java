@@ -31,7 +31,7 @@ public class GotoMove extends MoveBetweenDots {
 	 * Sobrecarga do construtor que não pede o parâmetro {@code outputPosition}. 
 	 */
 	public GotoMove(Position startPosition, Position endPosition, int speedInFrames, Boolean resetAfterFullCycle)
-		{ this(new Position(startPosition), startPosition, endPosition, speedInFrames, resetAfterFullCycle); }
+		{ this(new Position(), startPosition, endPosition, speedInFrames, resetAfterFullCycle); }
 	
 	/**
 	 * Sobrecarga do construtor que não pede o parâmetro {@code resetAfterFullCycle}. 
@@ -43,7 +43,7 @@ public class GotoMove extends MoveBetweenDots {
 	 * Sobrecarga do construtor que não pede os parâmetros {@code outputPosition} e {@code resetAfterFullCycle}. 
 	 */
 	public GotoMove(Position startPosition, Position endPosition, int speedInFrames)
-		{ this(new Position(startPosition), startPosition, endPosition, speedInFrames, true); }
+		{ this(new Position(), startPosition, endPosition, speedInFrames, true); }
 	
 	/**
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
@@ -55,7 +55,7 @@ public class GotoMove extends MoveBetweenDots {
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
 	 */
 	public GotoMove(double startX, double startY, double endX, double endY, int speedInFrames, Boolean resetAfterFullCycle)
-		{ this(new Position(startX, startY), new Position(startX, startY), new Position(endX, endY), speedInFrames, resetAfterFullCycle); }
+		{ this(new Position(), new Position(startX, startY), new Position(endX, endY), speedInFrames, resetAfterFullCycle); }
 	
 	/**
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
@@ -67,6 +67,6 @@ public class GotoMove extends MoveBetweenDots {
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
 	 */
 	public GotoMove(double startX, double startY, double endX, double endY, int speedInFrames)
-		{ this(new Position(startX, startY), new Position(startX, startY), new Position(endX, endY), speedInFrames, true); }
+		{ this(new Position(), new Position(startX, startY), new Position(endX, endY), speedInFrames, true); }
 	
 }

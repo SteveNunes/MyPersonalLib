@@ -2,13 +2,13 @@ package objmoveutils;
 
 public class JumpMove {
 	
-	private Position position, startPosition;
+	private Position inc, position, startPosition;
 	private int speedInFrames, currentFrame;
 	private double jumpStrenght, initialJumpStrenght, strenghtMultipiler, minStrenghtMultipiler;
 	
 	/**
 	 * 
-	 * @param linkedPosition - {@code Position} do objeto que será atualizado á cada chamada
+	 * @param outputPosition - {@code Position} do objeto que será atualizado á cada chamada
 	 * 													do método {@code move()}, fazendo ele realizar um movimento
 	 * 													simulando um pulo.
 	 * @param startPosition - Coordenada inicial de onde o objeto realizará o movimento de pulo.
@@ -18,10 +18,11 @@ public class JumpMove {
 	 * @param strenghtMultipiler - Multiplicador da força por frame
 	 * @param speedInFrames - Duração em frames do pulo.
 	 */
-	public JumpMove(Position linkedPosition, Position startPosition, double jumpStrenght, double strenghtMultipiler, int speedInFrames) {
+	public JumpMove(Position outputPosition, Position startPosition, double jumpStrenght, double strenghtMultipiler, int speedInFrames) {
 		if (speedInFrames < 0)
 			throw new RuntimeException("'speed' must be equal or higher than 0");
-		position = linkedPosition;
+		position = outputPosition;
+		inc = new Position();
 		this.startPosition = startPosition;
 		this.jumpStrenght = jumpStrenght;
 		this.strenghtMultipiler = strenghtMultipiler;
@@ -32,34 +33,35 @@ public class JumpMove {
 	}
 	
 	/**
-	 * Sobrecarga do construtor que não pede o parâmetro {@code linkedPosition}. 
+	 * Sobrecarga do construtor que não pede o parâmetro {@code outputPosition}. 
 	 */
 	public JumpMove(Position startPosition, double jumpStrenght, double strenghtMultipiler, int speedInFrames)
-		{ this(new Position(startPosition), startPosition, jumpStrenght, strenghtMultipiler, speedInFrames); }
+		{ this(new Position(), startPosition, jumpStrenght, strenghtMultipiler, speedInFrames); }
 
 	/**
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
 	 */
-	public JumpMove(Position linkedPosition, double startX, double startY, double jumpStrenght, double strenghtMultipiler, int speedInFrames)
-		{ this(linkedPosition, new Position(startX, startY), jumpStrenght, strenghtMultipiler, speedInFrames); }
+	public JumpMove(Position outputPosition, double startX, double startY, double jumpStrenght, double strenghtMultipiler, int speedInFrames)
+		{ this(outputPosition, new Position(startX, startY), jumpStrenght, strenghtMultipiler, speedInFrames); }
 	
 	/**
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
 	 */
 	public JumpMove(double startX, double startY, double jumpStrenght, double strenghtMultipiler, int speedInFrames)
-		{ this(new Position(startX, startY), new Position(startX, startY), jumpStrenght, strenghtMultipiler, speedInFrames); }
+		{ this(new Position(), new Position(startX, startY), jumpStrenght, strenghtMultipiler, speedInFrames); }
 	
 	public void move() {
 		if (++currentFrame < speedInFrames / 2) {
-			position.decY(jumpStrenght);
+			inc.decY(jumpStrenght);
 			if (jumpStrenght > minStrenghtMultipiler)
 				jumpStrenght /= strenghtMultipiler;
 		}
 		else {
-			position.incY(jumpStrenght);
+			inc.incY(jumpStrenght);
 			if (jumpStrenght < initialJumpStrenght * 3)
 				jumpStrenght *= strenghtMultipiler;
 		}
+		position.setPosition(startPosition.getX() + inc.getX(), startPosition.getY() + inc.getY());
 	}
 	
 	/**
@@ -99,10 +101,10 @@ public class JumpMove {
 	public Position getPosition()
 		{ return position; }
 
-	public void setLinkedPosition(Position position)
+	public void setOutputPosition(Position position)
 		{ this.position = position; }
 	
-	public void removeLinkedPosition()
+	public void removeOutputPosition()
 		{ this.position = new Position(position); }
 
 	public double getStrenghtMultipiler()
