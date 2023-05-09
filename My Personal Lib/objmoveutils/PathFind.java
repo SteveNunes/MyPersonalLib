@@ -61,6 +61,15 @@ public class PathFind {
 		updatePath(currentPosition, currentDirection, targetPosition);
 	}
 
+	public PathFind(Position currentPosition, Direction currentDirection, Position targetPosition, Function<Position, Boolean> tileIsFree, Boolean canTurn180OnFirstStep)
+		{ this(currentPosition, currentDirection, targetPosition, tileIsFree, PathFindType.AVERAGE_PATH, canTurn180OnFirstStep); }
+	
+	public PathFind(Position currentPosition, Direction currentDirection, Position targetPosition, Function<Position, Boolean> tileIsFree, PathFindType pathFindType)
+		{ this(currentPosition, currentDirection, targetPosition, tileIsFree, pathFindType, true); }
+
+	public PathFind(Position currentPosition, Direction currentDirection, Position targetPosition, Function<Position, Boolean> tileIsFree)
+		{ this(currentPosition, currentDirection, targetPosition, tileIsFree, PathFindType.AVERAGE_PATH, true); }
+
 	public void updatePath(Position currentPosition, Direction currentDirection, Position targetPosition) {
 		this.currentPosition.setPosition(currentPosition);
 		this.targetPosition.setPosition(targetPosition);
@@ -83,12 +92,12 @@ public class PathFind {
 				currentPath.clear();
 				currentPathPositions.clear();
 				firstStep = true;
-				tempMarkTileAndIncPositionByDir();
+				markTileAndIncPositionByDir();
 				firstStep = false;
 				while (!isStucked()) {
 					while (!isStucked() && !isPathFound()) { // Vai seguindo em frente em direções aleatórias que estejam LIVRES, até ficar preso ou encontrar o alvo
 						this.currentDirection = getRandomFreeDirection();
-						tempMarkTileAndIncPositionByDir();
+						markTileAndIncPositionByDir();
 					}
 					if (isPathFound()) { // Se encontrou o tile alvo, otimiza o caminho gerado
 						currentPath.add(this.currentDirection);
@@ -205,7 +214,7 @@ public class PathFind {
 		}
 	}
 
-	private void tempMarkTileAndIncPositionByDir() {
+	private void markTileAndIncPositionByDir() {
 		if (currentDirection != null) {
 			currentPathPositions.add(new Position(currentPosition));
 			currentPath.add(currentDirection);
