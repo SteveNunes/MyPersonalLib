@@ -280,7 +280,7 @@ public class PathFind {
 	public Position getNextPosition()
 		{ return currentPath.isEmpty() ? null : currentPathPositions.get(0); }
 
-	public List<Direction> getNextDirections()
+	public List<Direction> getPathDirections()
 		{ return currentPath; }
 	
 	public List<Position> getPathPositions()
@@ -291,11 +291,5 @@ public class PathFind {
 	
 	public Boolean isUnableToReachTargetPosition()
 		{ return currentPath.isEmpty(); }
-	
-	public List<List<Direction>> getFoundPaths()
-		{ return foundPaths; }
-
-	public List<List<Position>> getFoundPathsPositions()
-		{ return foundPathsPositions; }
 
 }
