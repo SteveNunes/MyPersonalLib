@@ -107,7 +107,7 @@ public class PathFind {
 						foundPathsPositions.add(new ArrayList<>(currentPathPositions));
 						foundTargetVal = 2;
 					}
-					while ((isStucked() || foundTargetVal > 0) && !currentPath.isEmpty()) {
+					while ((isStucked() || --foundTargetVal >= 0) && !currentPath.isEmpty()) {
 						/* Se o caminho atual ficou sem saída ou encontrou o tile-alvo,
 						 * faz o caminho reverso até achar outra direção alternativa livre.
 						 */
@@ -115,8 +115,7 @@ public class PathFind {
 						this.currentDirection = currentPath.get(n);
 						currentPathPositions.remove(n);
 						currentPath.remove(n);
-						if (foundTargetVal-- != 2)
-							tempTiles.add(new Position(this.currentPosition));
+						tempTiles.add(new Position(this.currentPosition));
 						this.currentPosition.incPositionByDirection(this.currentDirection.getReverseDirection());
 					}
 				}
@@ -131,7 +130,7 @@ public class PathFind {
 			if (pathFindType == PathFindType.AVERAGE_PATH)
 				n = new SecureRandom().nextInt(n);
 			else {
-				int min = foundPaths.size(), max = 0, index = 0;
+				int min = Integer.MAX_VALUE, max = 0, index = 0;
 				for (n = 0; n < foundPaths.size(); n++) {
 					if (pathFindType == PathFindType.SHORTEST_PATH && foundPaths.get(n).size() < min) {
 						min = foundPaths.get(n).size();
@@ -151,7 +150,7 @@ public class PathFind {
 		foundPathsPositions.clear();
 		tempTiles.clear();
 	}
-	
+
 	public void updatePath(Position newCurrentPosition, Direction newCurrentDirection)
 		{ updatePath(newCurrentPosition, newCurrentDirection, targetPosition); }
 	
@@ -222,14 +221,6 @@ public class PathFind {
 		}
 	}
 
-	private Boolean tileIsFree(Position position, Boolean ignoreCurrentPathPositions) {
-		return tileIsFree.apply(position) && !tempTiles.contains(position) &&
-				(ignoreCurrentPathPositions || !currentPathPositions.contains(position));
-	}
-
-	private Boolean tileIsFree(Position position)
-		{ return tileIsFree(position, false); }
-	
 	private List<Direction> getRandomizedListOfFreeDirections() {
 		int n, totalAvailableDirs = 0;
 		Position p = new Position();
@@ -258,11 +249,19 @@ public class PathFind {
 		return totalAvailableDirs == 0 ? null : availableDirs;
 	}
 	
+	private Boolean tileIsFree(Position position, Boolean ignoreCurrentPathPositions) {
+		return position.equals(targetPosition) ||
+						(tileIsFree.apply(position) && !tempTiles.contains(position) &&
+						(ignoreCurrentPathPositions || !currentPathPositions.contains(position)));
+	}
+
+	private Boolean tileIsFree(Position position)
+		{ return tileIsFree(position, false); }
+	
 	private Direction getRandomFreeDirection() {
 		List<Direction> dirs = getRandomizedListOfFreeDirections();
 		return dirs == null ? null : dirs.get(new SecureRandom().nextInt(dirs.size()));
 	}
-	
 
 	private Boolean isStucked()
 		{ return getRandomizedListOfFreeDirections() == null; }
