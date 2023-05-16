@@ -58,6 +58,7 @@ public class PathFind {
 		foundPathsPositions = new ArrayList<>();
 		currentPath = new ArrayList<>();
 		currentPathPositions = new ArrayList<>();
+		firstStep = true;
 		updatePath(currentPosition, currentDirection, targetPosition);
 	}
 
@@ -74,7 +75,6 @@ public class PathFind {
 		this.currentPosition.setPosition(currentPosition);
 		this.targetPosition.setPosition(targetPosition);
 		this.currentDirection = currentDirection;
-		firstStep = true;
 		tempTiles.clear();
 		currentPath.clear();
 		currentPathPositions.clear();
@@ -83,31 +83,31 @@ public class PathFind {
 		startFreeDirs = getRandomizedListOfFreeDirections();
 		if (startFreeDirs == null || isPathFound())
 			return;
-		int foundTargetVal = 0, n;
+		int foundTargetVal, n;
 		Position pos = new Position(currentPosition);
 		while (!isStucked()) {
 			for (Direction firstDir : startFreeDirs) {
+				firstStep = true;
 				this.currentDirection = firstDir;
 				this.currentPosition.setPosition(pos);
 				currentPath.clear();
 				currentPathPositions.clear();
-				firstStep = true;
 				markTileAndIncPositionByDir();
-				firstStep = false;
-				while (!isStucked()) {
+				foundTargetVal = 3;
+				do {
 					while (!isStucked() && !isPathFound()) { // Vai seguindo em frente em direções aleatórias que estejam LIVRES, até ficar preso ou encontrar o alvo
-						this.currentDirection = getRandomFreeDirection();
+						this.currentDirection = getLogicalFreeDirection();
 						markTileAndIncPositionByDir();
-					}
+						if (++foundTargetVal == 3)
+							tempTiles.remove(this.targetPosition);
+					} 
 					if (isPathFound()) { // Se encontrou o tile alvo, otimiza o caminho gerado
-						currentPath.add(this.currentDirection);
-						currentPathPositions.add(this.currentPosition);
 						optmizePath();
 						foundPaths.add(new ArrayList<>(currentPath));
 						foundPathsPositions.add(new ArrayList<>(currentPathPositions));
-						foundTargetVal = 2;
+						foundTargetVal = 1;
 					}
-					while ((isStucked() || --foundTargetVal >= 0) && !currentPath.isEmpty()) {
+					while ((isStucked() || foundTargetVal == 1) && !currentPath.isEmpty()) {
 						/* Se o caminho atual ficou sem saída ou encontrou o tile-alvo,
 						 * faz o caminho reverso até achar outra direção alternativa livre.
 						 */
@@ -119,6 +119,7 @@ public class PathFind {
 						this.currentPosition.incPositionByDirection(this.currentDirection.getReverseDirection());
 					}
 				}
+				while (!isStucked() && !isPathFound());
 			}
 		}
 		n = foundPaths.size();
@@ -218,13 +219,14 @@ public class PathFind {
 			currentPathPositions.add(new Position(currentPosition));
 			currentPath.add(currentDirection);
 			currentPosition.incPositionByDirection(currentDirection);
+			firstStep = false;
 		}
 	}
 
 	private List<Direction> getRandomizedListOfFreeDirections() {
 		int n, totalAvailableDirs = 0;
-		Position p = new Position();
 		List<Direction> availableDirs = new ArrayList<>();
+		
 		while (totalAvailableDirs < 4) {
 			n = new SecureRandom().nextInt(4);
 			while (availableDirs.contains(allDirs.get(n)))
@@ -238,27 +240,65 @@ public class PathFind {
 					availableDirs.remove(currentDirection.getReverseDirection());
 					totalAvailableDirs--;
 		}
-		for (n = 0; n < totalAvailableDirs; n++) {
-			p.setPosition(currentPosition);
-			p.incPositionByDirection(availableDirs.get(n));
-			if (!tileIsFree(p)) {
+		for (n = 0; n < totalAvailableDirs; n++)
+			if (!tileIsFree(currentPosition, availableDirs.get(n))) {
 				availableDirs.remove(n--);
 				totalAvailableDirs--;
 			}
-		}
 		return totalAvailableDirs == 0 ? null : availableDirs;
 	}
 	
-	private Boolean tileIsFree(Position position, Boolean ignoreCurrentPathPositions) {
-		return position.equals(targetPosition) ||
-						(tileIsFree.apply(position) && !tempTiles.contains(position) &&
-						(ignoreCurrentPathPositions || !currentPathPositions.contains(position)));
+	private Boolean tileIsFree(Position position, Direction direction, Boolean ignoreCurrentPathPositions) {
+		Position pos = new Position(position);
+		if (direction != null)
+			pos.incPositionByDirection(direction);
+		return tileIsFree.apply(pos) && !tempTiles.contains(pos) &&
+						(ignoreCurrentPathPositions || !currentPathPositions.contains(pos));
 	}
 
-	private Boolean tileIsFree(Position position)
-		{ return tileIsFree(position, false); }
+	private Boolean tileIsFree(Position position, Direction direction)
+		{ return tileIsFree(position, direction, false); }
 	
-	private Direction getRandomFreeDirection() {
+	private Boolean tileIsFree(Position position, Boolean ignoreCurrentPathPositions)
+		{ return tileIsFree(position, null, ignoreCurrentPathPositions); }
+
+	private Boolean tileIsFree(Position position)
+		{ return tileIsFree(position, null, false); }
+	
+	private Direction getLogicalFreeDirection() {
+		if (targetPosition.getX() == currentPosition.getX() ||
+				targetPosition.getY() == currentPosition.getY()) {
+					Direction d = null;
+					// Se manter na mesma direção se estiver indo reto ao tile alvo
+					if (targetPosition.getY() < currentPosition.getY() &&
+							currentDirection == Direction.UP &&
+							tileIsFree(currentPosition, Direction.UP))
+								d = Direction.UP;
+					else if (targetPosition.getY() > currentPosition.getY() &&
+							currentDirection == Direction.DOWN &&
+							tileIsFree(currentPosition, Direction.DOWN))
+								d = Direction.DOWN;
+					else if (targetPosition.getX() < currentPosition.getX() &&
+							currentDirection == Direction.LEFT &&
+							tileIsFree(currentPosition, Direction.LEFT))
+								d = Direction.LEFT;
+					else if (targetPosition.getX() > currentPosition.getX() &&
+							currentDirection == Direction.RIGHT &&
+							tileIsFree(currentPosition, Direction.RIGHT))
+								d =	Direction.RIGHT;
+					if (d != null && ((firstStep && canTurn180OnFirstStep) ||
+							(!firstStep && currentDirection.getReverseDirection() != d)))
+								return d;
+		}
+		for (Direction dir : allDirs) // Direção baseada na posição do tile alvo em relação a posição atual
+			if (((dir == Direction.LEFT && targetPosition.getX() < currentPosition.getX()) ||
+					(dir == Direction.RIGHT && targetPosition.getX() > currentPosition.getX()) ||
+					(dir == Direction.UP && targetPosition.getY() < currentPosition.getY()) ||
+					(dir == Direction.DOWN && targetPosition.getY() > currentPosition.getY())) &&
+					(currentDirection != dir && ((firstStep && canTurn180OnFirstStep) ||
+					(!firstStep && currentDirection.getReverseDirection() != dir)) &&
+					tileIsFree(currentPosition, dir)))
+						return dir;
 		List<Direction> dirs = getRandomizedListOfFreeDirections();
 		return dirs == null ? null : dirs.get(new SecureRandom().nextInt(dirs.size()));
 	}
