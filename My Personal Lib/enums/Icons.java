@@ -8,12 +8,14 @@ public enum Icons {
 
 	ICON_BLANK(""),
 	ICON_CALENDAR("/icons/calendar.png"),
+	ICON_NEW_FILE("/icons/newfile.png"),
 	ICON_COPY("/icons/copy.png"),
 	ICON_CLIPBOARD("/icons/clipboard.png"),
 	ICON_DELETE("/icons/delete.png"),
 	ICON_EDIT("/icons/edit.png"),
 	ICON_ERASER("/icons/eraser.png"),
 	ICON_EXCEL("/icons/excel.png"),
+	ICON_NOTE("/icons/note.png"),
 	ICON_MINUS("/icons/minus.png"),
 	ICON_MOVEDOWN("/icons/movedown.png"),
 	ICON_MOVELEFT("/icons/moveleft.png"),
@@ -49,8 +51,9 @@ public enum Icons {
 	ICON_RETURN_VISIT_FOWARDED_TO_SOMEONE("/icons/fowarded.png"),
 	ICON_RESIDENT_ASKED_TO_NOT_CALL_ANYMORE("/icons/askedtonotcallanymore.png"),
 	ICON_BLOCKED_BY_RESIDENT("/icons/blockednumber.png"),
-	ICON_UNDEFINED(""),
-	ICON_NUMBER_NOT_EXISTS("/icons/invalidnumber.png");
+	ICON_NUMBER_NOT_EXISTS("/icons/invalidnumber.png"),
+	ICON_VERIFY("/icons/verify.png"),
+	ICON_UNDEFINED("");
 
 	
 	private final String value;

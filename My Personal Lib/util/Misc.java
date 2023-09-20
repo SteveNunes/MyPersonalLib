@@ -3,9 +3,11 @@ package util;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -16,6 +18,12 @@ import javafx.scene.input.ClipboardContent;
 public class Misc {
 	
 	private static Map<String, Map<Long, ?>> uniqueId = new HashMap<>();
+	
+	public static String ignoraAcentos(String text) {
+    return Normalizer.normalize(text, Normalizer.Form.NFD)
+            .replaceAll("\\p{M}", "")
+            .toLowerCase(Locale.getDefault());
+	}
 	
 	public static void sleep(long millis) {
 		try

@@ -10,6 +10,15 @@ import java.util.List;
 
 public class MyMath {
 	
+	public static Boolean isPrime(int n) {
+		if (n <= 1)
+			return false;
+		for (int x = 2; x <= Math.sqrt(n); x++)
+			if (n % x == 0)
+				return false;
+		return true;
+	}
+  
 	//Clone da função map() do código do arduino
 	public static long mapValue(long value, long inMin, long inMax, long outMin, long outMax)
   	{ return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin; };

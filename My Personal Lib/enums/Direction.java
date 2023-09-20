@@ -3,6 +3,8 @@ package enums;
 import java.util.Arrays;
 import java.util.List;
 
+import objmoveutils.Position;
+
 public enum Direction {
 	DOWN(0),
 	DOWN_RIGHT(1),
@@ -44,5 +46,27 @@ public enum Direction {
 
 	public Direction getClockwiseDirection(int inc)
 		{ return getClockwiseDirection(this, inc); }
+	
+	public static Direction getDirectionThroughPositions(Position p1, Position p2) {
+		if (p2.getX() < p1.getX()) {
+			if (p2.getY() < p1.getY())
+				return Direction.TOP_LEFT;
+			if (p2.getY() > p1.getY())
+				return Direction.DOWN_LEFT;
+			return Direction.LEFT;
+		}
+		if (p2.getX() > p1.getX()) {
+			if (p2.getY() < p1.getY())
+				return Direction.TOP_RIGHT;
+			if (p2.getY() > p1.getY())
+				return Direction.DOWN_RIGHT;
+			return Direction.RIGHT;
+		}
+		if (p2.getY() < p1.getY())
+			return Direction.UP;
+		if (p2.getY() > p1.getY())
+			return Direction.DOWN;
+		return null;
+	}
 
 }

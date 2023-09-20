@@ -1,13 +1,21 @@
 package gui.util;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.List;
 import java.util.function.Function;
+
+import javax.imageio.ImageIO;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListCell;
@@ -21,6 +29,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
+import javafx.scene.image.WritablePixelFormat;
 import javafx.scene.layout.Background;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
@@ -358,6 +367,34 @@ public class Controller {
 
 	public static Image removeBgColor(Image image)
 		{ return removeBgColor(image, Color.WHITE, 0); }
+
+  private static int[] toIntArray(byte[] byteArray) {
+    int[] intArray = new int[byteArray.length / 4];
+    ByteBuffer.wrap(byteArray).asIntBuffer().get(intArray);
+    return intArray;
+  }
+  
+	public static void saveCanvasToFile(Canvas canvas, String filePath) {
+		int width = (int)canvas.getWidth(), height = (int)canvas.getHeight();
+    PixelReader pixelReader = canvas.snapshot(null, null).getPixelReader();
+    WritablePixelFormat<IntBuffer> pixelFormat = WritablePixelFormat.getIntArgbInstance();
+    int[] buffer = new int[width * height];
+    pixelReader.getPixels(0, 0, width, height, pixelFormat, buffer, 0, width);
+    ByteBuffer byteBuffer = ByteBuffer.allocate(width * height * 4);
+    for (int i = 0; i < buffer.length; i++) {
+    	int argb = buffer[i];
+    	byteBuffer.putInt(argb);
+    }
+    try {
+    	BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    	byte[] imageData = byteBuffer.array();
+    	bufferedImage.setRGB(0, 0, width, height, toIntArray(imageData), 0, width);
+    	File file = new File(filePath);
+    	ImageIO.write(bufferedImage, "png", file);
+    }
+    catch (IOException e)
+    	{ e.printStackTrace(); }
+	}
 
 	/* COMO PEGAR AS COORDENADAS DE TELA DE UM NODE
 					Bounds bounds = node.localToScreen(node.getBoundsInLocal());
