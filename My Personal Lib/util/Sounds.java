@@ -2,8 +2,11 @@ package util;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -13,49 +16,221 @@ import javazoom.jl.player.advanced.AdvancedPlayer;
 
 public class Sounds {
 	
-	private static Map<String, AdvancedPlayer> players = new HashMap<>();
-	
-	public static Clip playWav(String wavFilePath) {
-		Clip clip;
-		try (AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(wavFilePath).getAbsoluteFile())) {
-			clip = AudioSystem.getClip();
-			clip.open(audioInputStream);
-			new Thread(new Runnable() {
-				@Override
-				public void run()
-					{ clip.start(); }
-			}).start();
+	private static Map<String, List<AdvancedPlayer>> players = new HashMap<>();
+	private static Map<String, List<Clip>> clipes = new HashMap<>();
+
+	public static void main(String[] args) {
+		String wavFilePath = "D:\\audio.wav";
+		String mp3FilePath = "D:\\Audio & Video\\Audios\\Vozes Cave Johnson\\ACHO QUE VOCÊ LIGOU PRO NÚMERO ERRADO.mp3";
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Pressione ENTER para iniciar...");
+		sc.nextLine();
+		long ct = System.currentTimeMillis();
+		for (int n = 1; n <= 100; n++) {
+			playWav(wavFilePath, true);
+			playMp3(mp3FilePath, true);
 		}
-		catch (Exception e)
-			{ throw new RuntimeException("playWav(): Unable to play the file \"" + wavFilePath + "\"\n" + e.getMessage()); }
-		return clip;
+		System.out.println((System.currentTimeMillis() - ct) + "ms");
+		sc.nextLine();
+		stopAllMp3();
+		stopAllWaves();
+		sc.nextLine();
+		sc.close();
 	}
 
+	public static void playWav(String wavFilePath)
+		{ playWav(wavFilePath, false); }
+	
+	public static void playWav(String wavFilePath, Boolean saveOnCache) {
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try (AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(wavFilePath).getAbsoluteFile())) {
+					try (Clip clip = AudioSystem.getClip()) {
+	    			if (saveOnCache)
+		    			synchronized (clipes) {
+								if (clipes.get(wavFilePath) == null)
+									clipes.put(wavFilePath, new ArrayList<>());
+								clipes.get(wavFilePath).add(clip);
+		    			}
+						clip.open(audioInputStream);
+						clip.start();
+						while (!clip.isRunning())
+							Misc.sleep(50);
+						long end = System.currentTimeMillis() + clip.getMicrosecondLength() / 1000;
+						while (System.currentTimeMillis() < end) {
+							if (!clip.isActive())
+								return;
+							Misc.sleep(50);
+						}
+						clip.close();
+						clip.flush();
+    				if (saveOnCache)
+		    			synchronized (clipes) {
+								clipes.get(wavFilePath).remove(clip);
+								if (clipes.get(wavFilePath).isEmpty())
+				    			clipes.remove(wavFilePath);
+							}
+					}
+				}
+				catch (Exception e)
+					{ throw new RuntimeException("playWav(): Unable to play the file \"" + wavFilePath + "\"\n" + e.getMessage()); }
+			}
+		}).start();
+	}
+	
 	public static void stopWav(Clip clip) {
-		if (clip != null)
-			clip.close();
+		if (clip == null)
+			throw new RuntimeException("stopWav(): 'clip' is null");
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				clip.close();
+				clip.flush();
+				synchronized (clipes) {
+					for (String key : clipes.keySet()) {
+						clipes.get(key).remove(clip);
+						if (clipes.get(key).isEmpty())
+							clipes.remove(key);
+					}
+				}
+			}
+		}).start();
+	}
+	
+	public static void stopWav(String wavFilePath) {
+		if (clipes.get(wavFilePath) == null || clipes.get(wavFilePath).isEmpty())
+			throw new RuntimeException("stopWav(): Resource 'wavFilePath' is not active playing");
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				synchronized (clipes) {
+					for (Clip clip : clipes.get(wavFilePath)) {
+						clip.close();
+						clip.flush();
+					}
+					clipes.remove(wavFilePath);
+				}
+			}
+		}).start();
 	}
 
-	public static void playMp3(String mp3FilePath) {
+	public static void stopAllWaves() {
+		if (clipes.isEmpty())
+			return;
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				synchronized (clipes) {
+					for (String key : clipes.keySet())
+						for (Clip clip : clipes.get(key))
+							clip.close();
+					clipes.clear();
+				}
+			}
+		}).start();
+	}
+	
+	public static List<Clip> getClipes(String wavFilePath) {
+		if (clipes.get(wavFilePath) == null)
+			return null;
+		return clipes.get(wavFilePath);
+	}
+
+	public static List<Clip> getAllClipes() {
+		List<Clip> list = new ArrayList<>();
+		for (String key : clipes.keySet())
+			for (Clip clip : getClipes(key))
+				list.add(clip);
+		return list.isEmpty() ? null : list;
+	}
+	
+	public static void playMp3(String mp3FilePath)
+		{ playMp3(mp3FilePath, false); }
+
+	public static void playMp3(String mp3FilePath, Boolean saveOnCache) {
 		new Thread(new Runnable() {      @Override	    public void run() {
     		try (FileInputStream fileInputStream = new FileInputStream(mp3FilePath)) {
-    			if (players.containsKey(mp3FilePath))
-    				players.get(mp3FilePath).close();
     			AdvancedPlayer player = new AdvancedPlayer(fileInputStream);
-    			players.put(mp3FilePath, player);
+    			if (saveOnCache)
+	    			synchronized (players) {
+							if (players.get(mp3FilePath) == null)
+								players.put(mp3FilePath, new ArrayList<>());
+	    				players.get(mp3FilePath).add(player);
+	    			}
     			player.play();
-    			players.remove(mp3FilePath, player);
+    			if (saveOnCache)
+	  				synchronized (players) {
+	  					if (players.get(mp3FilePath) != null)
+	  						players.get(mp3FilePath).remove(player);
+	    			}
       	}
     		catch (Exception e)
-      		{ throw new RuntimeException("playMp3(): Unable to play the file \"" + mp3FilePath + "\"\n" + e.getMessage()); }
+    			{ throw new RuntimeException("playMp3(): Unable to play the file \"" + mp3FilePath + "\"\n" + e.getMessage()); }
 	    }		}).start();
 	}
 	
+	public static void stopMp3(AdvancedPlayer player) {
+		if (player == null)
+			throw new RuntimeException("stopMp3(): 'player' is null");
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				player.close();
+				synchronized (players) {
+					for (String key : players.keySet()) {
+						players.get(key).remove(player);
+						if (players.get(key).isEmpty())
+							players.remove(key);
+					}
+				}
+			}
+		}).start();
+	}
+	
 	public static void stopMp3(String mp3FilePath) {
-		if (players.containsKey(mp3FilePath)) {
-			players.get(mp3FilePath).close();
-			players.remove(mp3FilePath);
-		}
+		if (players.get(mp3FilePath) == null || players.get(mp3FilePath).isEmpty())
+			return;
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				synchronized (clipes) {
+					for (AdvancedPlayer player : players.get(mp3FilePath))
+						player.close();
+					clipes.remove(mp3FilePath);
+				}
+			}
+		}).start();
 	}
 
+	public static void stopAllMp3() {
+		if (players.isEmpty())
+			return;
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				synchronized (players) {
+					for (String key : players.keySet())
+						for (AdvancedPlayer player : players.get(key))
+							player.close();
+					players.clear();
+				}
+			}
+		}).start();
+	}
+
+	public static List<AdvancedPlayer> getPlayers(String mp3FilePath) {
+		if (players.get(mp3FilePath) == null)
+			return null;
+		return players.get(mp3FilePath);
+	}
+
+	public static List<AdvancedPlayer> getAllPlayers() {
+		List<AdvancedPlayer> list = new ArrayList<>();
+		for (String key : players.keySet())
+			for (AdvancedPlayer player : getPlayers(key))
+				list.add(player);
+		return list.isEmpty() ? null : list;
+	}
+	
 }
