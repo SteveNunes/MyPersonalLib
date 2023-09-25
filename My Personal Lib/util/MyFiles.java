@@ -9,9 +9,47 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileSystemView;
+
 public class MyFiles {
+	
+	private static List<File> selectFilesAndDirs(String initialFolder, Boolean listFiles, Boolean listDirs, Boolean multiSel) {
+		File initPath = initialFolder == null ? FileSystemView.getFileSystemView().getHomeDirectory() : new File(initialFolder);
+    JFileChooser filesChooser = new JFileChooser(initPath);
+    filesChooser.setFileSelectionMode(listFiles && listDirs ? JFileChooser.FILES_AND_DIRECTORIES :
+    																	 listFiles ? JFileChooser.FILES_ONLY : JFileChooser.DIRECTORIES_ONLY);
+    filesChooser.setMultiSelectionEnabled(multiSel);
+    filesChooser.showOpenDialog(null);
+    return new ArrayList<>(Arrays.asList(filesChooser.getSelectedFiles()));
+	}
+	
+	public static List<File> selectFiles(String initialFolder, Boolean multiSel)
+		{ return selectFilesAndDirs(initialFolder, true, false, multiSel); }
+	
+	public static List<File> selectFiles(Boolean multiSel)
+		{ return selectFiles(null, multiSel); }
+
+	public static File selectFile(String initialFolder)
+		{ return selectFiles(initialFolder, false).get(0); }
+
+	public static File selectFile()
+		{ return selectFiles(null, false).get(0); }
+
+	public static List<File> selectDirs(String initialFolder, Boolean multiSel)
+		{ return selectFilesAndDirs(initialFolder, false, true, multiSel); }
+	
+	public static List<File> selectDirs(Boolean multiSel)
+		{ return selectDirs(null, multiSel); }
+	
+	public static File selectDir(String initialFolder)
+		{ return selectDirs(initialFolder, false).get(0); }
+
+	public static File selectDir()
+		{ return selectDirs(null, false).get(0); }
 	
 	public static void copyAllFiles(String fromPath, String toPath) throws IOException {
 		fromPath = (new File(fromPath)).getAbsolutePath().replace("\\.\\", "\\");
