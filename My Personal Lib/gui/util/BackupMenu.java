@@ -13,7 +13,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import util.Backup;
 import util.FindFile;
-import util.MyFiles;
+import util.MyFile;
 
 public class BackupMenu {
 
@@ -120,7 +120,7 @@ public class BackupMenu {
 		List<File> dirs = FindFile.findDir(backupDir);
 		dirs.sort((f1, f2) -> f1.getName().compareTo(f2.getName()));
 		while (dirs.size() > maxBackupSize) {
-			MyFiles.deleteAllDirsAndFiles(dirs.get(0).getAbsolutePath());
+			MyFile.deleteAllDirsAndFiles(dirs.get(0).getAbsolutePath());
 			dirs.remove(0);
 		}
 		updateBackupMenuList();
@@ -131,7 +131,7 @@ public class BackupMenu {
 	private void addMenuListeners() {
   	menuItemLimparBackup.setOnAction(e -> {
   		try {
-				MyFiles.deleteAllDirsAndFiles(backupDir);
+				MyFile.deleteAllDirsAndFiles(backupDir);
 				updateBackupMenuList();
 				if (consumerAposLimparBackup != null)
 					consumerAposLimparBackup.accept(null);

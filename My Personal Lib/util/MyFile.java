@@ -15,7 +15,7 @@ import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileSystemView;
 
-public class MyFiles {
+public class MyFile {
 	
 	private static List<File> selectFilesAndDirs(String initialFolder, Boolean listFiles, Boolean listDirs, Boolean multiSel) {
 		File initPath = initialFolder == null ? FileSystemView.getFileSystemView().getHomeDirectory() : new File(initialFolder);
@@ -34,10 +34,10 @@ public class MyFiles {
 		{ return selectFiles(null, multiSel); }
 
 	public static File selectFile(String initialFolder)
-		{ return selectFiles(initialFolder, false).get(0); }
+		{ return selectFiles(initialFolder, false).isEmpty() ? null : selectFiles(initialFolder, false).get(0); }
 
 	public static File selectFile()
-		{ return selectFiles(null, false).get(0); }
+		{ return selectFiles(null, false).isEmpty() ? null : selectFiles(null, false).get(0); }
 
 	public static List<File> selectDirs(String initialFolder, Boolean multiSel)
 		{ return selectFilesAndDirs(initialFolder, false, true, multiSel); }
@@ -46,10 +46,10 @@ public class MyFiles {
 		{ return selectDirs(null, multiSel); }
 	
 	public static File selectDir(String initialFolder)
-		{ return selectDirs(initialFolder, false).get(0); }
+		{ return selectDirs(initialFolder, false).isEmpty() ? null : selectDirs(initialFolder, false).get(0); }
 
 	public static File selectDir()
-		{ return selectDirs(null, false).get(0); }
+		{ return selectDirs(null, false).isEmpty() ? null : selectDirs(null, false).get(0); }
 	
 	public static void copyAllFiles(String fromPath, String toPath) throws IOException {
 		fromPath = (new File(fromPath)).getAbsolutePath().replace("\\.\\", "\\");

@@ -10,15 +10,21 @@ import java.util.List;
 
 public class MyMath {
 	
-	public static Boolean isPrime(int n) {
-		if (n <= 1)
-			return false;
-		for (int x = 2; x <= Math.sqrt(n); x++)
-			if (n % x == 0)
-				return false;
-		return true;
-	}
-  
+	public static Boolean isPrime(long n)
+		{ return (n == 2 || n == 3 || n == 5 || n == 7 || (n > 9 && n % 2 > 0 && n % 3 > 0 && n % 5 > 0 && n % 7 > 0)); }
+	
+	/**
+	 * Retorna a porcentagem de num
+	 */
+	public static double porcent(double num, double porcent)
+		{ return ((num / 100) * porcent); }
+	
+	/**
+	 * Retorna a porcentagem de um valor baseado na parte desse valor
+	 */
+	public static double getPorcentFrom(double sliceValue, double wholeValue)
+		{ return sliceValue / wholeValue * 100; }
+
 	//Clone da função map() do código do arduino
 	public static long mapValue(long value, long inMin, long inMax, long outMin, long outMax)
   	{ return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin; };

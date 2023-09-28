@@ -324,7 +324,7 @@ public class MyCalendar {
 			if (show.charAt(n) == '1' && (n > 0 || dur[0] > 0)) {
 				if (!result.isEmpty())
 					result.append(":");
-				result.append(Misc.fillWithZerosAtLeft("" + dur[n], 2));
+				result.append(MyString.fillWithZerosAtLeft("" + dur[n], 2));
 			}
 		return result.toString();
 	}

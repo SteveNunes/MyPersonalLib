@@ -57,7 +57,7 @@ public class TextFile {
 	public void loadFileFromDisk(String fileName) {
 		this.fileName = fileName;
 		if (new File(fileName).exists())
-			fileBuffer = MyFiles.readAllLinesFromFile(fileName);
+			fileBuffer = MyFile.readAllLinesFromFile(fileName);
 		else
 			fileBuffer = new ArrayList<>();
 	}
@@ -82,7 +82,7 @@ public class TextFile {
 	 * 
 	 */
 	public void saveToDisk(String fileName)
-		{ MyFiles.writeAllLinesOnFile(fileBuffer, fileName); }
+		{ MyFile.writeAllLinesOnFile(fileBuffer, fileName); }
 
 	/**
 	 * Sobrecarga do método 'saveToDisk(String fileName)' onde não é preciso

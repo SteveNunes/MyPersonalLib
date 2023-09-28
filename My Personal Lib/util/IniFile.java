@@ -57,6 +57,24 @@ public class IniFile {
 	
 	public Path getFilePath()
 		{ return file; }
+	
+	public String getNextFreeNumericItem(String section) {
+		int n = 1;
+		for (; isItem(section, "" + n); n++);
+		return "" + n;
+	}
+	
+	public void removeNumericItemAndReorderSection(String section, String item) {
+		Map<String, String> newSection = new HashMap<>();
+		int n = 1;
+		for (String s : getItemList(section))
+			if (!read(section, s).equals(item))
+				newSection.put("" + (n++), read(section, s));
+		while (!getItemList(section).isEmpty())
+			remove(section, getItemList(section).get(0));
+		for (String s : newSection.keySet())
+			write(section, s, newSection.get(s));
+	}
 
 	public static Boolean stringIsSection(String s)
 		{ return s.split(" ")[0].matches(("\\Q" + "[*]*" + "\\E").replace("*", "\\E.*\\Q")); }
@@ -71,7 +89,7 @@ public class IniFile {
 		iniBody = new LinkedHashMap<String, LinkedHashMap<String, String>>();
 		if (!fileName.isEmpty()) {
 			if (Files.exists(file)) {
-				fileBuffer = MyFiles.readAllLinesFromFile(fileName);
+				fileBuffer = MyFile.readAllLinesFromFile(fileName);
 				String section = "", item, val;
 				for (String s : fileBuffer)
 					if (stringIsSection(s)) {
@@ -161,7 +179,7 @@ public class IniFile {
 
 	public void saveToDisk() {
 		updateFileBuffer();
-		MyFiles.writeAllLinesOnFile(fileBuffer, fileName);
+		MyFile.writeAllLinesOnFile(fileBuffer, fileName);
 	}
 
 	public void write(String iniSection, String iniItem, String value, Boolean saveOnDisk) {

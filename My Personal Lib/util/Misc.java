@@ -3,11 +3,9 @@ package util;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
-import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -18,12 +16,6 @@ import javafx.scene.input.ClipboardContent;
 public class Misc {
 	
 	private static Map<String, Map<Long, ?>> uniqueId = new HashMap<>();
-	
-	public static String ignoraAcentos(String text) {
-    return Normalizer.normalize(text, Normalizer.Form.NFD)
-            .replaceAll("\\p{M}", "")
-            .toLowerCase(Locale.getDefault());
-	}
 	
 	public static void sleep(long millis) {
 		try
@@ -115,21 +107,6 @@ public class Misc {
 	  return resultado.toString();
 	}
 	
-	public static Boolean isPrimo(long n)
-		{ return (n == 2 || n == 3 || n == 5 || n == 7 || (n > 9 && n % 2 > 0 && n % 3 > 0 && n % 5 > 0 && n % 7 > 0)); }
-
-	/**
-	 * Retorna a porcentagem de num
-	 */
-	public static double porcent(double num, double porcent)
-		{ return ((num / 100) * porcent); }
-	
-	/**
-	 * Retorna a porcentagem de um valor baseado na parte desse valor
-	 */
-	public static double getPorcentFrom(double sliceValue, double wholeValue)
-		{ return sliceValue / wholeValue * 100; }
-
 	public static Boolean alwaysTrue()
 		{ return true; }
 	
@@ -160,35 +137,6 @@ public class Misc {
 	public static <T> T notNull(T o1, T o2)
 		{ return o1 == null ? o2 : o1; }
 	
-	/**
-	 * Retorna a {@code String} informada contendo um valor numérico, preenchida
-	 * com zeros á esquerda, até chegar ao total de digitos especificados.<p>
-	 */
-	public static String fillWithZerosAtLeft(String number, int totalDigits) {
-		while (number.length() < totalDigits)
-			number = "0" + number;
-		return number;
-	}
-	
-	/**
-	 * Retorna a string informada com no máximo {@code limitLenght} de letras.
-	 * Se a string for maior que {@code limitLenght}, poe '...' ao final da string.
-	 */
-	public static String limitedString(String string, int limitLenght) {
-		StringBuilder sb = new StringBuilder();
-		for (String s : string.split(" ")) {
-			if (sb.length() + s.length() >= limitLenght) {
-				sb.append("...");
-				return sb.toString();
-			}
-			if (!sb.isEmpty())
-				sb.append(" ");
-			sb.append(s);
-			
-		}
-		return sb.toString();
-	}
-
 	public static Boolean textMatch(String text, String pattern, TextMatchType matchType, Boolean caseSensitive) {
 		if (text == null || text.isEmpty() || pattern == null || pattern.isEmpty())
 			return false;
@@ -219,7 +167,7 @@ public class Misc {
 		{ return textMatch(text, pattern, TextMatchType.EXACTLY); }
 	
 	/**
-	 * Converte uma {@code Array} de {@code String} uníca.
+	 * Converte uma {@code Array} em {@code String}.
 	 */
 	public static String arrayToString(String[] array, int startIndex, int endIndex, String spacing) {
 		StringBuilder result = new StringBuilder(); 

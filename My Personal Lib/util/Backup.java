@@ -33,7 +33,7 @@ public class Backup {
 		dirs.sort((f1, f2) -> f1.getName().compareTo(f2.getName()));
 		while (dirs.size() > maxLimit) {
 			File dir = dirs.get(0);
-			MyFiles.deleteAllDirsAndFiles(dir.getAbsolutePath());
+			MyFile.deleteAllDirsAndFiles(dir.getAbsolutePath());
 			dirs.remove(0);
 		}
 	}
@@ -45,20 +45,20 @@ public class Backup {
 		backupDir = BACKUP_DIR + backupDir + "\\";
 		String tempDir = ".\\src\\BackupTemp\\";
 		try
-			{ MyFiles.copyAllFiles(FILES_TO_BACKUP_DIR, tempDir); }
+			{ MyFile.copyAllFiles(FILES_TO_BACKUP_DIR, tempDir); }
 		catch (IOException ex) {
-			MyFiles.deleteAllDirsAndFiles(tempDir);
+			MyFile.deleteAllDirsAndFiles(tempDir);
 			throwIOException("Falha ao carregar backup.");
 		}
 		try {
-			MyFiles.copyAllFiles(backupDir, FILES_TO_BACKUP_DIR);
-			MyFiles.deleteAllDirsAndFiles(tempDir);
+			MyFile.copyAllFiles(backupDir, FILES_TO_BACKUP_DIR);
+			MyFile.deleteAllDirsAndFiles(tempDir);
 		}
 		catch (IOException ex) {
-			MyFiles.deleteAllDirsAndFiles(FILES_TO_BACKUP_DIR);
+			MyFile.deleteAllDirsAndFiles(FILES_TO_BACKUP_DIR);
 			try {
-				MyFiles.copyAllFiles(tempDir, FILES_TO_BACKUP_DIR);
-				MyFiles.deleteAllDirsAndFiles(tempDir);
+				MyFile.copyAllFiles(tempDir, FILES_TO_BACKUP_DIR);
+				MyFile.deleteAllDirsAndFiles(tempDir);
 			}
 			catch (IOException ex2)
 				{ throwIOException("Falha ao carregar backup."); }
@@ -70,11 +70,11 @@ public class Backup {
 		ioException = null;
 		backupDir = BACKUP_DIR + backupDir + "\\";
 		try {
-			MyFiles.deleteAllDirsAndFiles(backupDir);
-			MyFiles.copyAllFiles(FILES_TO_BACKUP_DIR, backupDir);
+			MyFile.deleteAllDirsAndFiles(backupDir);
+			MyFile.copyAllFiles(FILES_TO_BACKUP_DIR, backupDir);
 		}
 		catch (IOException ex) {
-			MyFiles.deleteAllDirsAndFiles(backupDir);
+			MyFile.deleteAllDirsAndFiles(backupDir);
 			throwIOException("Falha ao salvar backup.");
 		}
 	}	
