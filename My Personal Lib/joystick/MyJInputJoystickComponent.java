@@ -6,7 +6,7 @@ import net.java.games.input.Component;
 import net.java.games.input.Component.Identifier.Axis;
 import net.java.games.input.Component.Identifier.Button;
 
-public class MyJoystickComponent {
+public class MyJInputJoystickComponent {
 
 	private Component component;
 	private String name;
@@ -18,7 +18,7 @@ public class MyJoystickComponent {
 	private float maxTriggerValue;
 	private float deadZone;
 	
-	public MyJoystickComponent(Component component, String name, float minTriggerValue, float maxTriggerValue) {
+	public MyJInputJoystickComponent(Component component, String name, float minTriggerValue, float maxTriggerValue) {
 		this.component = component;
 		this.name = name;
 		this.minTriggerValue = minTriggerValue;
@@ -30,37 +30,37 @@ public class MyJoystickComponent {
 		heldTime = 0;
 	}
 	
-	public MyJoystickComponent(Component component, String name, float triggerValue)
+	public MyJInputJoystickComponent(Component component, String name, float triggerValue)
 		{ this(component, name, triggerValue, triggerValue); }
 	
-	public MyJoystickComponent(Component component, float minTriggerValue, float maxTriggerValue)
+	public MyJInputJoystickComponent(Component component, float minTriggerValue, float maxTriggerValue)
 		{ this(component, component.getName(), minTriggerValue, maxTriggerValue); }
 
-	public MyJoystickComponent(Component component, float triggerValue)
+	public MyJInputJoystickComponent(Component component, float triggerValue)
 		{ this(component, component.getName(), triggerValue, triggerValue); }
 
-	public MyJoystickComponent(Component component, String name)
+	public MyJInputJoystickComponent(Component component, String name)
 		{ this(component, name, 0f, 1f); }
 
-	public MyJoystickComponent(Component component)
+	public MyJInputJoystickComponent(Component component)
 		{ this(component, component.getName(), 0f, 1f); }
 	
-	public MyJoystickComponent(MyJoystickComponent componentEX, String name, float minTriggerValue, float maxTriggerValue)
+	public MyJInputJoystickComponent(MyJInputJoystickComponent componentEX, String name, float minTriggerValue, float maxTriggerValue)
 		{ this(componentEX.getComponent(), name, minTriggerValue, maxTriggerValue); }
 	
-	public MyJoystickComponent(MyJoystickComponent componentEX, String name, float triggerValue)
+	public MyJInputJoystickComponent(MyJInputJoystickComponent componentEX, String name, float triggerValue)
 		{ this(componentEX.getComponent(), name, triggerValue, triggerValue); }
 
-	public MyJoystickComponent(MyJoystickComponent componentEX, float minTriggerValue, float maxTriggerValue)
+	public MyJInputJoystickComponent(MyJInputJoystickComponent componentEX, float minTriggerValue, float maxTriggerValue)
 		{ this(componentEX, componentEX.getName(), minTriggerValue, maxTriggerValue); }
 	
-	public MyJoystickComponent(MyJoystickComponent componentEX, float triggerValue)
+	public MyJInputJoystickComponent(MyJInputJoystickComponent componentEX, float triggerValue)
 		{ this(componentEX, componentEX.getName(), triggerValue, triggerValue); }
 	
-	public MyJoystickComponent(MyJoystickComponent componentEX, String name)
+	public MyJInputJoystickComponent(MyJInputJoystickComponent componentEX, String name)
 		{ this(componentEX, name, componentEX.minTriggerValue, componentEX.maxTriggerValue); }
 	
-	public MyJoystickComponent(MyJoystickComponent componentEX)
+	public MyJInputJoystickComponent(MyJInputJoystickComponent componentEX)
 		{ this(componentEX, componentEX.name, componentEX.minTriggerValue, componentEX.maxTriggerValue); }
 
 	private void setStartHold() {
@@ -116,21 +116,21 @@ public class MyJoystickComponent {
 	}
 	
 	public boolean isAnalogicComponent()
-		{ return minTriggerValue != maxTriggerValue; }
+		{ return isAxis() || isTrigger(); }
 	
 	public boolean isButton()
 		{ return component.getIdentifier() instanceof Button; }
 	
 	public boolean isAxis()
-		{ return component.getIdentifier() instanceof Axis && minTriggerValue < 0 && maxTriggerValue > 0; }
+		{ return component.getIdentifier() instanceof Axis && !isTrigger(); }
 
 	public boolean isTrigger() {
-		return component.getIdentifier() instanceof Axis &&
-			((minTriggerValue == 0 && maxTriggerValue != 0) || (minTriggerValue != 0 && maxTriggerValue == 0));
+		return component.getIdentifier() == Component.Identifier.Axis.Z ||
+						component.getIdentifier() == Component.Identifier.Axis.RZ;
 	}
 
 	public boolean isPov()
-		{ return component.getIdentifier().getName().equals("pov"); }
+		{ return component.getIdentifier() == Component.Identifier.Axis.POV; }
 	
 	public void setDeadZone(float value) {
 		if (!isAnalogicComponent())
@@ -181,13 +181,13 @@ public class MyJoystickComponent {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj != null && (this == obj || ((MyJoystickComponent)obj).getComponent() == component))
+		if (obj != null && (this == obj || ((MyJInputJoystickComponent)obj).getComponent() == component))
 			return true;
 		if (obj == null)
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		MyJoystickComponent other = (MyJoystickComponent) obj;
+		MyJInputJoystickComponent other = (MyJInputJoystickComponent) obj;
 		return Objects.equals(component, other.component);
 	}
 
