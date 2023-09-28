@@ -1,7 +1,6 @@
 package joystick;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -216,7 +215,7 @@ public class MyJInputJoystick {
 	}
 	
 	public static List<MyJInputJoystick> getJoysticks()
-		{ return Collections.unmodifiableList(joysticks); }
+		{ return joysticks; }
 	
 	public boolean isConnected()
 		{ return !close; }
@@ -234,7 +233,7 @@ public class MyJInputJoystick {
 		{ return buttons.size(); }
 	
 	public List<MyJInputJoystickComponent> getButtons()
-		{ return Collections.unmodifiableList(buttons); }
+		{ return buttons; }
 
 	public MyJInputJoystickComponent getButton(int buttonID) {
 		if (buttonID < 0 || buttonID >= buttons.size())
@@ -246,7 +245,7 @@ public class MyJInputJoystick {
 		{ return axes.size(); }
 	
 	public List<MyJInputJoystickComponent> getAxes()
-		{ return Collections.unmodifiableList(axes); }
+		{ return axes; }
 	
 	public MyJInputJoystickComponent getAxis(int axisID) {
 		if (axisID < 0 || axisID >= axes.size())
@@ -258,7 +257,7 @@ public class MyJInputJoystick {
 		{ return triggers.size(); }
 	
 	public List<MyJInputJoystickComponent> getTriggers()
-		{ return Collections.unmodifiableList(triggers); }
+		{ return triggers; }
 	
 	public MyJInputJoystickComponent getTrigger(int triggerID) {
 		if (triggerID < 0 || triggerID >= triggers.size())
@@ -270,7 +269,7 @@ public class MyJInputJoystick {
 		{ return povs.size(); }
 	
 	public List<MyJInputJoystickComponent> getPovs()
-		{ return Collections.unmodifiableList(povs); }
+		{ return povs; }
 	
 	public MyJInputJoystickComponent getPov(int povID) {
 		if (povID < 0 || povID >= povs.size())
@@ -282,7 +281,7 @@ public class MyJInputJoystick {
 		{ return components.size(); }
 	
 	public List<MyJInputJoystickComponent> getComponents()
-		{ return Collections.unmodifiableList(components); }
+		{ return components; }
 	
 	public MyJInputJoystickComponent getComponent(int componentID) {
 		if (componentID < 0 || componentID >= components.size())

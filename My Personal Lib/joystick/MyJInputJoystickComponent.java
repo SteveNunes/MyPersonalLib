@@ -48,29 +48,28 @@ public class MyJInputJoystickComponent {
 	public MyJInputJoystickComponent(Component component)
 		{ this(component, component.getName(), 0f, 1f); }
 	
-	public MyJInputJoystickComponent(MyJInputJoystickComponent componentEX, String name, float minTriggerValue, float maxTriggerValue)
-		{ this(componentEX.getComponent(), name, minTriggerValue, maxTriggerValue); }
+	public MyJInputJoystickComponent(MyJInputJoystickComponent component, String name, float minTriggerValue, float maxTriggerValue)
+		{ this(component.getComponent(), name, minTriggerValue, maxTriggerValue); }
 	
-	public MyJInputJoystickComponent(MyJInputJoystickComponent componentEX, String name, float triggerValue)
-		{ this(componentEX.getComponent(), name, triggerValue, triggerValue); }
+	public MyJInputJoystickComponent(MyJInputJoystickComponent component, String name, float triggerValue)
+		{ this(component.getComponent(), name, triggerValue, triggerValue); }
 
-	public MyJInputJoystickComponent(MyJInputJoystickComponent componentEX, float minTriggerValue, float maxTriggerValue)
-		{ this(componentEX, componentEX.getName(), minTriggerValue, maxTriggerValue); }
+	public MyJInputJoystickComponent(MyJInputJoystickComponent component, float minTriggerValue, float maxTriggerValue)
+		{ this(component, component.getName(), minTriggerValue, maxTriggerValue); }
 	
-	public MyJInputJoystickComponent(MyJInputJoystickComponent componentEX, float triggerValue)
-		{ this(componentEX, componentEX.getName(), triggerValue, triggerValue); }
+	public MyJInputJoystickComponent(MyJInputJoystickComponent component, float triggerValue)
+		{ this(component, component.getName(), triggerValue, triggerValue); }
 	
-	public MyJInputJoystickComponent(MyJInputJoystickComponent componentEX, String name)
-		{ this(componentEX, name, componentEX.minTriggerValue, componentEX.maxTriggerValue); }
+	public MyJInputJoystickComponent(MyJInputJoystickComponent component, String name)
+		{ this(component, name, component.minTriggerValue, component.maxTriggerValue); }
 	
-	public MyJInputJoystickComponent(MyJInputJoystickComponent componentEX)
-		{ this(componentEX, componentEX.name, componentEX.minTriggerValue, componentEX.maxTriggerValue); }
+	public MyJInputJoystickComponent(MyJInputJoystickComponent component)
+		{ this(component, component.name, component.minTriggerValue, component.maxTriggerValue); }
 
 	public void setExactlyTriggerValues(float ... values) {
 		onlyTriggerValues = new ArrayList<>();
 		for (float f : values)
 			onlyTriggerValues.add(f);
-		System.out.println(getName() + " -> " + onlyTriggerValues);
 	}
 	
 	private void setStartHold() {
