@@ -277,6 +277,18 @@ public class MyJInputJoystick {
 		return povs.get(povID);
 	}	
 		
+	public int getTotalComponents()
+		{ return components.size(); }
+	
+	public List<MyJInputJoystickComponent> getComponents()
+		{ return Collections.unmodifiableList(components); }
+	
+	public MyJInputJoystickComponent getComponent(int componentID) {
+		if (componentID < 0 || componentID >= components.size())
+			throw new RuntimeException(componentID + " - Invalid Button ID");
+		return components.get(componentID);
+	}
+
 	public void setOnPressButtonEvent(BiConsumer<MyJInputJoystick, MyJInputJoystickComponent> consumer)
 		{ onPressButton = consumer; }
 
