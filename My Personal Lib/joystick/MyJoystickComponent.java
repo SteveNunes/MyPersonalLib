@@ -92,15 +92,15 @@ public class MyJoystickComponent {
 		else { // Componentes analógicos (Axis e Triggers)
 			if (minTriggerValue == 0) {
 				if (maxTriggerValue > 0) { // Axis que vai de 0 a 1f
-					if (prevValue < deadZone && value >= deadZone)
+					if (prevValue <= deadZone && value > deadZone)
 						setStartHold();
-					else if (prevValue >= deadZone && value < deadZone)
+					else if (prevValue > deadZone && value <= deadZone)
 						setHoldTime();
 				}
 				else { // Axis que vai de 0 a -1f
-					if (prevValue > deadZone * -1 && value <= deadZone * -1)
+					if (prevValue >= deadZone * -1 && value < deadZone * -1)
 						setStartHold();
-					else if (prevValue <= deadZone * -1 && value > deadZone * -1)
+					else if (prevValue < deadZone * -1 && value >= deadZone * -1)
 						setHoldTime();
 				}
 			}

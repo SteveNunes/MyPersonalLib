@@ -85,20 +85,17 @@ public class MyJoystick {
 			else if (type.equals("x") || type.equals("y") || type.equals("z") ||
 							 type.equals("rx") || type.equals("ry") || type.equals("rz")) { // Axis (xy) e gatilhos (z)
 									if (!allAsButton) {
-										if (type.equals("z"))
-											triggers.add(new MyJoystickComponent(component, 0, -1f));
-										else if (type.equals("rz"))
-											triggers.add(new MyJoystickComponent(component, 0, 1f));
+										if (type.equals("z") || type.equals("rz")) {
+											triggers.add(new MyJoystickComponent(component, component.getName() + "-", 0, -1f));
+											triggers.add(new MyJoystickComponent(component, component.getName() + "+", 0, 1f));
+										}
 										else
 											axes.add(new MyJoystickComponent(component, -1f, 1f));
 									}
-									else
-										for (int n = 0; n < 2; n++) {
-											if (n == 0)
-												components.add(new MyJoystickComponent(component, component.getName() + "-", 0f, -1f));
-											else
-												components.add(new MyJoystickComponent(component, component.getName() + "+", 0f, 1f));
-										}
+									else {
+										components.add(new MyJoystickComponent(component, component.getName() + "-", 0f, -1f));
+										components.add(new MyJoystickComponent(component, component.getName() + "+", 0f, 1f));
+									}
 			}
 		}
 		close = false;
