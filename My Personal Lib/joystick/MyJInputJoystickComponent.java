@@ -82,8 +82,8 @@ public class MyJInputJoystickComponent {
 		startHold = -1;
 	}
 	
-	/** Call this method always after doing a Controller.pool() */
-	public void pool() {
+	/** Call this method always after doing a Controller.poll() */
+	public void poll() {
 		if (startHold == -1)
 			startHold = 0;
 		if (heldTime == -1)
@@ -166,11 +166,11 @@ public class MyJInputJoystickComponent {
 	public String getName()
 		{ return name; }
 	
-	/** Return the component pool value */
+	/** Return the component poll value */
 	public float getValue()
 		{ return value; }
 	
-	/** Return the preview component pool value (Before the last pool() call) */
+	/** Return the preview component poll value (Before the last poll() call) */
 	public float getPreviewValue()
 		{ return prevValue; }
 	
@@ -182,11 +182,11 @@ public class MyJInputJoystickComponent {
 	public boolean isHold()
 		{ return startHold > 0; }
 
-	/** Component was pressed right now, after the last call of pool() */
+	/** Component was pressed right now, after the last call of poll() */
 	public boolean wasPressed()
 		{ return startHold > 0 && heldTime == -1; }
 
-	/** Component was released right now, after the last call of pool() */
+	/** Component was released right now, after the last call of poll() */
 	public boolean wasReleased()
 		{ return heldTime > 0 && startHold == -1; }
 

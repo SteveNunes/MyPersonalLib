@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import enums.TextMatchType;
@@ -17,10 +18,22 @@ public class Misc {
 	
 	private static Map<String, Map<Long, ?>> uniqueId = new HashMap<>();
 	
+	/** Atalho para pausar a thread, sem precisar se preocupar com o try catch envolvido. */
 	public static void sleep(long millis) {
 		try
 			{ Thread.sleep(millis); }
 		catch (Exception e) {}
+	}
+	
+	/** Apenas imprime no console o valor de System.currentTimeMillis() */
+	public static void printCTime()
+		{ System.out.println(System.currentTimeMillis()); }
+	
+	/** Retorna o tempo de processamento do consumer, em milisegundos */
+	public static <T> long bench(Consumer<T> consumer) {
+		long start = System.currentTimeMillis();
+		consumer.accept(null);
+		return System.currentTimeMillis() - start;
 	}
 	
 	public static byte[] charArrayToBytes(char[] chars) {

@@ -1,6 +1,7 @@
 package joystick;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -117,22 +118,24 @@ public class MyJInputJoystick {
 						if (onAxisChanges != null)
 							synchronized (axes) {
 								for (MyJInputJoystickComponent axis : axes) {
-									axis.pool();
-									if (axis.isHold() && axis.getPreviewValue() != axis.getValue())
-										onAxisChanges.accept(thisJoystick, axis);
+									axis.poll();
+									if ((axis.isHold() && axis.getPreviewValue() != axis.getValue()) ||
+											axis.wasPressed() || axis.wasReleased())
+												onAxisChanges.accept(thisJoystick, axis);
 								}
 							}
 						if (onTriggerChanges != null)
 							synchronized (triggers) {
 								for (MyJInputJoystickComponent trigger : triggers) {
-									trigger.pool();
-									if (trigger.isHold() && trigger.getPreviewValue() != trigger.getValue())
-										onTriggerChanges.accept(thisJoystick, trigger);
+									trigger.poll();
+									if ((trigger.isHold() && trigger.getPreviewValue() != trigger.getValue()) ||
+											trigger.wasPressed() || trigger.wasReleased())
+												onTriggerChanges.accept(thisJoystick, trigger);
 								}
 							}
 						synchronized (povs) {
 							for (MyJInputJoystickComponent pov : povs) {
-								pov.pool();
+								pov.poll();
 								if (pov.wasPressed() && onPressPov != null)
 									onPressPov.accept(thisJoystick, pov);
 								else if (pov.wasReleased() && onReleasePov != null)
@@ -143,7 +146,7 @@ public class MyJInputJoystick {
 						}
 						synchronized (buttons) {
 							for (MyJInputJoystickComponent button : buttons) {
-								button.pool();
+								button.poll();
 								if (button.wasPressed() && onPressButton != null)
 									onPressButton.accept(thisJoystick, button);
 								else if (button.wasReleased() && onReleaseButton != null)
@@ -156,7 +159,7 @@ public class MyJInputJoystick {
 					else
 						synchronized (components) {
 							for (MyJInputJoystickComponent joyComponents : components) {
-								joyComponents.pool();
+								joyComponents.poll();
 								if (joyComponents.wasPressed() && onPressAnyComponent != null)
 									onPressAnyComponent.accept(thisJoystick, joyComponents);
 								else if (joyComponents.wasReleased() && onReleaseAnyComponent != null)
@@ -184,12 +187,7 @@ public class MyJInputJoystick {
 		{ return initializeControllers(MyJoystickStyle.DEFAULT); }
 	
 	public static int initializeControllers(MyJoystickStyle joystickStyle) {
-		if (!joysticks.isEmpty()) {
-			for (MyJInputJoystick joystick : joysticks)
-				joystick.close();
-			joysticks.clear();
-		}
-		
+		closeAllJoysticks();
 		Controller[] controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
 		
 		for (Controller controller : controllers) {
@@ -217,6 +215,19 @@ public class MyJInputJoystick {
 	public static List<MyJInputJoystick> getJoysticks()
 		{ return joysticks; }
 	
+	public static void closeAllJoysticks() {
+		for (MyJInputJoystick j : joysticks) {
+			j.close();
+			onJoystickDisconnected.accept(j);
+		}
+		joysticks.clear();
+	}
+	
+	public static void setPauseAllJoysticks(boolean value) {
+		for (MyJInputJoystick j : joysticks)
+			j.setPauseThread(value);		
+	}
+	
 	public boolean isConnected()
 		{ return !close; }
 	
@@ -233,7 +244,7 @@ public class MyJInputJoystick {
 		{ return buttons.size(); }
 	
 	public List<MyJInputJoystickComponent> getButtons()
-		{ return buttons; }
+		{ return Collections.unmodifiableList(buttons); }
 
 	public MyJInputJoystickComponent getButton(int buttonID) {
 		if (buttonID < 0 || buttonID >= buttons.size())
@@ -245,7 +256,7 @@ public class MyJInputJoystick {
 		{ return axes.size(); }
 	
 	public List<MyJInputJoystickComponent> getAxes()
-		{ return axes; }
+		{ return Collections.unmodifiableList(axes); }
 	
 	public MyJInputJoystickComponent getAxis(int axisID) {
 		if (axisID < 0 || axisID >= axes.size())
@@ -257,7 +268,7 @@ public class MyJInputJoystick {
 		{ return triggers.size(); }
 	
 	public List<MyJInputJoystickComponent> getTriggers()
-		{ return triggers; }
+		{ return Collections.unmodifiableList(triggers); }
 	
 	public MyJInputJoystickComponent getTrigger(int triggerID) {
 		if (triggerID < 0 || triggerID >= triggers.size())
@@ -269,7 +280,7 @@ public class MyJInputJoystick {
 		{ return povs.size(); }
 	
 	public List<MyJInputJoystickComponent> getPovs()
-		{ return povs; }
+		{ return Collections.unmodifiableList(povs); }
 	
 	public MyJInputJoystickComponent getPov(int povID) {
 		if (povID < 0 || povID >= povs.size())
@@ -281,7 +292,7 @@ public class MyJInputJoystick {
 		{ return components.size(); }
 	
 	public List<MyJInputJoystickComponent> getComponents()
-		{ return components; }
+		{ return Collections.unmodifiableList(components); }
 	
 	public MyJInputJoystickComponent getComponent(int componentID) {
 		if (componentID < 0 || componentID >= components.size())
