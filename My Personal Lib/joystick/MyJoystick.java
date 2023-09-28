@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
-import enums.MyJoystickStyle;
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
@@ -22,26 +21,26 @@ public class MyJoystick {
 	private static Consumer<MyJoystick> onJoystickDisconnected = joystick -> {};
 	
 	private Controller controller;
-	private List<JoyComponent> components;
-	private List<JoyComponent> buttons;
-	private List<JoyComponent> axes;
-	private List<JoyComponent> triggers;
-	private List<JoyComponent> povs;
+	private List<MyJoystickComponent> components;
+	private List<MyJoystickComponent> buttons;
+	private List<MyJoystickComponent> axes;
+	private List<MyJoystickComponent> triggers;
+	private List<MyJoystickComponent> povs;
 	private boolean allAsButton;
 	private boolean pauseThread;
 	private boolean close;
 	private int joystickID;
-	private Consumer<JoyComponent> onPressPov;
-	private Consumer<JoyComponent> onHoldPov;
-	private Consumer<JoyComponent> onReleasePov;
-	private Consumer<JoyComponent> onPressButton;
-	private Consumer<JoyComponent> onHoldButton;
-	private Consumer<JoyComponent> onReleaseButton;
-	private Consumer<JoyComponent> onPressAnyComponent;
-	private Consumer<JoyComponent> onHoldAnyComponent;
-	private Consumer<JoyComponent> onReleaseAnyComponent;
-	private Consumer<JoyComponent> onAxisChanges;
-	private Consumer<JoyComponent> onTriggerChanges;
+	private Consumer<MyJoystickComponent> onPressPov;
+	private Consumer<MyJoystickComponent> onHoldPov;
+	private Consumer<MyJoystickComponent> onReleasePov;
+	private Consumer<MyJoystickComponent> onPressButton;
+	private Consumer<MyJoystickComponent> onHoldButton;
+	private Consumer<MyJoystickComponent> onReleaseButton;
+	private Consumer<MyJoystickComponent> onPressAnyComponent;
+	private Consumer<MyJoystickComponent> onHoldAnyComponent;
+	private Consumer<MyJoystickComponent> onReleaseAnyComponent;
+	private Consumer<MyJoystickComponent> onAxisChanges;
+	private Consumer<MyJoystickComponent> onTriggerChanges;
 	
 	public MyJoystick(Controller controller)
 		{ this(controller, MyJoystickStyle.DEFAULT); }
@@ -71,13 +70,13 @@ public class MyJoystick {
 			String type = component.getIdentifier().getName();
 			if (MyString.isInteger(type)) { // Botão
 				if (!allAsButton)
-					buttons.add(new JoyComponent(component, 1f));
+					buttons.add(new MyJoystickComponent(component, 1f));
 				else
-					components.add(new JoyComponent(component, 1f));
+					components.add(new MyJoystickComponent(component, 1f));
 			}
 			else if (type.equals("pov")) // POV
 				for (int n = 1; n <= 8; n++) {
-					JoyComponent joyComponent = new JoyComponent(component, "Pov " + povDirs[n - 1], 0.125f * n);
+					MyJoystickComponent joyComponent = new MyJoystickComponent(component, "Pov " + povDirs[n - 1], 0.125f * n);
 					if (!allAsButton)
 						povs.add(joyComponent);
 					else
@@ -87,18 +86,18 @@ public class MyJoystick {
 							 type.equals("rx") || type.equals("ry") || type.equals("rz")) { // Axis (xy) e gatilhos (z)
 									if (!allAsButton) {
 										if (type.equals("z"))
-											triggers.add(new JoyComponent(component, 0, 1f));
+											triggers.add(new MyJoystickComponent(component, 0, -1f));
 										else if (type.equals("rz"))
-											triggers.add(new JoyComponent(component, 0, -1f));
+											triggers.add(new MyJoystickComponent(component, 0, 1f));
 										else
-											axes.add(new JoyComponent(component, -1f, 1f));
+											axes.add(new MyJoystickComponent(component, -1f, 1f));
 									}
 									else
 										for (int n = 0; n < 2; n++) {
 											if (n == 0)
-												components.add(new JoyComponent(component, component.getName() + "-", 0f, -1f));
+												components.add(new MyJoystickComponent(component, component.getName() + "-", 0f, -1f));
 											else
-												components.add(new JoyComponent(component, component.getName() + "+", 0f, 1f));
+												components.add(new MyJoystickComponent(component, component.getName() + "+", 0f, 1f));
 										}
 			}
 		}
@@ -129,21 +128,21 @@ public class MyJoystick {
 					
 					if (!allAsButton) {
 						synchronized (axes) {
-							for (JoyComponent axis : axes) {
+							for (MyJoystickComponent axis : axes) {
 								axis.pool();
 								if (axis.isHold() && axis.getPreviewValue() != axis.getValue())
 									onAxisChanges.accept(axis);
 							}
 						}
 						synchronized (triggers) {
-							for (JoyComponent trigger : triggers) {
+							for (MyJoystickComponent trigger : triggers) {
 								trigger.pool();
 								if (trigger.isHold() && trigger.getPreviewValue() != trigger.getValue())
 									onTriggerChanges.accept(trigger);
 							}
 						}
 						synchronized (povs) {
-							for (JoyComponent pov : povs) {
+							for (MyJoystickComponent pov : povs) {
 								pov.pool();
 								if (pov.wasPressed())
 									onPressPov.accept(pov);
@@ -154,7 +153,7 @@ public class MyJoystick {
 							}
 						}
 						synchronized (buttons) {
-							for (JoyComponent button : buttons) {
+							for (MyJoystickComponent button : buttons) {
 								button.pool();
 								if (button.wasPressed())
 									onPressButton.accept(button);
@@ -167,7 +166,7 @@ public class MyJoystick {
 					}
 					else
 						synchronized (components) {
-							for (JoyComponent joyComponents : components) {
+							for (MyJoystickComponent joyComponents : components) {
 								joyComponents.pool();
 								if (joyComponents.wasPressed())
 									onPressAnyComponent.accept(joyComponents);
@@ -246,10 +245,10 @@ public class MyJoystick {
 	public int getTotalButtons()
 		{ return buttons.size(); }
 	
-	public List<JoyComponent> getButtons()
+	public List<MyJoystickComponent> getButtons()
 		{ return Collections.unmodifiableList(buttons); }
 
-	public JoyComponent getButton(int buttonID) {
+	public MyJoystickComponent getButton(int buttonID) {
 		if (buttonID < 0 || buttonID >= buttons.size())
 			throw new RuntimeException(buttonID + " - Invalid Button ID");
 		return buttons.get(buttonID);
@@ -258,10 +257,10 @@ public class MyJoystick {
 	public int getTotalAxes()
 		{ return axes.size(); }
 	
-	public List<JoyComponent> getAxes()
+	public List<MyJoystickComponent> getAxes()
 		{ return Collections.unmodifiableList(axes); }
 	
-	public JoyComponent getAxis(int axisID) {
+	public MyJoystickComponent getAxis(int axisID) {
 		if (axisID < 0 || axisID >= axes.size())
 			throw new RuntimeException(axisID + " - Invalid Axis ID");
 		return axes.get(axisID);
@@ -270,10 +269,10 @@ public class MyJoystick {
 	public int getTotalTriggers()
 		{ return triggers.size(); }
 	
-	public List<JoyComponent> getTriggers()
+	public List<MyJoystickComponent> getTriggers()
 		{ return Collections.unmodifiableList(triggers); }
 	
-	public JoyComponent getTrigger(int triggerID) {
+	public MyJoystickComponent getTrigger(int triggerID) {
 		if (triggerID < 0 || triggerID >= triggers.size())
 			throw new RuntimeException(triggerID + " - Invalid Trigger ID");
 		return triggers.get(triggerID);
@@ -282,46 +281,46 @@ public class MyJoystick {
 	public int getTotalPovs()
 		{ return povs.size(); }
 	
-	public List<JoyComponent> getPovs()
+	public List<MyJoystickComponent> getPovs()
 		{ return Collections.unmodifiableList(povs); }
 	
-	public JoyComponent getPov(int povID) {
+	public MyJoystickComponent getPov(int povID) {
 		if (povID < 0 || povID >= povs.size())
 			throw new RuntimeException(povID + " - Invalid Pov ID");
 		return povs.get(povID);
 	}	
 		
-	public void setOnPressButtonEvent(Consumer<JoyComponent> consumer)
+	public void setOnPressButtonEvent(Consumer<MyJoystickComponent> consumer)
 		{ onPressButton = consumer; }
 
-	public void setOnHoldButtonEvent(Consumer<JoyComponent> consumer)
+	public void setOnHoldButtonEvent(Consumer<MyJoystickComponent> consumer)
 		{ onHoldButton = consumer; }
 
-	public void setOnReleaseButtonEvent(Consumer<JoyComponent> consumer)
+	public void setOnReleaseButtonEvent(Consumer<MyJoystickComponent> consumer)
 		{ onReleaseButton = consumer; }
 
-	public void setOnPressPovEvent(Consumer<JoyComponent> consumer)
+	public void setOnPressPovEvent(Consumer<MyJoystickComponent> consumer)
 		{ onPressPov = consumer; }
 	
-	public void setOnHoldPovEvent(Consumer<JoyComponent> consumer)
+	public void setOnHoldPovEvent(Consumer<MyJoystickComponent> consumer)
 		{ onHoldPov = consumer; }
 	
-	public void setOnReleasePovEvent(Consumer<JoyComponent> consumer)
+	public void setOnReleasePovEvent(Consumer<MyJoystickComponent> consumer)
 		{ onReleasePov = consumer; }
 	
-	public void setOnAxisChangesEvent(Consumer<JoyComponent> consumer)
+	public void setOnAxisChangesEvent(Consumer<MyJoystickComponent> consumer)
 		{ onAxisChanges = consumer; }
 
-	public void setOnTriggerChangesEvent(Consumer<JoyComponent> consumer)
+	public void setOnTriggerChangesEvent(Consumer<MyJoystickComponent> consumer)
 		{ onTriggerChanges = consumer; }
 
-	public void setOnPressAnyComponentEvent(Consumer<JoyComponent> consumer)
+	public void setOnPressAnyComponentEvent(Consumer<MyJoystickComponent> consumer)
 		{ onPressAnyComponent = consumer; }
 
-	public void setOnHoldAnyComponentEvent(Consumer<JoyComponent> consumer)
+	public void setOnHoldAnyComponentEvent(Consumer<MyJoystickComponent> consumer)
 		{ onHoldAnyComponent = consumer; }
 
-	public void setOnReleaseAnyComponentEvent(Consumer<JoyComponent> consumer)
+	public void setOnReleaseAnyComponentEvent(Consumer<MyJoystickComponent> consumer)
 		{ onReleaseAnyComponent = consumer; }
 
 	public static void setOnJoystickConnectedEvent(Consumer<MyJoystick> consumer)

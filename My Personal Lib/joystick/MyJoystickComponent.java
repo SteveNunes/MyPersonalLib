@@ -6,7 +6,7 @@ import net.java.games.input.Component;
 import net.java.games.input.Component.Identifier.Axis;
 import net.java.games.input.Component.Identifier.Button;
 
-public class JoyComponent {
+public class MyJoystickComponent {
 
 	private Component component;
 	private String name;
@@ -18,7 +18,7 @@ public class JoyComponent {
 	private float maxTriggerValue;
 	private float deadZone;
 	
-	public JoyComponent(Component component, String name, float minTriggerValue, float maxTriggerValue) {
+	public MyJoystickComponent(Component component, String name, float minTriggerValue, float maxTriggerValue) {
 		this.component = component;
 		this.name = name;
 		this.minTriggerValue = minTriggerValue;
@@ -30,37 +30,37 @@ public class JoyComponent {
 		heldTime = 0;
 	}
 	
-	public JoyComponent(Component component, String name, float triggerValue)
+	public MyJoystickComponent(Component component, String name, float triggerValue)
 		{ this(component, name, triggerValue, triggerValue); }
 	
-	public JoyComponent(Component component, float minTriggerValue, float maxTriggerValue)
+	public MyJoystickComponent(Component component, float minTriggerValue, float maxTriggerValue)
 		{ this(component, component.getName(), minTriggerValue, maxTriggerValue); }
 
-	public JoyComponent(Component component, float triggerValue)
+	public MyJoystickComponent(Component component, float triggerValue)
 		{ this(component, component.getName(), triggerValue, triggerValue); }
 
-	public JoyComponent(Component component, String name)
+	public MyJoystickComponent(Component component, String name)
 		{ this(component, name, 0f, 1f); }
 
-	public JoyComponent(Component component)
+	public MyJoystickComponent(Component component)
 		{ this(component, component.getName(), 0f, 1f); }
 	
-	public JoyComponent(JoyComponent componentEX, String name, float minTriggerValue, float maxTriggerValue)
+	public MyJoystickComponent(MyJoystickComponent componentEX, String name, float minTriggerValue, float maxTriggerValue)
 		{ this(componentEX.getComponent(), name, minTriggerValue, maxTriggerValue); }
 	
-	public JoyComponent(JoyComponent componentEX, String name, float triggerValue)
+	public MyJoystickComponent(MyJoystickComponent componentEX, String name, float triggerValue)
 		{ this(componentEX.getComponent(), name, triggerValue, triggerValue); }
 
-	public JoyComponent(JoyComponent componentEX, float minTriggerValue, float maxTriggerValue)
+	public MyJoystickComponent(MyJoystickComponent componentEX, float minTriggerValue, float maxTriggerValue)
 		{ this(componentEX, componentEX.getName(), minTriggerValue, maxTriggerValue); }
 	
-	public JoyComponent(JoyComponent componentEX, float triggerValue)
+	public MyJoystickComponent(MyJoystickComponent componentEX, float triggerValue)
 		{ this(componentEX, componentEX.getName(), triggerValue, triggerValue); }
 	
-	public JoyComponent(JoyComponent componentEX, String name)
+	public MyJoystickComponent(MyJoystickComponent componentEX, String name)
 		{ this(componentEX, name, componentEX.minTriggerValue, componentEX.maxTriggerValue); }
 	
-	public JoyComponent(JoyComponent componentEX)
+	public MyJoystickComponent(MyJoystickComponent componentEX)
 		{ this(componentEX, componentEX.name, componentEX.minTriggerValue, componentEX.maxTriggerValue); }
 
 	private void setStartHold() {
@@ -181,13 +181,13 @@ public class JoyComponent {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj != null && (this == obj || ((JoyComponent)obj).getComponent() == component))
+		if (obj != null && (this == obj || ((MyJoystickComponent)obj).getComponent() == component))
 			return true;
 		if (obj == null)
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		JoyComponent other = (JoyComponent) obj;
+		MyJoystickComponent other = (MyJoystickComponent) obj;
 		return Objects.equals(component, other.component);
 	}
 

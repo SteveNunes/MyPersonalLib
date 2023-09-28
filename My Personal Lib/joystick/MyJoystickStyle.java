@@ -1,4 +1,4 @@
-package enums;
+package joystick;
 
 public enum MyJoystickStyle {
 	DEFAULT,
