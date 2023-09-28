@@ -65,8 +65,9 @@ public class MyJInputJoystick {
 					components.add(new MyJInputJoystickComponent(component, 1f));
 			}
 			else if (identifier == Component.Identifier.Axis.POV)
-				for (int n = 1; n <= 8; n++) {
-					MyJInputJoystickComponent joyComponent = new MyJInputJoystickComponent(component, "Pov " + povDirs[n - 1], 0.125f * n);
+				for (int n = 2; n <= 8; n += 2) {
+					MyJInputJoystickComponent joyComponent = new MyJInputJoystickComponent(component, "Pov " + povDirs[n - 1]);
+					joyComponent.setExactlyTriggerValues(0.125f * (n - 1), 0.125f * n, 0.125f * (n == 8 ? 1 : n + 1));
 					if (!allAsButton)
 						povs.add(joyComponent);
 					else

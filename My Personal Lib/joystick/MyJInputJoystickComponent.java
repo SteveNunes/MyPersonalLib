@@ -1,6 +1,7 @@
 package joystick;
 
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 
 import net.java.games.input.Component;
 import net.java.games.input.Component.Identifier.Axis;
@@ -17,12 +18,14 @@ public class MyJInputJoystickComponent {
 	private float minTriggerValue;
 	private float maxTriggerValue;
 	private float deadZone;
+	private List<Float> onlyTriggerValues;
 	
 	public MyJInputJoystickComponent(Component component, String name, float minTriggerValue, float maxTriggerValue) {
 		this.component = component;
 		this.name = name;
 		this.minTriggerValue = minTriggerValue;
 		this.maxTriggerValue = maxTriggerValue;
+		
 		deadZone = 0f;
 		value = 0f;
 		prevValue = 0f;
@@ -63,6 +66,13 @@ public class MyJInputJoystickComponent {
 	public MyJInputJoystickComponent(MyJInputJoystickComponent componentEX)
 		{ this(componentEX, componentEX.name, componentEX.minTriggerValue, componentEX.maxTriggerValue); }
 
+	public void setExactlyTriggerValues(float ... values) {
+		onlyTriggerValues = new ArrayList<>();
+		for (float f : values)
+			onlyTriggerValues.add(f);
+		System.out.println(getName() + " -> " + onlyTriggerValues);
+	}
+	
 	private void setStartHold() {
 		startHold = System.currentTimeMillis();
 		heldTime = -1;
@@ -81,7 +91,13 @@ public class MyJInputJoystickComponent {
 			heldTime = 0;
 		prevValue = value;
 		value = component.getPollData();
-		if (isPov() || isButton()) {
+		if (onlyTriggerValues != null) { // Botões e POV com valores exatos para ativação
+			if (!onlyTriggerValues.contains(prevValue) && onlyTriggerValues.contains(value))
+				setStartHold();
+			else if (onlyTriggerValues.contains(prevValue) && !onlyTriggerValues.contains(value))
+				setHoldTime();
+		}
+		else if (isPov() || isButton()) { // Botões e POV sem valores exatos para ativação
 			if (prevValue != value) {
 				if (value == minTriggerValue)
 					setStartHold();
@@ -174,21 +190,5 @@ public class MyJInputJoystickComponent {
 	/** Component was released right now, after the last call of pool() */
 	public boolean wasReleased()
 		{ return heldTime > 0 && startHold == -1; }
-
-	@Override
-	public int hashCode()
-		{ return Objects.hash(component); }
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj != null && (this == obj || ((MyJInputJoystickComponent)obj).getComponent() == component))
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		MyJInputJoystickComponent other = (MyJInputJoystickComponent) obj;
-		return Objects.equals(component, other.component);
-	}
 
 }
