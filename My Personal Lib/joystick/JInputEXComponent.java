@@ -7,7 +7,7 @@ import net.java.games.input.Component;
 import net.java.games.input.Component.Identifier.Axis;
 import net.java.games.input.Component.Identifier.Button;
 
-public class MyJInputJoystickComponent {
+public class JInputEXComponent {
 
 	private Component component;
 	private String name;
@@ -20,12 +20,13 @@ public class MyJInputJoystickComponent {
 	private float deadZone;
 	private List<Float> onlyTriggerValues;
 	
-	public MyJInputJoystickComponent(Component component, String name, float minTriggerValue, float maxTriggerValue) {
+	public JInputEXComponent(Component component, String name, float minTriggerValue, float maxTriggerValue) {
 		this.component = component;
 		this.name = name;
 		this.minTriggerValue = minTriggerValue;
 		this.maxTriggerValue = maxTriggerValue;
-		
+		if (minTriggerValue == maxTriggerValue)
+			setExactlyTriggerValues(minTriggerValue);
 		deadZone = 0f;
 		value = 0f;
 		prevValue = 0f;
@@ -33,37 +34,37 @@ public class MyJInputJoystickComponent {
 		heldTime = 0;
 	}
 	
-	public MyJInputJoystickComponent(Component component, String name, float triggerValue)
+	public JInputEXComponent(Component component, String name, float triggerValue)
 		{ this(component, name, triggerValue, triggerValue); }
 	
-	public MyJInputJoystickComponent(Component component, float minTriggerValue, float maxTriggerValue)
+	public JInputEXComponent(Component component, float minTriggerValue, float maxTriggerValue)
 		{ this(component, component.getName(), minTriggerValue, maxTriggerValue); }
 
-	public MyJInputJoystickComponent(Component component, float triggerValue)
+	public JInputEXComponent(Component component, float triggerValue)
 		{ this(component, component.getName(), triggerValue, triggerValue); }
 
-	public MyJInputJoystickComponent(Component component, String name)
-		{ this(component, name, 0f, 1f); }
+	public JInputEXComponent(Component component, String name)
+		{ this(component, name, 1f, 1f); }
 
-	public MyJInputJoystickComponent(Component component)
-		{ this(component, component.getName(), 0f, 1f); }
+	public JInputEXComponent(Component component)
+		{ this(component, component.getName(), 1f, 1f); }
 	
-	public MyJInputJoystickComponent(MyJInputJoystickComponent component, String name, float minTriggerValue, float maxTriggerValue)
+	public JInputEXComponent(JInputEXComponent component, String name, float minTriggerValue, float maxTriggerValue)
 		{ this(component.getComponent(), name, minTriggerValue, maxTriggerValue); }
 	
-	public MyJInputJoystickComponent(MyJInputJoystickComponent component, String name, float triggerValue)
+	public JInputEXComponent(JInputEXComponent component, String name, float triggerValue)
 		{ this(component.getComponent(), name, triggerValue, triggerValue); }
 
-	public MyJInputJoystickComponent(MyJInputJoystickComponent component, float minTriggerValue, float maxTriggerValue)
+	public JInputEXComponent(JInputEXComponent component, float minTriggerValue, float maxTriggerValue)
 		{ this(component, component.getName(), minTriggerValue, maxTriggerValue); }
 	
-	public MyJInputJoystickComponent(MyJInputJoystickComponent component, float triggerValue)
+	public JInputEXComponent(JInputEXComponent component, float triggerValue)
 		{ this(component, component.getName(), triggerValue, triggerValue); }
 	
-	public MyJInputJoystickComponent(MyJInputJoystickComponent component, String name)
+	public JInputEXComponent(JInputEXComponent component, String name)
 		{ this(component, name, component.minTriggerValue, component.maxTriggerValue); }
 	
-	public MyJInputJoystickComponent(MyJInputJoystickComponent component)
+	public JInputEXComponent(JInputEXComponent component)
 		{ this(component, component.name, component.minTriggerValue, component.maxTriggerValue); }
 
 	public void setExactlyTriggerValues(float ... values) {
@@ -90,46 +91,36 @@ public class MyJInputJoystickComponent {
 			heldTime = 0;
 		prevValue = value;
 		value = component.getPollData();
-		if (onlyTriggerValues != null) { // Botões e POV com valores exatos para ativação
+		if (onlyTriggerValues != null) { // Componentes com valores exatos para ativação
 			if (!onlyTriggerValues.contains(prevValue) && onlyTriggerValues.contains(value))
 				setStartHold();
 			else if (onlyTriggerValues.contains(prevValue) && !onlyTriggerValues.contains(value))
 				setHoldTime();
 		}
-		else if (isPov() || isButton()) { // Botões e POV sem valores exatos para ativação
-			if (prevValue != value) {
-				if (value == minTriggerValue)
-					setStartHold();
-				else
-					setHoldTime();
-			}
-		}
-		else { // Componentes analógicos (Axis e Triggers)
-			if (minTriggerValue == 0) {
-				if (maxTriggerValue > 0) { // Axis que vai de 0 a 1f
-					if (prevValue <= deadZone && value > deadZone)
-						setStartHold();
-					else if (prevValue > deadZone && value <= deadZone)
-						setHoldTime();
-				}
-				else { // Axis que vai de 0 a -1f
-					if (prevValue >= deadZone * -1 && value < deadZone * -1)
-						setStartHold();
-					else if (prevValue < deadZone * -1 && value >= deadZone * -1)
-						setHoldTime();
-				}
-			}
-			else { // Axis que vai de -1f a 1f
-				if (prevValue > deadZone * -1 && prevValue < deadZone &&
-						(value <= deadZone * -1 || value >= deadZone))
-							setStartHold();
-				else if ((prevValue <= deadZone * -1 || prevValue >= deadZone) &&
-									value > deadZone * -1 && value < deadZone)
-										setHoldTime();
-			}
+		else {
+			if (prevValue == 0 && value != 0)
+				setStartHold();
+			else if (prevValue != 0 && value == 0)
+				setHoldTime();
 		}
 	}
 	
+	private boolean isOnDeadZone(float value) {
+		if (onlyTriggerValues != null || !isAnalogicComponent())
+			return onlyTriggerValues != null ? !onlyTriggerValues.contains(value) : value == 0;
+		if (minTriggerValue == 0)
+			return (maxTriggerValue < 0 && value > maxTriggerValue * deadZone) ||
+							(maxTriggerValue > 0 && value < maxTriggerValue * deadZone);
+		else
+			return value < maxTriggerValue * deadZone && value > minTriggerValue * deadZone;
+	}
+	
+	public boolean isOnDeadZone()
+		{ return isOnDeadZone(value); }
+	
+	public boolean wasOnDeadZone()
+		{ return isOnDeadZone(prevValue); }
+
 	public boolean isAnalogicComponent()
 		{ return isAxis() || isTrigger(); }
 	
