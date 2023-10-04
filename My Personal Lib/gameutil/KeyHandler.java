@@ -1,56 +1,56 @@
 package gameutil;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 
-public class KeyHandler {
+public abstract class KeyHandler {
 	
-	private static List<KeyCode> pressedKeys = new ArrayList<>();
-	private static Map<KeyEvent, Integer> repeatKeys = new HashMap<>();
 	private static int repeatDelay = -1;
-	private static Consumer<KeyCode> onPressedKeyCall;
-	private static Consumer<KeyCode> onHoldingKeyCall;
+	private static Map<KeyCode, Integer> repeatKeys = new HashMap<>();
+	private static Consumer<KeyCode> onRepeatKeyCall;
 	
 	public static void setRepatKeyDelay(int delay)
 		{ repeatDelay = delay; }
 	
-	public static void keyPressedEventHandler(KeyEvent e, Consumer<KeyCode> onKeyPressEvent, Consumer<KeyCode> onHoldingKeyEvent) {
-		KeyCode keyCode = e.getCode();
-		if (repeatDelay != -1)
-			repeatKeys.put(e, 0);
-		pressedKeys.add(keyCode);
-		onPressedKeyCall = onKeyPressEvent;
-		onHoldingKeyCall = onHoldingKeyEvent;
-		onPressedKeyCall.accept(keyCode);
-	}
+	public static boolean isKeyDown(KeyCode keyCode)
+		{ return repeatKeys.containsKey(keyCode); }
 
-	public static void keyReleasedEventHandler(KeyEvent e, Consumer<KeyCode> onKeyReleaseEvent) {
-		KeyCode keyCode = e.getCode();
-		if (repeatDelay != -1)
-			repeatKeys.remove(e);
-		pressedKeys.remove(keyCode);
-		onKeyReleaseEvent.accept(keyCode);
+	public static void setOnKeyPressEvent(Scene scene, Consumer<KeyCode> consumer) {
+		scene.setOnKeyPressed(keyEvent -> {
+			repeatKeys.put(keyEvent.getCode(), 1);
+			consumer.accept(keyEvent.getCode());
+		});
 	}
 	
-	public static Boolean keyIsPressed(KeyCode keyCode)
-		{ return pressedKeys.contains(keyCode); }
+	public static void setOnKeyHoldEvent(Consumer<KeyCode> consumer)
+		{ onRepeatKeyCall = consumer; }
+	
+	public static void setOnKeyReleaseEvent(Scene scene, Consumer<KeyCode> consumer) {
+		scene.setOnKeyPressed(keyEvent -> {
+			repeatKeys.remove(keyEvent.getCode());
+			consumer.accept(keyEvent.getCode());
+		});
+	}
+	
+	public static KeyCode[] getAllHoldKeys()
+		{ return (KeyCode[])repeatKeys.keySet().toArray(); }
+	
+	public static int getNumberOfHoldKeys()
+		{ return repeatKeys.size(); }
 
-	public static void runItOnMainLoopEveryFrame() {
+	/** Call it on your main loop every frame */
+	public static void holdKeyPoll() {
 		if (repeatDelay == -1)
 			return;
-		for (KeyEvent e : repeatKeys.keySet()) {
-			if (repeatKeys.get(e) >= repeatDelay)
-				onHoldingKeyCall.accept(e.getCode());
-			else
-				repeatKeys.put(e, repeatKeys.get(e) + 1);
+		for (KeyCode e : repeatKeys.keySet()) {
+			if (onRepeatKeyCall != null && repeatKeys.get(e) >= repeatDelay)
+				onRepeatKeyCall.accept(e);
+			repeatKeys.put(e, repeatKeys.get(e) + 1);
 		}
-		
 	}
 
 }

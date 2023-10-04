@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MyMath {
+public abstract class MyMath {
 	
 	public static Boolean isPrime(long n)
 		{ return (n == 2 || n == 3 || n == 5 || n == 7 || (n > 9 && n % 2 > 0 && n % 3 > 0 && n % 5 > 0 && n % 7 > 0)); }

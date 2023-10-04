@@ -3,7 +3,7 @@ package util;
 import java.text.Normalizer;
 import java.util.Locale;
 
-public class MyString {
+public abstract class MyString {
 
 	public static Boolean isShort(String str) {
     try {

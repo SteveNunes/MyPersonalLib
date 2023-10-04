@@ -1,21 +1,13 @@
 package gui.util;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.util.List;
 import java.util.function.Function;
-
-import javax.imageio.ImageIO;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
-import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListCell;
@@ -23,13 +15,10 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.image.PixelReader;
-import javafx.scene.image.PixelWriter;
-import javafx.scene.image.WritableImage;
-import javafx.scene.image.WritablePixelFormat;
 import javafx.scene.layout.Background;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
@@ -37,7 +26,7 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import util.Misc;
 
-public class Controller {
+public abstract class ControllerUtils {
 	
 	private static final String COLOR_FOR_SELECTED_FOCUSED_HOVERED_EVEN = "#8FAFFF";
 	private static final String COLOR_FOR_SELECTED_FOCUSED_HOVERED_ODD = "#7F9FEF";
@@ -123,6 +112,19 @@ public class Controller {
 	public static void comboBoxAddEventToScrollToSelectedItem(ComboBox<?> comboBox)
 		{ comboBox.setOnShowing(e -> comboBoxScrollTo(comboBox, comboBox.getSelectionModel().getSelectedIndex())); } 
 	
+	public static Tooltip getNewTooltip(String text, String fontFamily, int fontSize)
+		{ return getNewTooltip(text, "-fx-font-size: " + fontSize + "px; -fx-font-family: \"" + fontFamily + "\";"); }
+	
+	public static Tooltip getNewTooltip(String text, String css) {
+		Tooltip tp = new Tooltip(text);
+		if (css != null)
+			tp.setStyle(css);
+		return tp;
+	}
+	
+	public static Tooltip getNewTooltip(String text)
+		{ return getNewTooltip(text, null); }
+
 	/**
 	 * Seleciona a linha desejada na {@code ListView}  e mantém
 	 * o item selecionado na metade da lista visivel.
@@ -246,7 +248,7 @@ public class Controller {
 		listView.setCellFactory(factory);
 	}
 
-	public static Stage currentStage(ActionEvent event)
+	public static Stage getCurrentStage(ActionEvent event)
 		{ return (Stage) ((Node) event.getSource()).getScene().getWindow(); }
 
 	/**
@@ -266,10 +268,10 @@ public class Controller {
 	 * 											10 indices para baixo, irá retornar -2 pois ao mover 2 indices
 	 * 											para cima, o item chega ao indice 0.
 	 */
-	public static <T> void changeItemPosFromList(ListView<T> listView, List<T> list, int index, int val) {
+	public static <T> void changeItemPosFromListView(ListView<T> listView, List<T> list, int index, int val) {
 		listView.getSelectionModel().clearSelection();
 		val = Misc.moveItemIndex(list, index, val);
-		Controller.setListToListView(listView, list, index + val);
+		ControllerUtils.setListToListView(listView, list, index + val);
 		int n = (int)(listView.getHeight() / listView.getFixedCellSize() / 2);
 		listView.scrollTo(n);
 	}
@@ -278,7 +280,7 @@ public class Controller {
 		Image image = new Image(imagePath);
 		ImageView imageView;
 		if (removeBGColorTolerance > -1)
-			imageView = new ImageView(removeBgColor(image, removeColor, removeBGColorTolerance));
+			imageView = new ImageView(ImageUtils.removeBgColor(image, removeColor, removeBGColorTolerance));
 		else imageView = new ImageView(image);
 		imageView.setFitWidth(imageWidth);
 		imageView.setFitHeight(imageHeight);
@@ -320,81 +322,6 @@ public class Controller {
 	
 	public static void addIconToButton(Button button, String imagePath)
 		{ addIconToButton(button, imagePath, Color.WHITE, 0); }
-
-	/** Remove o branco ou tons similares de branco da imagem (de acordo com o valor
-	 * 	de {@code toleranceThreshold} (Que vai de 0 a 255) Quanto mais próximo de 255,
-	 * 	menos tons de branco serão removidos (Se usar 255, apenas o branco puro será
-	 * 	removido da imagem). 
-	 * 
-	 * @param image		A imagem a ter a cor de fundo removida
-	 * @param toleranceThreshold		Valor de tolerância
-	 * @return		A imagem com a cor de fundo removida
-	 */
-	
-	public static Image removeBgColor(Image image, Color transparentColor, int toleranceThreshold) {
-		int W = (int) image.getWidth();
-		int H = (int) image.getHeight();
-		WritableImage outputImage = new WritableImage(W, H);
-		PixelReader reader = image.getPixelReader();
-		PixelWriter writer = outputImage.getPixelWriter();
-		for (int y = 0; y < H; y++)
-			for (int x = 0; x < W; x++) {
-				int argb = reader.getArgb(x, y);
-				int r = (argb >> 16) & 0xFF;
-				int g = (argb >> 8) & 0xFF;
-				int b = argb & 0xFF;
-				int rr = (int)(transparentColor.getRed() * 255);
-				int gg = (int)(transparentColor.getGreen() * 255);
-				int bb = (int)(transparentColor.getBlue() * 255);
-				int r2 = (rr - toleranceThreshold) < 0 ? 0 : rr - toleranceThreshold;
-				int g2 = (gg - toleranceThreshold) < 0 ? 0 : gg - toleranceThreshold;
-				int b2 = (bb - toleranceThreshold) < 0 ? 0 : bb - toleranceThreshold;
-				int r3 = (rr + toleranceThreshold) > 255 ? 255 : rr + toleranceThreshold;
-				int g3 = (gg + toleranceThreshold) > 255 ? 255 : gg + toleranceThreshold;
-				int b3 = (bb + toleranceThreshold) > 255 ? 255 : bb + toleranceThreshold;
-				if (r <= r3 && r >= r2 && g <= g3 && g >= g2 && b <= b3 && b >= b2)
-					argb &= 0x00FFFFFF;
-				writer.setArgb(x, y, argb);
-			}
-		return outputImage;
-	}
-
-	public static Image removeBgColor(Image image, int toleranceThreshold)
-		{ return removeBgColor(image, Color.valueOf("#00FF00"), toleranceThreshold); }
-
-	public static Image removeBgColor(Image image, Color transparentColor)
-		{ return removeBgColor(image, transparentColor, 0); }
-
-	public static Image removeBgColor(Image image)
-		{ return removeBgColor(image, Color.WHITE, 0); }
-
-  private static int[] toIntArray(byte[] byteArray) {
-    int[] intArray = new int[byteArray.length / 4];
-    ByteBuffer.wrap(byteArray).asIntBuffer().get(intArray);
-    return intArray;
-  }
-  
-	public static void saveCanvasToFile(Canvas canvas, String filePath) {
-		int width = (int)canvas.getWidth(), height = (int)canvas.getHeight();
-    PixelReader pixelReader = canvas.snapshot(null, null).getPixelReader();
-    WritablePixelFormat<IntBuffer> pixelFormat = WritablePixelFormat.getIntArgbInstance();
-    int[] buffer = new int[width * height];
-    pixelReader.getPixels(0, 0, width, height, pixelFormat, buffer, 0, width);
-    ByteBuffer byteBuffer = ByteBuffer.allocate(width * height * 4);
-    for (int i = 0; i < buffer.length; i++) {
-    	int argb = buffer[i];
-    	byteBuffer.putInt(argb);
-    }
-    try {
-    	BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-    	byte[] imageData = byteBuffer.array();
-    	bufferedImage.setRGB(0, 0, width, height, toIntArray(imageData), 0, width);
-    	File file = new File(filePath);
-    	ImageIO.write(bufferedImage, "png", file);
-    }
-    catch (IOException e)
-    	{ e.printStackTrace(); }
-	}
 
 	/* COMO PEGAR AS COORDENADAS DE TELA DE UM NODE
 					Bounds bounds = node.localToScreen(node.getBoundsInLocal());

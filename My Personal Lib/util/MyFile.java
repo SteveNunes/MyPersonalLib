@@ -15,7 +15,7 @@ import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileSystemView;
 
-public class MyFile {
+public abstract class MyFile {
 	
 	private static List<File> selectFilesAndDirs(String initialFolder, Boolean listFiles, Boolean listDirs, Boolean multiSel) {
 		File initPath = initialFolder == null ? FileSystemView.getFileSystemView().getHomeDirectory() : new File(initialFolder);

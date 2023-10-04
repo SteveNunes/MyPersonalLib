@@ -173,8 +173,16 @@ public class JInputEXComponent {
 	public int getHoldTime()
 		{ return startHold > 0 ? (int)(System.currentTimeMillis() - startHold) : heldTime; }
 	
-	/** Component is hold */
+	/** Return {@code true} if the component is hold */
 	public boolean isHold()
 		{ return startHold > 0; }
+
+	/** Return {@code true} if the component was pressed on the last poll */
+	public boolean wasPressed()
+		{ return !delta.isHold() && isHold(); }
+
+	/** Return {@code true} if the component was released on the last poll */
+	public boolean wasReleased()
+		{ return delta.isHold() && !isHold(); }
 
 }

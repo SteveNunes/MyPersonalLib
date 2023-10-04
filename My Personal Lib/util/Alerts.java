@@ -28,7 +28,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.util.Pair;
 
-public class Alerts {
+public abstract class Alerts {
 	
 	/**
 	 * Função para criar janelas de alerta, que retornam um {@code Optional} com informações sobre o botão que o usuário pressionou nessa janela. O fluxo do programa é interrompido enquanto a janela estiver aberta.

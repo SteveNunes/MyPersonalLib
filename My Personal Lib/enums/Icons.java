@@ -1,6 +1,6 @@
 package enums;
 
-import gui.util.Controller;
+import gui.util.ControllerUtils;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 
@@ -74,7 +74,7 @@ public enum Icons {
 			imageView.setFitHeight(height);
 			return imageView;
 		}
-		return Controller.getImageViewFromImagePath(icon.getValue(), width, height, Color.WHITE, 50);
+		return ControllerUtils.getImageViewFromImagePath(icon.getValue(), width, height, Color.WHITE, 50);
 	}
 	
 }

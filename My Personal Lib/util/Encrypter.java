@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class Encrypter { 
+public abstract class Encrypter { 
 
 	public static String encrypt(List<String> strings, String password) {
 		int plus = (int)(int)MyMath.rand(50, 10);

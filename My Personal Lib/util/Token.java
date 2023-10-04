@@ -45,7 +45,7 @@ import enums.TextMatchType;
  * lastTokens() - Retorna uma List de String com os tokes obtidos pelo último método chamado.
  */
 
-public class Token {
+public abstract class Token {
 	private static String lastDelimiter = "";
 	private static String[] tokens;
 	private static List<String> ltokens = new ArrayList<>();

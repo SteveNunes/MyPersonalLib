@@ -41,6 +41,19 @@ public class JInputEX {
 	private BiConsumer<JInputEX, JInputEXComponent> onAxisChanges;
 	private BiConsumer<JInputEX, JInputEXComponent> onTriggerChanges;
 	
+	static {
+		Controller[] controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
+		for (Controller controller : controllers) {
+			if (controller.getType() == Controller.Type.GAMEPAD) {
+				JInputEX joystick = new JInputEX(controller);
+				joystick.joystickID = joysticks.size();
+				joysticks.add(joystick);
+				if (onJoystickConnected != null)
+					onJoystickConnected.accept(joystick);
+			}
+		}
+	}
+
 	private JInputEX() {}
 	
 	private JInputEX(Controller joystick) {
@@ -54,7 +67,6 @@ public class JInputEX {
 		scanComponents();
 		setDefaultDeadZoneValues();
 		sortComponents();
-		createThread(this);
 	}
 	
 	private void scanComponents() {
@@ -120,70 +132,44 @@ public class JInputEX {
 		});
 	}
 	
-	private void createThread(JInputEX thisJoystick) {
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				while (!close) {
-					synchronized (joystick) {
-						if (!joystick.poll()) {
-							if (onJoystickDisconnected != null)
-								onJoystickDisconnected.accept(thisJoystick);
-							close = true;
-							return;
-						}
-					}
-					synchronized (axes) {
-						for (JInputEXComponent axis : axes) {
-							axis.poll();
-							if (onAxisChanges != null && axis.getDelta().getValue() != axis.getValue())
-								onAxisChanges.accept(thisJoystick, axis);
-						}
-					}
-					synchronized (triggers) {
-						for (JInputEXComponent trigger : triggers) {
-							trigger.poll();
-							if (onTriggerChanges != null && trigger.getDelta().getValue() != trigger.getValue())
-								onTriggerChanges.accept(thisJoystick, trigger);
-						}
-					}
-					synchronized (povs) {
-						for (JInputEXComponent pov : povs) {
-							pov.poll();
-							if (onPovChanges != null && pov.getDelta().getValue() != pov.getValue())
-								onPovChanges.accept(thisJoystick, pov);
-						}
-					}
-					synchronized (buttons) {
-						for (JInputEXComponent button : buttons) {
-							button.poll();
-							if (!button.getDelta().isHold() && button.isHold() && onPressButton != null)
-								onPressButton.accept(thisJoystick, button);
-							if (button.getDelta().isHold() && !button.isHold() && onReleaseButton != null)
-								onReleaseButton.accept(thisJoystick, button);
-							if (button.isHold() && onHoldButton != null)
-								onHoldButton.accept(thisJoystick, button);
-						}
-					}
-					synchronized (components) {
-						for (JInputEXComponent comp : components) {
-							comp.poll();
-							if (!comp.getDelta().isHold() && comp.isHold() && onPressComponent != null)
-								onPressComponent.accept(thisJoystick, comp);
-							if (comp.getDelta().isHold() && !comp.isHold() && onReleaseComponent != null)
-								onReleaseComponent.accept(thisJoystick, comp);
-							if (comp.isHold() && onHoldComponent != null)
-								onHoldComponent.accept(thisJoystick, comp);
-						}
-					}
-					sleep(1);
-					while (!close && pauseThread)
-						sleep(100);
-				}
-			}
-		}).start();
+	public void poll() {
+		if (!joystick.poll())
+			throw new RuntimeException("The joystick is disconnected");
+		for (JInputEXComponent axis : axes) {
+			axis.poll();
+			if (onAxisChanges != null && axis.getDelta().getValue() != axis.getValue())
+				onAxisChanges.accept(this, axis);
+		}
+		for (JInputEXComponent trigger : triggers) {
+			trigger.poll();
+			if (onTriggerChanges != null && trigger.getDelta().getValue() != trigger.getValue())
+				onTriggerChanges.accept(this, trigger);
+		}
+		for (JInputEXComponent pov : povs) {
+			pov.poll();
+			if (onPovChanges != null && pov.getDelta().getValue() != pov.getValue())
+				onPovChanges.accept(this, pov);
+		}
+		for (JInputEXComponent button : buttons) {
+			button.poll();
+			if (button.wasPressed() && onPressButton != null)
+				onPressButton.accept(this, button);
+			if (button.wasReleased() && onReleaseButton != null)
+				onReleaseButton.accept(this, button);
+			if (button.isHold() && onHoldButton != null)
+				onHoldButton.accept(this, button);
+		}
+		for (JInputEXComponent comp : components) {
+			comp.poll();
+			if (comp.wasPressed() && onPressComponent != null)
+				onPressComponent.accept(this, comp);
+			if (comp.wasReleased() && onReleaseComponent != null)
+				onReleaseComponent.accept(this, comp);
+			if (comp.isHold() && onHoldComponent != null)
+				onHoldComponent.accept(this, comp);
+		}
 	}
-	
+
 	/** Set if thread is paused ({@code true}) or not ({@code false)} */
 	public void setPauseThread(boolean value)
 		{ pauseThread = value; }
@@ -191,22 +177,6 @@ public class JInputEX {
 	/** Return {@code true} if thread is paused */
 	public boolean isThreadPaused()
 		{ return pauseThread; }
-	
-	/** Search for joysticks on the system and initialize them all */
-	public static int initializeJoysticks() {
-		closeAllJoysticks();
-		Controller[] controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
-		for (Controller controller : controllers) {
-			if (controller.getType() == Controller.Type.GAMEPAD) {
-				JInputEX joystick = new JInputEX(controller);
-				joystick.joystickID = joysticks.size();
-				joysticks.add(joystick);
-				if (onJoystickConnected != null)
-					onJoystickConnected.accept(joystick);
-			}
-		}
-		return joysticks.size();
-	}
 	
 	/** Return the total of initialized joysticks */
 	public static int getTotalJoysticks()
@@ -384,11 +354,6 @@ public class JInputEX {
 	/** Set a consumer which will trigger when a joystick is disconnected */
 	public static void setOnJoystickDisconnectedEvent(Consumer<JInputEX> consumer)
 		{ onJoystickDisconnected = consumer; }
-
-	private void sleep(long value) {
-		try { Thread.sleep(value); }
-		catch (InterruptedException e) {}
-	}
 	
 }
 

@@ -11,7 +11,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
-public class DrawUtils {
+public abstract class DrawUtils {
 
 	public static Rectangle drawRectangle(ObservableList<Node> childrens, double x, double y, double width, double height, Color fillColor, Color strokeColor, int strokeWidth, double opacity, double rotate) {
 		Rectangle rectangle = new Rectangle();

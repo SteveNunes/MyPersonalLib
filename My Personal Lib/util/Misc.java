@@ -7,17 +7,49 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import enums.TextMatchType;
+import javafx.application.Platform;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 
-public class Misc {
+public abstract class Misc {
 	
 	private static Map<String, Map<Long, ?>> uniqueId = new HashMap<>();
 	
+	/** Chame esse método no final do seu main loop, passando no consumer a
+	  * chamada do mesmo método para um efetivo loop infinito sem dar freezing */
+	public static void runLater(Runnable runnable)
+		{ Platform.runLater(runnable); }
+	
+	/**
+	 * Criar um timer que fica executando determinada(s) tarefa(s) em intervalos fixos.
+	 * @param timeUnit - O tipo de unidade de tempo que será usado ao especificar os valores de delay
+	 * @param startDelay - Delay até o início das tarefas
+	 * @param repeatDelay - Delay do intervalo entre a repetição das tarefas
+	 * @param runnable - Conjunto de tarefas á serem executadas
+	 * @return - Um tipo {@code ScheduledExecutorService} permitindo que você o armazene em uma variável, para poder parar o timer posteriormente, com o método .shutdown().
+	 */
+	public static ScheduledExecutorService createTimer(TimeUnit timeUnit, long startDelay, long repeatDelay, Runnable runnable) {
+		ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+		executor.scheduleAtFixedRate(runnable, startDelay, repeatDelay, timeUnit);
+		return executor;
+	}
+
+	public static ScheduledExecutorService createTimer(TimeUnit timeUnit, long repeatDelay, Runnable runnable)
+		{ return createTimer(timeUnit, 0, repeatDelay, runnable); }
+	
+	public static ScheduledExecutorService createTimer(long startDelay, long repeatDelay, Runnable runnable)
+		{ return createTimer(TimeUnit.MILLISECONDS, startDelay, repeatDelay, runnable); }
+	
+	public static ScheduledExecutorService createTimer(long repeatDelay, Runnable runnable)
+		{ return createTimer(TimeUnit.MILLISECONDS, 0, repeatDelay, runnable); }
+
 	/** Atalho para pausar a thread, sem precisar se preocupar com o try catch envolvido. */
 	public static void sleep(long millis) {
 		try
@@ -213,7 +245,7 @@ public class Misc {
 	public static String arrayToString(String[] array, int startIndex)
 		{ return arrayToString(array, startIndex, array.length - 1); }
 	
-	/**
+  /**
 	 * Sobrecarga do método {@code arrayToString(String[] array, int startIndex, int endIndex, String spacing)}<br>
 	 * que não pede os parâmetros {@code startIndex}, {@code endIndex} e {@code spacing}<br>
 	 */

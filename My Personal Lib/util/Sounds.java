@@ -14,7 +14,7 @@ import javax.sound.sampled.Clip;
 
 import javazoom.jl.player.advanced.AdvancedPlayer;
 
-public class Sounds {
+public abstract class Sounds {
 	
 	private static Map<String, List<AdvancedPlayer>> players = new HashMap<>();
 	private static Map<String, List<Clip>> clipes = new HashMap<>();

@@ -118,9 +118,9 @@ public class EditableHBox {
 		    	if (event.getClickCount() == 2) {
 		    		startedCTime = System.currentTimeMillis();
 		    		ComboBox<T> comboBox = new ComboBox<T>();
-		    		Controller.setListToComboBox(comboBox, comboBoxItems);
+		    		ControllerUtils.setListToComboBox(comboBox, comboBoxItems);
 		    		if (comboBoxMask != null)
-		    			Controller.changeHowComboBoxDisplayItens(comboBox, comboBoxMask);
+		    			ControllerUtils.changeHowComboBoxDisplayItens(comboBox, comboBoxMask);
 		    		if (selectedIndex != null)
 		    			comboBox.getSelectionModel().select(selectedIndex);
 		    		else

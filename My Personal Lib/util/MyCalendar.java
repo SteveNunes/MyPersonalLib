@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import enums.PeriodToMillis;
 
-public class MyCalendar {
+public abstract class MyCalendar {
 	
 	/*
 	a    AM/PM
