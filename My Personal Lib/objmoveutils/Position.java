@@ -1,19 +1,18 @@
 package objmoveutils;
 
+import java.awt.Rectangle;
+import java.awt.geom.Ellipse2D;
+import java.security.SecureRandom;
 import java.util.Objects;
 
 import enums.Direction;
-import shapesobj.CircleObj;
-import shapesobj.EllipseObj;
-import shapesobj.RectangleObj;
-import shapesobj.SquareObj;
-import util.MyMath;
 
 public class Position {
 
 	private double x;
 	private double y;
 	private int tileSize;
+	private static SecureRandom secureRandom = null;
 	
 	public Position()
 		{ this(0, 0, 1); }
@@ -22,6 +21,8 @@ public class Position {
 		this.x = x;
 		this.y = y;
 		this.tileSize = tileSize;
+		if (secureRandom == null)
+			secureRandom = new SecureRandom();
 	}
 	
 	public Position(double x, double y)
@@ -133,179 +134,61 @@ public class Position {
 		{ incPositionByDirection(direction, 1); }
 	
 	public Position getTilePosition()
-		{ return new Position(getDX(), getDY()); }
+		{ return new Position(getTileX(), getTileY()); }
 	
-	public int getDX()
+	public int getTileX()
 		{ return (int)((getX() + (tileSize / 2)) / tileSize); }
 	
-	public int getDY()
+	public int getTileY()
 		{ return (int)((getY() + (tileSize / 2)) / tileSize); }
 	
 	public static Boolean isOnSameTile(Position position1, Position position2)
 		{ return position1.isOnSameTile(position2); }
 
 	public Boolean isOnSameTile(Position position)
-		{ return position.getDX() == getDX() && position.getDY() == getDY(); }
-
-	public static Boolean coordIsInsideOfARectangle(double x, double y, double dx, double dy, double dw, double dh)
-		{ return x >= dx && x <= dx + dw && y >= dy && y <= dy + dh; }
+		{ return position.getTileX() == getTileX() && position.getTileY() == getTileY(); }
 	
-	public static Boolean coordIsInsideOfARectangle(double x, double y, RectangleObj rectangleObj) {
-		return coordIsInsideOfARectangle(x, y, rectangleObj.getX(), rectangleObj.getY(),
-			rectangleObj.getWidth(), rectangleObj.getHeight());
+	public static Position getRandomPositionFromAnEllipse(Ellipse2D ellipse) {
+    double centerX = ellipse.getCenterX();
+    double centerY = ellipse.getCenterY();
+    double semiMajorAxis = ellipse.getWidth() / 2.0;
+    double semiMinorAxis = ellipse.getHeight() / 2.0;
+    double randomAngle = 2 * Math.PI * secureRandom.nextDouble();
+    double randomRadius = Math.sqrt(secureRandom.nextDouble());
+    double randomX = centerX + semiMajorAxis * randomRadius * Math.cos(randomAngle);
+    double randomY = centerY + semiMinorAxis * randomRadius * Math.sin(randomAngle);
+    return new Position(randomX, randomY);
 	}
 	
-	public static Boolean coordIsInsideOfARectangle(Position position, double dx, double dy, double dw, double dh)
-		{ return coordIsInsideOfARectangle(position.getX(), position.getY(), dx, dy, dw, dh); }
-	
-	public static Boolean coordIsInsideOfARectangle(Position position, RectangleObj rectangleObj) {
-		return coordIsInsideOfARectangle(position.getX(), position.getY(),
-			rectangleObj.getX(), rectangleObj.getY(),
-			rectangleObj.getWidth(), rectangleObj.getHeight());
+	public static Position getRandomPositionFromASquare(Rectangle rectangle) {
+    int randomX = rectangle.x + secureRandom.nextInt(rectangle.width);
+    int randomY = rectangle.y + secureRandom.nextInt(rectangle.height);
+    return new Position(randomX, randomY);
 	}
 	
-	public Boolean isInsideOfARect(double dx, double dy, double dw, double dh)
-		{ return coordIsInsideOfARectangle(this, dx, dy, dw, dh); }
-
-	public Boolean isInsideOfARect(RectangleObj rectangleObj)
-		{ return coordIsInsideOfARectangle(this, rectangleObj); }
-	
-	public static Boolean coordIsInsideOfASquare(double x, double y, double dx, double dy, double sqrSize)
-		{ return coordIsInsideOfARectangle(x, y, dx, dy, sqrSize, sqrSize); }
-	
-	public static Boolean coordIsInsideOfASquare(double x, double y, SquareObj squareangleObj) {
-		return coordIsInsideOfASquare(x, y, squareangleObj.getX(), squareangleObj.getY(),
-			squareangleObj.getSize());
-	}
-	
-	public static Boolean coordIsInsideOfASquare(Position position, double dx, double dy, double sqrSize)
-		{ return coordIsInsideOfASquare(position.getX(), position.getY(), dx, dy, sqrSize); }
-	
-	public static Boolean coordIsInsideOfASquare(Position position, SquareObj squareangleObj) {
-		return coordIsInsideOfASquare(position.getX(), position.getY(),
-			squareangleObj.getX(), squareangleObj.getY(),
-			squareangleObj.getSize());
-	}
-	
-	public Boolean isInsideOfASquare(double dx, double dy, double sqrSize)
-		{ return coordIsInsideOfASquare(this, dx, dy, sqrSize); }
-	
-	public Boolean isInsideOfASquare(SquareObj squareangleObj)
-		{ return coordIsInsideOfASquare(this, squareangleObj); }
-	
-	public static Boolean coordIsInsideOfAnEllipse(double x, double y, double cx, double cy, double hRadius, double vRadius) {
-		double c = (Math.pow((cx - x), 2) / Math.pow(hRadius, 2)) +
-								(Math.pow((cy - y), 2) / Math.pow(vRadius, 2));
-		return c == 0;
-	}
-	
-	public static Boolean coordIsInsideOfAnEllipse(double x, double y, EllipseObj ellipseObj) {
-		return coordIsInsideOfAnEllipse(x, y, ellipseObj.getX(), ellipseObj.getY(),
-			ellipseObj.getHorizontalRadius(), ellipseObj.getVerticalRadius());
-	}
-	
-	public static Boolean coordIsInsideOfAnEllipse(Position position, double cx, double cy, double hRadius, double vRadius)
-		{ return coordIsInsideOfAnEllipse(position.getX(), position.getY(), cx, cy, hRadius, vRadius); }
-	
-	public static Boolean coordIsInsideOfAnEllipse(Position position, EllipseObj ellipseObj) {
-		return coordIsInsideOfAnEllipse(position.getX(), position.getY(),
-			ellipseObj.getX(), ellipseObj.getY(),
-			ellipseObj.getHorizontalRadius(), ellipseObj.getVerticalRadius());
-	}
-	
-	public Boolean isInsideOfAnEllipse(double cx, double cy, double hRadius, double vRadius)
-		{ return coordIsInsideOfAnEllipse(this, cx, cy, hRadius, vRadius); }
-	
-	public Boolean isInsideOfAnEllipse(EllipseObj ellipseObj)
-		{ return coordIsInsideOfAnEllipse(this, ellipseObj); }
-
-	public static Boolean coordIsInsideOfACircle(double x, double y, double cx, double cy, double radius)
-		{ return ((x - cx) * (x - cx) + (y - cy) * (y - cy) <= radius * radius); }
-	
-	public static Boolean coordIsInsideOfACircle(double x, double y, CircleObj circleObj) {
-		return coordIsInsideOfACircle(x, y, circleObj.getX(), circleObj.getY(),
-			circleObj.getRadius());
-	}
-	
-	public static Boolean coordIsInsideOfACircle(Position position, double cx, double cy, double sqrSize)
-		{ return coordIsInsideOfACircle(position.getX(), position.getY(), cx, cy, sqrSize); }
-	
-	public static Boolean coordIsInsideOfACircle(Position position, CircleObj circleObj) {
-		return coordIsInsideOfACircle(position.getX(), position.getY(),
-			circleObj.getX(), circleObj.getY(),
-			circleObj.getRadius());
-	}
-	
-	public Boolean isInsideOfACircle(double cx, double cy, double sqrSize)
-		{ return coordIsInsideOfACircle(this, cx, cy, sqrSize); }
-	
-	public Boolean isInsideOfACircle(CircleObj circleObj)
-		{ return coordIsInsideOfACircle(this, circleObj); }
-	
-	public static Position getRandCoordFromACircle(double x, double y, double radius) {
-		double xx, yy;
-	  do {
-	  	xx = MyMath.rand(x - radius, x + radius);
-	  	yy = MyMath.rand(y - radius, y + radius);
-	  }
-	  while (!Position.coordIsInsideOfACircle(xx, yy, x, y, radius));
-	  return new Position(xx, yy);
-	}
-	
-	public static Position getRandCoordFromAnEllipse(double x, double y, double hRadius, double vRadius) {
-		double xx, yy;
-	  do {
-	  	xx = MyMath.rand(x - hRadius, x + hRadius);
-	  	yy = MyMath.rand(y - vRadius, y + vRadius);
-	  }
-	  while (!Position.coordIsInsideOfAnEllipse(xx, yy, x, y, hRadius, vRadius));
-	  return new Position(xx, yy);
-	}
-	
-	public static Position getRandCoordFromASquare(double x, double y, double size) {
-		double xx, yy;
-	  do {
-	  	xx = MyMath.rand(x - size, x + size);
-	  	yy = MyMath.rand(y - size, y + size);
-	  }
-	  while (!Position.coordIsInsideOfASquare(xx, yy, x, y, size));
-	  return new Position(xx, yy);
-	}
-	
-	public static Position getRandCoordFromARecatngle(double x, double y, double w, double h) {
-		double xx, yy;
-	  do {
-	  	xx = MyMath.rand(x - w, x + w);
-	  	yy = MyMath.rand(y - h, y + h);
-	  }
-	  while (!Position.coordIsInsideOfARectangle(xx, yy, x, y, w, h));
-	  return new Position(xx, yy);
-	}
-	
+	/** Retorna {@code true} se os valores X e Y do Position atual estiverem perfeitamente centralizados em um Tile  */
 	public Boolean isPerfectTileCentred()
 		{ return (int)x % tileSize == 0 && (int)y % tileSize == 0; }
 	
   /*
    * Retorna um {@code Position} com valores {@code X, Y} referentes
-   * ao incremento para que um objeto nas coordenadas {@code x1, y1}
-   * chegue até as coordenadas {@code x2, y2} no total de {@code frames}
+   * ao incremento para que um objeto na coordenada {@code position1}
+   * chegue até a coordenada {@code position2} no total de {@code frames}
    */
-	public static Position getIncrementForGoToCoordinate(double x1, double y1, double x2, double y2, int frames) {
-	  double x = (x2 - x1) / frames;
-	  double y = (y2 - y1) / frames;
+	public static Position getIncrementForMoveBetweenPositions(Position position1, Position position2, int frames) {
+	  double x = (position2.getX() - position1.getX()) / frames;
+	  double y = (position2.getY() - position1.getY()) / frames;
 	  return new Position(x, y);
 	}
 	
-	public static Position getIncrementForGoToCoordinate(Position position, double dx, double dy, int frames)
-		{ return getIncrementForGoToCoordinate(position.getX(), position.getY(), dx, dy, frames); }
+	public static Position getIncrementForMoveBetweenPositions(double startX, double startY, double endX, double endY, int frames)
+		{ return getIncrementForMoveBetweenPositions(new Position(startX, startY), new Position(endX, endY), frames); }
 
-	public static Position getIncrementForGoToCoordinate(double dx, double dy, Position position, int frames)
-		{ return getIncrementForGoToCoordinate(dx, dy, position.getX(), position.getY(), frames); }
+	public static Position getIncrementForMoveBetweenPositions(double startX, double startY, Position endPosition, int frames)
+		{ return getIncrementForMoveBetweenPositions(startX, startY, endPosition.getX(), endPosition.getY(), frames); }
 
-	public static Position getIncrementForGoToCoordinate(Position position1, Position position2, int frames)
-		{ return getIncrementForGoToCoordinate(position1.getX(), position1.getY(), position2.getX(), position2.getY(), frames); }
-
-
+	public static Position getIncrementForMoveBetweenPositions(Position startPosition, double endX, double endY, int frames)
+		{ return getIncrementForMoveBetweenPositions(startPosition.getX(), startPosition.getY(), endX, endY, frames); }
 	
   /** Informe as coordenadas {@code x, y} do centro do círculo, e seu raio  para retornar
    * a coordenada de um dos pontos utilizados para formar esse círculo.

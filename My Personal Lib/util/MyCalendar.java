@@ -42,7 +42,7 @@ public abstract class MyCalendar {
 	Z    TimeZone no formato "+0000"
 	 */
 	
-	private static Date lastDay = getDateAtMidnight();
+	private static Date lastDay = getDateAt1SecBeforeMidnight();
 	
 	public static Date stringToDate(String literalDate, String simpleDateFormat) throws Exception
 		{ return new SimpleDateFormat(simpleDateFormat).parse(literalDate); }
@@ -50,13 +50,16 @@ public abstract class MyCalendar {
 	public static String dateToString(Date date, String simpleDateFormat)
 		{ return new SimpleDateFormat(simpleDateFormat).format(date); }
 
+	public static String dateToString(String simpleDateFormat)
+		{ return dateToString(new Date(), simpleDateFormat); }
+	
 	public static Boolean dayWasChanged()
-		{ return lastDay.getTime() != getDateAtMidnight().getTime(); }
+		{ return lastDay.getTime() != getDateAt1SecBeforeMidnight().getTime(); }
 
 	public static void setLastDayToCurrentDay()
-		{ lastDay = getDateAtMidnight(); }
+		{ lastDay = getDateAt1SecBeforeMidnight(); }
 
-	public static long getOnlyHourTimeFromDate(Date date) {
+	public static long getOnlyTimeFromDate(Date date) {
 		String str = new SimpleDateFormat("HH:mm:ss:SSS").format(date);
 		try 
 			{ date = new SimpleDateFormat("HH:mm:ss:SSS").parse(str); }
@@ -65,10 +68,10 @@ public abstract class MyCalendar {
 		return date.getTime();
 	}
 
-	public static long getOnlyHourTimeFromDate()
-		{ return getOnlyHourTimeFromDate(new Date()); }
+	public static long getOnlyTimeFromDate()
+		{ return getOnlyTimeFromDate(new Date()); }
 	
-	public static Date getDateAtTime(Date date, String time) {
+	public static Date changeTimeFromDate(Date date, String time) {
 		String str = new SimpleDateFormat("dd/MM/yyyy").format(date);
 		try
 			{ date = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").parse(str + " " + time); }
@@ -77,95 +80,107 @@ public abstract class MyCalendar {
 		return date;
 	}
 	
+	public static Date getDateAt1SecBeforeMidnight(Date date)
+		{ return changeTimeFromDate(date, "23:59:59"); }
+	
+	public static Date getDateAt1SecBeforeMidnight()
+		{ return getDateAt1SecBeforeMidnight(new Date()); }
+
 	public static Date getDateAtMidnight(Date date)
-		{ return getDateAtTime(date, "23:59:59"); }
+		{ return changeTimeFromDate(date, "00:00:00"); }
 	
 	public static Date getDateAtMidnight()
-		{ return getDateAtMidnight(new Date()); }
+		{ return getDateAt1SecBeforeMidnight(new Date()); }
 
 	private static int intFromSDF(Date dt, String format)
 		{ return Integer.parseInt(new SimpleDateFormat(format).format(dt)); }
 	
-	public static Boolean isDawn(Date dt)
-		{ return getHour(dt) < 6; }
+	public static Boolean isDateAtDawn(Date dt)
+		{ return getHourFromDate(dt) < 6; }
 	
-	public static Boolean isDawn()
-		{ return isDawn(new Date()); }
+	public static Boolean isDawnRightNow()
+		{ return isDateAtDawn(new Date()); }
 
-	public static Boolean isMorning(Date dt)
-		{ return getHour(dt) >= 6 && getHour(dt) < 12; }
+	public static Boolean isDateAtMorning(Date dt)
+		{ return getHourFromDate(dt) >= 6 && getHourFromDate(dt) < 12; }
 	
-	public static Boolean isMorning()
-		{ return isMorning(new Date()); }
+	public static Boolean isMorningRightNow()
+		{ return isDateAtMorning(new Date()); }
 
-	public static Boolean isAfternoon(Date dt)
-		{ return getHour(dt) >= 12 && getHour(dt) < 18; }
+	public static Boolean isDateAtAfternoon(Date dt)
+		{ return getHourFromDate(dt) >= 12 && getHourFromDate(dt) < 18; }
 
-	public static Boolean isAfternoon()
-		{ return isAfternoon(new Date()); }
+	public static Boolean isAfternoonRightNow()
+		{ return isDateAtAfternoon(new Date()); }
 
-	public static Boolean isNight(Date dt)
-		{ return getHour(dt) >= 18; }
+	public static Boolean isDateAtNight(Date dt)
+		{ return getHourFromDate(dt) >= 18; }
 
-	public static Boolean isNight()
-		{ return isNight(new Date()); }
+	public static Boolean isNightRightNow()
+		{ return isDateAtNight(new Date()); }
 	
-	public static Boolean isWeekDay(Date dt)
-		{ return getWeekDay(dt) < 6; }
+	public static Boolean isDateWeekDay(Date dt)
+		{ return getWeekDayFromDate(dt) < 6; }
 	
-	public static Boolean isWeekDay()
-		{ return isWeekDay(new Date()); }
+	public static Boolean isWeekDayToday()
+		{ return isDateWeekDay(new Date()); }
 	
-	public static Boolean isWeekend(Date dt)
-		{ return getWeekDay(dt) >= 6; }
+	public static Boolean isDateWeekend(Date dt)
+		{ return getWeekDayFromDate(dt) >= 6; }
 
-	public static Boolean isWeekend()
-		{ return isWeekend(new Date()); }
+	public static Boolean isWeekendToday()
+		{ return isDateWeekend(new Date()); }
 
-	public static int getWeekDay(Date dt)
+	public static int getWeekDayFromDate(Date dt)
 		{ return intFromSDF(dt, "u"); }
 
-	public static int getWeekDay()
-		{ return getWeekDay(new Date()); }
+	public static int getCurrentWeekDay()
+		{ return getWeekDayFromDate(new Date()); }
 
-	public static int getYear(Date dt)
+	public static int getYearFromDate(Date dt)
 		{ return intFromSDF(dt, "yyyy"); }
 
-	public static int getYear()
-		{ return getYear(new Date()); }
+	public static int getCurrentYear()
+		{ return getYearFromDate(new Date()); }
 
-	public static int getMonth(Date dt)
+	public static int getMonthFromDate(Date dt)
 		{ return intFromSDF(dt, "MM"); }
 
-	public static int getMonth()
-		{ return getMonth(new Date()); }
+	public static int getCurrentMonth()
+		{ return getMonthFromDate(new Date()); }
 
-	public static int getDay(Date dt)
+	public static int getDayFromDate(Date dt)
 		{ return intFromSDF(dt, "dd"); }
 	
-	public static int getDay()
-		{ return getDay(new Date()); }
+	public static int getCurrentDay()
+		{ return getDayFromDate(new Date()); }
 	
-	public static int getHour(Date dt)
+	public static int getHourFromDate(Date dt)
 		{ return intFromSDF(dt, "HH"); }
 	
-	public static int getHour()
-		{ return getHour(new Date()); }
+	public static int getCurrentHour()
+		{ return getHourFromDate(new Date()); }
 
-	public static int getMinute(Date dt)
+	public static int getMinuteFromDate(Date dt)
 		{ return intFromSDF(dt, "mm"); }
 
-	public static int getMinute()
-		{ return getMinute(new Date()); }
+	public static int getCurrentMinute()
+		{ return getMinuteFromDate(new Date()); }
 
-	public static int getSeconds(Date dt)
+	public static int getSecondFromDate(Date dt)
 		{ return intFromSDF(dt, "ss"); }
 
-	public static int getSeconds()
-		{ return getSeconds(new Date()); }
+	public static int getCurrentSecond()
+		{ return getSecondFromDate(new Date()); }
 	
+	public static int getMicroSecondFromDate(Date dt)
+		{ return intFromSDF(dt, "SSS"); }
+	
+	public static int getCurrentMicroSecond()
+		{ return getMicroSecondFromDate(new Date()); }
+
 	public static Boolean isSameDay(Date dt1, Date dt2)
-		{ return getDay(dt1) == getDay(dt2); }
+		{ return getDayFromDate(dt1) == getDayFromDate(dt2); }
 	
 	public static Boolean isSameDate(Date date1, Date date2) {
 		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
@@ -180,6 +195,18 @@ public abstract class MyCalendar {
 	
 	public static Boolean isSameDate(Date date)
 		{ return isSameDate(date, new Date()); }
+	
+	public static Date getIncrementedDate(Date date, PeriodToMillis period, int inc)
+		{ return new Date(date.getTime() + period.getValue() * inc); }
+
+	public static Date getIncrementedDate(Date date, PeriodToMillis period)
+		{ return getIncrementedDate(date, period, 1); }
+	
+	public static Date getIncrementedDate(PeriodToMillis period, int inc)
+		{ return getIncrementedDate(new Date(), period, inc); }
+	
+	public static Date getIncrementedDate(PeriodToMillis period)
+		{ return getIncrementedDate(new Date(), period); }
 
 	/**
 	 * Compara o dia da data informada por parâmetro com o dia da data atual.
@@ -189,13 +216,13 @@ public abstract class MyCalendar {
 	 * ou {@code 1} se o dia data informada por parâmetro for superior ao dia da data atual.
 	 */
 	public static int dateIsToday(Date date) {
-		return getDateAtMidnight(date) == getDateAtMidnight() ? 0 :
+		return getDateAt1SecBeforeMidnight(date) == getDateAt1SecBeforeMidnight() ? 0 :
 			System.currentTimeMillis() > date.getTime() ? -1 : 1;
 	}
 	
 	public static Date mixDateAndHour(Date dateToGetDate, Date dateToGetHour) {
-		Date date = new Date(dateToGetDate.getTime() - getOnlyHourTimeFromDate(dateToGetDate));
-		date.setTime(date.getTime() + getOnlyHourTimeFromDate(dateToGetHour));
+		Date date = new Date(dateToGetDate.getTime() - getOnlyTimeFromDate(dateToGetDate));
+		date.setTime(date.getTime() + getOnlyTimeFromDate(dateToGetHour));
 		return date;
 	}
 	
@@ -255,7 +282,7 @@ public abstract class MyCalendar {
 	
 	public static void setMonthTo(Date date, int month) {
 		try {
-			String dateStr = MyCalendar.getDay(date) + "/" + month + new SimpleDateFormat("/yyyy HH:mm:ss").format(date);
+			String dateStr = MyCalendar.getDayFromDate(date) + "/" + month + new SimpleDateFormat("/yyyy HH:mm:ss").format(date);
 			date.setTime(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").parse(dateStr).getTime());
 		}
 		catch (Exception e) { }
@@ -263,7 +290,7 @@ public abstract class MyCalendar {
 	
 	public static void setYearTo(Date date, int year) {
 		try {
-			String dateStr = MyCalendar.getDay(date) + "/" + MyCalendar.getMonth(date) + "/" + year + " " + new SimpleDateFormat("HH:mm:ss").format(date);
+			String dateStr = MyCalendar.getDayFromDate(date) + "/" + MyCalendar.getMonthFromDate(date) + "/" + year + " " + new SimpleDateFormat("HH:mm:ss").format(date);
 			date.setTime(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").parse(dateStr).getTime());
 		}
 		catch (Exception e) { }

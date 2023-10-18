@@ -22,6 +22,12 @@ public abstract class Misc {
 	
 	private static Map<String, Map<Long, ?>> uniqueId = new HashMap<>();
 	
+	/** Define um evento que será disparado quando o programa for encerrado */
+	public static void setShutdownEvent(Runnable runnable) {
+		Thread shutdownHook = new Thread(runnable);
+		Runtime.getRuntime().addShutdownHook(shutdownHook);
+	}
+	
 	/** Chame esse método no final do seu main loop, passando no consumer a
 	  * chamada do mesmo método para um efetivo loop infinito sem dar freezing */
 	public static void runLater(Runnable runnable)
@@ -62,9 +68,9 @@ public abstract class Misc {
 		{ System.out.println(System.currentTimeMillis()); }
 	
 	/** Retorna o tempo de processamento do consumer, em milisegundos */
-	public static <T> long bench(Consumer<T> consumer) {
+	public static <T> long bench(Runnable runnable) {
 		long start = System.currentTimeMillis();
-		consumer.accept(null);
+		runnable.run();
 		return System.currentTimeMillis() - start;
 	}
 	

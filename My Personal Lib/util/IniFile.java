@@ -1,5 +1,6 @@
 package util;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,23 +19,34 @@ public class IniFile {
 	private String fileName, lastReadVal = null;
 	private List<String> fileBuffer;
 	private LinkedHashMap<String, LinkedHashMap<String, String>> iniBody;
-	private static Map<String, IniFile> openedIniFiles = new HashMap<>();
+	long changedTime = 0;
+	static Map<String, IniFile> openedIniFiles = new HashMap<>();
 	
-	private IniFile(String fileName, Boolean newFile) {
+	static void saveAllFilesToDisk() {
+		for (IniFile iniFile : openedIniFiles.values())
+			iniFile.saveToDisk();
+	}
+	
+	void saveToDisk() {
+		if (openedIniFiles.containsKey(fileName)) {
+			changedTime = 0;
+			updateFileBuffer();
+			MyFile.writeAllLinesOnFile(fileBuffer, fileName);
+		}
+	}
+
+	private IniFile(String fileName) {
 		this.fileName = fileName;
 		refresh();
-		if (!newFile)
-			loadIniFromDisk(fileName);
-		else {
-			iniBody = new LinkedHashMap<String, LinkedHashMap<String, String>>();
-			fileBuffer = new ArrayList<>();
-		}
+		loadIniFromDisk(fileName);
 		openedIniFiles.put(fileName, this);
 	}
 	
-	public static IniFile getNewIniFileInstance(String fileName, Boolean newFile) {
-		if (newFile || !openedIniFiles.containsKey(fileName)) 
-			return new IniFile(fileName, newFile);
+	static { TextFile.enableAutoSave(); }
+	
+	public static IniFile getNewIniFileInstance(String fileName) {
+		if (!openedIniFiles.containsKey(fileName)) 
+			return new IniFile(fileName);
 		openedIniFiles.get(fileName).refresh();
 		return openedIniFiles.get(fileName);
 	}
@@ -44,17 +56,9 @@ public class IniFile {
 		loadIniFromDisk(fileName);
 	}
 
-	public static IniFile getNewIniFileInstance(String fileName)
-		{ return getNewIniFileInstance(fileName, false); }
-
 	public static List<IniFile> getOpenedIniFilesList()
 		{ return (List<IniFile>)openedIniFiles.values(); }
 
-	public void closeFile() {
-		openedIniFiles.put(fileName, null);
-		openedIniFiles.remove(fileName);
-	}
-	
 	public Path getFilePath()
 		{ return file; }
 	
@@ -74,6 +78,7 @@ public class IniFile {
 			remove(section, getItemList(section).get(0));
 		for (String s : newSection.keySet())
 			write(section, s, newSection.get(s));
+		changedTime = System.currentTimeMillis();
 	}
 
 	public static Boolean stringIsSection(String s)
@@ -176,22 +181,13 @@ public class IniFile {
 				insertMissingItens(sec, newFileBuffer, addeds);
 		fileBuffer = new ArrayList<>(newFileBuffer);
 	}
-
-	public void saveToDisk() {
-		updateFileBuffer();
-		MyFile.writeAllLinesOnFile(fileBuffer, fileName);
-	}
-
-	public void write(String iniSection, String iniItem, String value, Boolean saveOnDisk) {
+	
+	public void write(String iniSection, String iniItem, String value) {
 		if (!iniBody.containsKey(iniSection))
 		  iniBody.put(iniSection, new LinkedHashMap<String, String>());
 		iniBody.get(iniSection).put(iniItem, value);
-		if (saveOnDisk)
-			saveToDisk();
+		changedTime = System.currentTimeMillis();
 	}
-
-	public void write(String iniSection, String iniItem, String value)
-		{ write(iniSection, iniItem, value, false); }
 
 	public String getLastReadVal()
 		{ return lastReadVal; }
@@ -202,31 +198,22 @@ public class IniFile {
 		return (lastReadVal = null);
 	}
 
-	public String remove(String iniSection, String iniItem, Boolean saveOnDisk) {
+	public String remove(String iniSection, String iniItem) {
 		if (isItem(iniSection, iniItem)) {
 			iniBody.get(iniSection).remove(iniItem);
-			if (saveOnDisk)
-				saveToDisk();
 			return iniItem;
 		}
 		return null;
 	}
 
-	public String remove(String iniSection, String iniItem)
-		{ return remove(iniSection, iniItem, false); }
-
-	public String remove(String iniSection, Boolean saveOnDisk) {
+	public String remove(String iniSection) {
 		if (isSection(iniSection)) {
 			iniBody.remove(iniSection);
-			if (saveOnDisk)
-				saveToDisk();
+			changedTime = System.currentTimeMillis();
 			return iniSection;
 		}
 		return null;
 	}
-
-	public String remove(String iniSection)
-		{ return remove(iniSection, false); }
 
 	public String fileName()
 		{ return fileName; }
@@ -283,23 +270,20 @@ public class IniFile {
 	public Boolean isItem(String iniSection, String iniItem)
 		{ return isSection(iniSection) ? iniBody.get(iniSection).containsKey(iniItem) : false; }
 
-	public void clearSection(String iniSection, Boolean saveOnDisk) {
+	public void clearSection(String iniSection) {
 		iniBody.get(iniSection).clear();
-		if (saveOnDisk)
-			saveToDisk();
+		changedTime = System.currentTimeMillis();
 	}
 
-	public void clearSection(String iniSection)
-		{ clearSection(iniSection, false); }
-
-	public void clearFile(Boolean saveOnDisk) {
+	public void clearFile() {
 		iniBody.clear();
-		if (saveOnDisk)
-			saveToDisk();
+		changedTime = System.currentTimeMillis();
 	}
 
-	public void clearFile()
-		{ clearFile(false); }
+	public void closeFile() {
+		openedIniFiles.remove(fileName);
+		clearFile();
+	}
 
 	public List<String> getSectionList() {
 		List<String> list = new ArrayList<String>();
@@ -323,6 +307,20 @@ public class IniFile {
 			  	list.add(item);
 		}
 		return list;
+	}
+
+	public void renameFileTo(String newFileName) {
+		File file = new File(fileName);
+		if (file.exists() && !file.delete())
+			throw new RuntimeException("Não foi possível renomear o arquivo " + fileName);
+		newFileName = file.getParent().toString() + "\\" + newFileName;
+		File file2 = new File(newFileName);
+		if (file2.exists() && !file2.delete())
+			throw new RuntimeException("Não foi possível renomear o arquivo " + fileName);
+		openedIniFiles.put(newFileName, this);
+		openedIniFiles.remove(fileName);
+		fileName = newFileName;
+		saveToDisk();
 	}
 
 	/**

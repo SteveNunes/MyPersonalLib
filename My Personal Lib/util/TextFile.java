@@ -2,7 +2,9 @@ package util;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import enums.TextMatchType;
 
@@ -15,9 +17,41 @@ import enums.TextMatchType;
  */
 
 public class TextFile {
+
+	static Map<String, TextFile> openedTextFiles = new HashMap<>();
+	static Thread autoSaveThread = null;
+
+	static void enableAutoSave() {
+		if (autoSaveThread == null) {
+			autoSaveThread = new Thread(() -> {
+				while (true) {
+					synchronized (IniFile.openedIniFiles) {
+						for (IniFile iniFile : IniFile.openedIniFiles.values())
+							if (iniFile.changedTime > 0 && (System.currentTimeMillis() - iniFile.changedTime)  > 5000)
+								iniFile.saveToDisk();
+					}
+					synchronized (openedTextFiles) {
+						for (TextFile textFile : openedTextFiles.values())
+							if (textFile.changedTime > 0 && (System.currentTimeMillis() - textFile.changedTime)  > 5000)
+								MyFile.writeAllLinesOnFile(textFile.fileBuffer, textFile.fileName);				}
+					Misc.sleep(100);
+				}
+			});
+			autoSaveThread.setDaemon(true);
+			autoSaveThread.start();
+			Misc.setShutdownEvent(() -> {
+				IniFile.saveAllFilesToDisk();
+				saveAllFilesToDisk();
+			});
+		}
+	}
+	
+	static { enableAutoSave(); }
+	
 	private int lastFoundLine;
 	private List<String> fileBuffer;
 	private String fileName;
+	private long changedTime;
 
 	/**
 	 * Métodos e seus equivalentes em mIRC Scripting:
@@ -33,16 +67,32 @@ public class TextFile {
 	 * Extras:
 	 * 	fileName()					- Retorna o nome do arquivo que foi carregado.
 	 * 	loadFileFromDisk()	- Recarrega as informa��es do disco para a memória.
-	 * 	saveToDisk() 				- Salva toda a informa��o do buffer do arquivo na
-	 * 												memória para o disco. 
 	 * 	findAll() 					- Retorna uma List de Strings com as linhas
 	 * 												encontradas usando um wildCard.
 	 */
 
-	public TextFile(String fileName) {
+	private TextFile(String fileName) {
 		lastFoundLine = 0;
+		changedTime = 0;
 		loadFileFromDisk(fileName);
+		openedTextFiles.put(fileName, this);
 	}
+
+	public static TextFile getNewTextFileInstance(String fileName) {
+		if (!openedTextFiles.containsKey(fileName)) 
+			return new TextFile(fileName);
+		return openedTextFiles.get(fileName);
+	}
+	
+	private static void saveAllFilesToDisk() {
+		for (TextFile textFile : openedTextFiles.values())
+			MyFile.writeAllLinesOnFile(textFile.fileBuffer, textFile.fileName);
+	}
+	
+	/**
+	 * IMPLEMENTAR o getInstance igual no IniFile para evitar abrir mais de 1 vez
+	 * o mesmo arquivo em instancias diferentes
+	 */
 
 	/**
 	 * Carrega o arquivo do disco pra memória. Esse método é chamado automaticamente
@@ -70,28 +120,6 @@ public class TextFile {
 	 */
 	public void loadFileFromDisk()
 		{ loadFileFromDisk(fileName); }
-
-	/**
-	 * Salva o arquivo da memória pro disco. Esse procedimento não é feito
-	 * automaticamente, á não ser que você confirme em certos métodos que isso deve
-	 * ser feito após a chamada do método. Métodos que permitem salvar em disco após
-	 * a chamada do mesmo: replaceLine(), insertLine(), addLine(), removeLine()
-	 * 
-	 * @param fileName - Se desejar que o arquivo carregado seja salvo com outro
-	 *                 		nome, especifique o novo nome como parâmetro.
-	 * 
-	 */
-	public void saveToDisk(String fileName)
-		{ MyFile.writeAllLinesOnFile(fileBuffer, fileName); }
-
-	/**
-	 * Sobrecarga do método 'saveToDisk(String fileName)' onde não é preciso
-	 * informar o nome do arquivo, pois o nome do arquivo fica gravado em uma String
-	 * ap�s carregar o arquivo do disco para a memória, e esse nome é passado como
-	 * parâmetro por essa sobrecarga.
-	 */
-	public void saveToDisk()
-		{ saveToDisk(fileName); }
 
 	/**
 	 * @return - O nome do arquivo especificado por �ltimo ao instancear o objeto ou
@@ -125,19 +153,12 @@ public class TextFile {
 	 * @param saveOnDisk - Se especificar 'true', salva o arquivo em disco ap�s a
 	 *                   altera��o.
 	 */
-	public void replaceLine(String text, int lineNumber, Boolean saveOnDisk) {
-		if (lines() > 0 && lineNumber <= lines())
+	public void replaceLine(String text, int lineNumber) {
+		if (lines() > 0 && lineNumber <= lines()) {
 			fileBuffer.set(lineNumber - 1, text);
-		if (saveOnDisk) saveToDisk();
+			changedTime = System.currentTimeMillis();
+		}
 	}
-
-	/**
-	 * Sobrecarga do método 'replaceLine(String text, int lineNumber, Boolean
-	 * saveOnDisk)' pnde não é preciso informar o parâmetro 'saveOnDisk' (é passado
-	 * o valor 'false' por padr�o)
-	 */
-	public void replaceLine(String text, int lineNumber)
-		{ replaceLine(text, lineNumber, false); }
 
 	/**
 	 * Insere o texto informado na linha informada, empurrando todas as linhas para
@@ -148,19 +169,12 @@ public class TextFile {
 	 * @param saveOnDisk - Se especificar 'true', salva o arquivo em disco ap�s a
 	 *                   altera��o.
 	 */
-	public void insertLine(String text, int lineNumber, Boolean saveOnDisk) {
-		if (lines() > 0 && lineNumber <= lines())
+	public void insertLine(String text, int lineNumber) {
+		if (lines() > 0 && lineNumber <= lines()) {
 			fileBuffer.add(lineNumber - 1, text);
-		if (saveOnDisk) saveToDisk();
+			changedTime = System.currentTimeMillis();
+		}
 	}
-
-	/**
-	 * Sobrecarga do método 'insertLine(String text, int lineNumber, Boolean
-	 * saveOnDisk)' pnde não é preciso informar o parâmetro 'saveOnDisk' (é passado
-	 * o valor 'false' por padr�o)
-	 */
-	public void insertLine(String text, int lineNumber)
-		{ insertLine(text, lineNumber, false); }
 
 	/**
 	 * Insere o texto informado ao final do arquivo.
@@ -169,15 +183,11 @@ public class TextFile {
 	 * @param saveOnDisk - Se especificar 'true', salva o arquivo em disco ap�s a
 	 *                   altera��o.
 	 */
-	public void addLine(String text, Boolean saveOnDisk) {
+	public void addLine(String text) {
 		fileBuffer.add(text);
-		if (saveOnDisk)
-			saveToDisk();
+		changedTime = System.currentTimeMillis();
 	}
 
-	public void addLine(String text)
-		{ addLine(text, false); }
-	
 	/**
 	 * Remove as linhas especificadas do arquivo, desde 'startLine' até 'endLine'.
 	 * 
@@ -186,39 +196,23 @@ public class TextFile {
 	 * @param saveOnDisk - Se especificar 'true', salva o arquivo em disco ap�s a
 	 *                   altera��o.
 	 */
-	public void removeLine(int startLine, int endLine, Boolean saveOnDisk) {
+	public void removeLine(int startLine, int endLine) {
 		if (startLine == 0) startLine = 1;
 		else if (startLine < 0) startLine = -startLine;
 		if (endLine < 1 || endLine > lines()) endLine = lines();
 		if (!fileBuffer.isEmpty() && startLine > 0 && endLine <= lines())
 		  for (int n = endLine - startLine; n >= 0; n--)
 		  	fileBuffer.remove(startLine - 1);
-		if (saveOnDisk) saveToDisk();
+		changedTime = System.currentTimeMillis();
 	}
-
-	/**
-	 * Sobrecarga do método 'removeLine(int startLine, int endLine, Boolean
-	 * saveOnDisk)' pnde não é preciso informar o parâmetro 'saveOnDisk' (é passado
-	 * o valor 'false' por padr�o)
-	 */
-	public void removeLine(int startLine, int endLine)
-		{ removeLine(startLine, endLine, false); }
 
 	/**
 	 * Sobrecarga do método 'removeLine(int startLine, int endLine, Boolean
 	 * saveOnDisk)' pnde não é preciso informar o parâmetro 'endLine' (é passado o
 	 * valor de 'startLine' por padr�o)
 	 */
-	public void removeLine(int lineNumber, Boolean saveOnDisk)
-		{ removeLine(lineNumber, lineNumber, saveOnDisk); }
-
-	/**
-	 * Sobrecarga do método 'removeLine(int lineNumber, Boolean saveOnDisk)' pnde
-	 * não é preciso informar o parâmetro 'saveOnDisk' (é passado o valor 'false'
-	 * por padr�o)
-	 */
 	public void removeLine(int lineNumber)
-		{ removeLine(lineNumber, lineNumber, false); }
+		{ removeLine(lineNumber, lineNumber); }
 
 	public String find(String wildCard, int startLine) {
 		if (startLine < 1) startLine = 1;
@@ -272,5 +266,28 @@ public class TextFile {
 	 */
 	public List<String> findAll(String wildCard)
 		{ return findAll(wildCard, 1); }
+	
+	public void clearFile()
+		{ fileBuffer.clear(); }
+	
+	public void closeFile() {
+		openedTextFiles.remove(fileName);
+		fileBuffer.clear();
+		fileBuffer = null;
+	}
+	
+	public void renameFileTo(String newFileName) {
+		File file = new File(fileName);
+		if (file.exists() && !file.delete())
+			throw new RuntimeException("Não foi possível renomear o arquivo " + fileName);
+		newFileName = file.getParent().toString() + "\\" + newFileName;
+		File file2 = new File(newFileName);
+		if (file2.exists() && !file2.delete())
+			throw new RuntimeException("Não foi possível renomear o arquivo " + fileName);
+		openedTextFiles.put(newFileName, this);
+		openedTextFiles.remove(fileName);
+		fileName = newFileName;
+		MyFile.writeAllLinesOnFile(fileBuffer, fileName);
+	}
 
 }

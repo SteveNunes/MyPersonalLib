@@ -5,7 +5,7 @@ import util.Misc;
 public class FPSHandler {
 
 	private int gameCyclesPerSecond;
-	private long nextCicleAt;
+	private double nextCicleAt;
 	private int gameFrameSkip;
 	private int frameSkip;
 	private long elapsedFrames;
@@ -14,6 +14,7 @@ public class FPSHandler {
 	private long fpsTimer;
 	private int currentFPS;
 	private int currentCPS;
+	private Runnable callsWhileWaitingForFPS;
 	
 	public FPSHandler(int cyclesPerSecond, int frameSkip) {
 		gameCyclesPerSecond = cyclesPerSecond;
@@ -26,7 +27,14 @@ public class FPSHandler {
 		fpsTimer = System.currentTimeMillis();
 		currentFPS = 0;
 		currentCPS = 0;
+		callsWhileWaitingForFPS = null;
 	}
+	
+	public FPSHandler(int cyclesPerSecond)
+		{ this(cyclesPerSecond, 0); }
+	
+	public void setEventToRunWhileWaitingForFPS(Runnable runnable)
+		{ runnable = callsWhileWaitingForFPS; }
 
 	public void setCPS(int fps)
 		{ gameCyclesPerSecond = fps; }
@@ -48,28 +56,35 @@ public class FPSHandler {
 	 */
 	public void fpsCounter() {
 		if (gameCyclesPerSecond > 0) {
-			Misc.sleep(nextCicleAt - System.currentTimeMillis());
-			nextCicleAt += 1000 / gameCyclesPerSecond;
+			while (System.currentTimeMillis() < nextCicleAt) {
+				if (callsWhileWaitingForFPS != null)
+					callsWhileWaitingForFPS.run();
+				if (System.currentTimeMillis() < nextCicleAt)
+					Misc.sleep(1);
+				if (System.currentTimeMillis() >= fpsTimer) {
+					fpsTimer += 1000;
+					currentFPS = fps;
+					currentCPS = cps;
+					fps = 0;
+					cps = 0;
+				}
+			}
+			nextCicleAt += 1000d / gameCyclesPerSecond;
 		}
 		frameSkip++;
 		cps++;
-		if (gameFrameSkip == 0 || ++frameSkip > gameFrameSkip) {
+		if (gameFrameSkip == 0 || frameSkip > gameFrameSkip) {
 			frameSkip = 0;
 			fps++;
 			elapsedFrames++;
 		}
-		if (System.currentTimeMillis() >= fpsTimer) {
-			fpsTimer = System.currentTimeMillis() + 1000;
-			currentFPS = fps;
-			currentCPS = cps;
-			fps = 0;
-			cps = 0;
-		}
 	}
 	
 	/*
-	 * Only update your screen when this method returns {@code true},
-	 * otherwise, just update game stuffs without any drawning. 
+	 * Only update your screen when this method returns {@code true}.
+	 * It will guarante that your draw will run propperly at the
+	 * desired frameskip. While it returns {@code false} just update
+	 * game stuffs without any drawning. 
 	 */
 	public Boolean ableToDraw()
 		{ return gameFrameSkip == 0 || frameSkip >= gameFrameSkip; }

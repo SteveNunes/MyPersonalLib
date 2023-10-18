@@ -9,5 +9,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JavaFX"/>
 	<classpathentry kind="lib" path="D:/Java/java-libs/JavaLayer/jl1.0.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JInput"/>
+	<classpathentry kind="lib" path="D:/Java/java-libs/jnativehook-2.2.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

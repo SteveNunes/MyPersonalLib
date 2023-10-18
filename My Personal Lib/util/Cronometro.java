@@ -79,6 +79,20 @@ public class Cronometro {
 	public void setPausado()
 		{ setPausado(!pausado); }
 	
+	public static long getDuracao(String formatoHHMMSS) {
+		String[] split = formatoHHMMSS.split(":");
+		try {
+			long duracao = 0;
+			long[] incs = {PeriodToMillis.SECOND.getValue(), PeriodToMillis.MINUTE.getValue(),
+										 PeriodToMillis.HOUR.getValue(), PeriodToMillis.DAY.getValue()};
+			for (int p = split.length - 1; p >= 0; p--)
+				duracao += Long.parseLong(split[p]) * incs[split.length - (p + 1)];
+			return duracao;
+		}
+		catch (Exception e)
+			{ throw new RuntimeException(formatoHHMMSS + " -> formato inválido (Deve ser: [DD:][HH:][MM:]SS"); }
+	}
+	
 	public void reset() {
 		dataInicial.setTime(System.currentTimeMillis());
 		dataDaPausa.setTime(System.currentTimeMillis());
