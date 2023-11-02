@@ -1,7 +1,11 @@
 package util;
 
 import java.text.Normalizer;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
+
+import enums.TextMatchType;
 
 public abstract class MyString {
 
@@ -92,6 +96,59 @@ public abstract class MyString {
 			
 		}
 		return sb.toString();
+	}
+
+	public static Boolean textMatch(String text, String pattern, TextMatchType matchType, Boolean caseSensitive) {
+		if (text == null || text.isEmpty() || pattern == null || pattern.isEmpty())
+			return false;
+		if (matchType == TextMatchType.WILDCARD &&
+				((!caseSensitive && text.toLowerCase().matches(("\\Q" + pattern.toLowerCase() + "\\E").replace("*", "\\E.*\\Q")))) ||
+				 (caseSensitive && text.matches(("\\Q" + pattern + "\\E").replace("*", "\\E.*\\Q"))))
+						return true;
+		if (matchType == TextMatchType.REGEX) {
+			String[] regexChars = {"\\", "+", ".", "*", "[", "]", "{", "}", "(", ")", "?", "^", "$", "|"};
+			String pat = pattern;
+			for (String c : regexChars)
+				pat.replace(c, "\\" + c);
+			if ((!caseSensitive && text.toLowerCase().matches(pat.toLowerCase())) ||
+				  (caseSensitive && text.matches(pat)))
+						return true;
+		}
+		if (matchType == TextMatchType.EXACTLY &&
+				((!caseSensitive && text.toLowerCase().contains(pattern.toLowerCase())) ||
+				 (caseSensitive && text.contains(pattern))))
+						return true;
+		return false;
+	}
+
+	public static Boolean textMatch(String text, String pattern, TextMatchType matchType)
+		{ return textMatch(text, pattern, matchType, true); }
+	
+	public static Boolean textMatch(String text, String pattern)
+		{ return textMatch(text, pattern, TextMatchType.EXACTLY); }
+	
+	/**
+	 * Clone de $strip do mIRC Scripting
+	 */
+	public static String mircStrip(String text) {
+	  StringBuilder result = new StringBuilder();
+	  int ignore = 0;
+	  List<Character> strips = Arrays.asList((char)2, (char)3, (char)15, (char)29, (char)30, (char)31);
+	  for (int n = 0; n < text.length(); n++) {
+	  	char c = text.charAt(n);
+	    if (c == (char)3) ignore = ignore == 0 ? 1 : -1;
+	    else if (ignore != 0) {
+	      if (ignore == 1 && c == ',')
+	      	ignore = 2;
+	      else if (!Character.isDigit(c))
+	      	ignore = 0;
+	    }
+	    if (ignore == 0 && !strips.contains(c))
+	    	result.append(c);
+	    else if (ignore == -1)
+	    	ignore = 0;
+	  }
+	  return result.toString();
 	}
 
 }

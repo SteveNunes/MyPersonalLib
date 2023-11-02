@@ -548,7 +548,7 @@ public abstract class Token {
 		int total = 0;
 		ltokens.clear();
 		for (int n = 0, p = 0; n < ttokens.length; n++)
-			if (Misc.textMatch(ttokens[n], wildcard, TextMatchType.WILDCARD)) {
+			if (MyString.textMatch(ttokens[n], wildcard, TextMatchType.WILDCARD)) {
 				if (pos > 0 && ++p == pos)
 					return ttokens[n];
 				else if (pos == 0) {

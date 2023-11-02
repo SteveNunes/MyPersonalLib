@@ -218,7 +218,7 @@ public class TextFile {
 		if (startLine < 1) startLine = 1;
 		else if (startLine > lines()) return "";
 		for (int n = startLine - 1; n < lines(); n++)
-			if (n + 1 >= startLine && Misc.textMatch(fileBuffer.get(n), wildCard, TextMatchType.WILDCARD)) {
+			if (n + 1 >= startLine && MyString.textMatch(fileBuffer.get(n), wildCard, TextMatchType.WILDCARD)) {
 				lastFoundLine = n + 1;
 				return fileBuffer.get(n);
 			}

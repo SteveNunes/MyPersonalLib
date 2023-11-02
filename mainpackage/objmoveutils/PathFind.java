@@ -4,6 +4,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.function.Function;
 
@@ -23,6 +24,7 @@ public class PathFind {
 	private List<Position> tempTiles, currentPath;
 	private List<List<Position>> foundPaths;
 	private Boolean reversing = false, debug = false, firstStep;
+	private Random random = new Random(new SecureRandom().nextInt(Integer.MAX_VALUE));
 	private Scanner sc;
 	
 	public PathFind() {}
@@ -191,7 +193,7 @@ public class PathFind {
 			currentPath.clear();
 		else {
 			if (pathFindType == PathFindType.AVERAGE_PATH)
-				n = new SecureRandom().nextInt(n);
+				n = random.nextInt(n);
 			else {
 				int min = Integer.MAX_VALUE, max = 0, index = 0;
 				for (n = 0; n < foundPaths.size(); n++) {
@@ -297,7 +299,7 @@ public class PathFind {
 		List<Direction> availableDirs = new ArrayList<>();
 		
 		while (totalAvailableDirs < 4) {
-			n = new SecureRandom().nextInt(4);
+			n = random.nextInt(4);
 			while (availableDirs.contains(allDirs.get(n)))
 				if (++n == 4)
 					n = 0;
@@ -371,7 +373,7 @@ public class PathFind {
 						tileIsFree(currentPosition, dir)))
 							return dir;
 		List<Direction> dirs = getRandomizedListOfFreeDirections();
-		return dirs == null ? null : dirs.get(new SecureRandom().nextInt(dirs.size()));
+		return dirs == null ? null : dirs.get(random.nextInt(dirs.size()));
 	}
 
 	public Direction getCurrentDirection() {

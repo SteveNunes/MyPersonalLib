@@ -139,7 +139,7 @@ public class MoveBetweenDots {
 		dotIndex = index;
 		pos.setPosition(getCurrentDot());
 		dotIndex = getNextDotCoordIndex();
-		inc = Position.getIncrementForMoveBetweenPositions(pos, getCurrentDot(), speedInFrames);
+		inc = ShapeUtils.getIncrementValueForMoveBetweenPositions(pos, getCurrentDot(), speedInFrames);
 		if (!resetAfterFullCycle && index != dotIndex &&
 				dotIndex == (orientation == DirectionOrientation.CLOCKWISE ? 0 : dots.size() - 1))
 					cycleWasCompleted = true;

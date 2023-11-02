@@ -327,8 +327,6 @@ public abstract class ControllerUtils {
 					Bounds bounds = node.localToScreen(node.getBoundsInLocal());
 					bounds.XXXXX()
 					
-			 COMO MOVER O MOUSE PARA UM LOCAL ESPECIFICO DA TELA
-					new Robot().mouseMove(x, y);
 		 */
 	
 }

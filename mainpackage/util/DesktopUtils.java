@@ -1,6 +1,5 @@
 package util;
 
-import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 
@@ -17,5 +16,8 @@ public abstract class DesktopUtils {
 	
 	public static int getHardwareScreenHeight()
 		{ return GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode().getHeight(); }
+	
+	public static float getSystemDpiScale()
+		{ return (float)getHardwareScreenWidth() / (float)getSystemScreenWidth(); }
 
 }

@@ -1,6 +1,8 @@
 package util;
 
 import java.io.File;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,7 +22,7 @@ public class IniFile {
 	private List<String> fileBuffer;
 	private LinkedHashMap<String, LinkedHashMap<String, String>> iniBody;
 	long changedTime = 0;
-	static Map<String, IniFile> openedIniFiles = new HashMap<>();
+	static LinkedHashMap<String, IniFile> openedIniFiles = new LinkedHashMap<>();
 	
 	static void saveAllFilesToDisk() {
 		for (IniFile iniFile : openedIniFiles.values())
@@ -104,7 +106,7 @@ public class IniFile {
 					else if (!section.isEmpty() && stringIsItem(s)) {
 						String[] split = s.split("=");
 						item = split[0];
-						val = Misc.arrayToString(split, 1, "=");
+						val = MyConverters.arrayToString(split, 1, "=");
 						write(section, item, val);
 					}
 			}
@@ -284,6 +286,12 @@ public class IniFile {
 		openedIniFiles.remove(fileName);
 		clearFile();
 	}
+	
+	public static void closeAllOpenedIniFiles() {
+		for (IniFile ini : openedIniFiles.values())
+			ini.clearFile();
+		openedIniFiles.clear();
+	}
 
 	public List<String> getSectionList() {
 		List<String> list = new ArrayList<String>();
@@ -322,14 +330,110 @@ public class IniFile {
 		fileName = newFileName;
 		saveToDisk();
 	}
+	
+	public Short readAsShort(String section, String item, Short defaultReturnValue) {
+		Short n;
+		try
+			{ n = Short.parseShort(read(section, item)); }
+		catch (Exception e)
+			{ n = defaultReturnValue; }
+		return n;
+	}
+	
+	public Short readAsShort(String section, String item)
+		{ return readAsShort(section, item, null); }
+	
+	public Integer readAsInteger(String section, String item, Integer defaultReturnValue) {
+		Integer n;
+		try
+			{ n = Integer.parseInt(read(section, item)); }
+		catch (Exception e)
+			{ n = defaultReturnValue; }
+		return n;
+	}
+	
+	public Integer readAsInteger(String section, String item)
+		{ return readAsInteger(section, item, null); }
 
+	public Long readAsLong(String section, String item, Long defaultReturnValue) {
+		Long n;
+		try
+			{ n = Long.parseLong(read(section, item)); }
+		catch (Exception e)
+			{ n = defaultReturnValue; }
+		return n;
+	}
+	
+	public Long readAsLong(String section, String item)
+		{ return readAsLong(section, item, null); }
+
+	public Float readAsFloat(String section, String item, Float defaultReturnValue) {
+		Float n;
+		try
+			{ n = Float.parseFloat(read(section, item)); }
+		catch (Exception e)
+			{ n = defaultReturnValue; }
+		return n;
+	}
+	
+	public Float readAsFloat(String section, String item)
+		{ return readAsFloat(section, item, null); }
+
+	public Double readAsDouble(String section, String item, Double defaultReturnValue) {
+		Double n;
+		try
+			{ n = Double.parseDouble(read(section, item)); }
+		catch (Exception e)
+			{ n = defaultReturnValue; }
+		return n;
+	}
+	
+	public Double readAsDouble(String section, String item)
+		{ return readAsDouble(section, item, null); }
+
+	public Character readAsCharacter(String section, String item, Character defaultReturnChar) {
+		Character c;
+		try
+			{ c = read(section, item).charAt(0); }
+		catch (Exception e)
+			{ c = defaultReturnChar; }
+		return c;
+	}
+
+	public Character readAsCharacter(String section, String item)
+		{ return readAsCharacter(section, item, null); }
+
+	public BigInteger readAsBigInteger(String section, String item, BigInteger defaultReturnChar) {
+		BigInteger c;
+		try
+			{ c = new BigInteger(read(section, item)); }
+		catch (Exception e)
+			{ c = defaultReturnChar; }
+		return c;
+	}
+
+	public BigInteger readAsBigInteger(String section, String item)
+		{ return readAsBigInteger(section, item, null); }
+
+	public BigDecimal readAsBigDecimal(String section, String item, BigDecimal defaultReturnChar) {
+		BigDecimal c;
+		try
+			{ c = new BigDecimal(read(section, item)); }
+		catch (Exception e)
+			{ c = defaultReturnChar; }
+		return c;
+	}
+
+	public BigDecimal readAsBigDecimal(String section, String item)
+		{ return readAsBigDecimal(section, item, null); }
+	
 	/**
 	 * Retorna um LinkedHashMap, contendo vários itens=valores provindos de uma
 	 * string no formato: {ITEM=VAL}{ITEM2=VAL}{ITEM3=VAL}
-	 * {@code enclosers} se refere aos caracteres que isolam o grupo de ITEM=VAL.
-	 * 									 Exemplo: Se o formato for {ITEM=VAL} use no {@code enclosers} "{}"
-	 * 									 ou simplesmente nem especifique o {@code enclosers}, pois é passado
-	 * 									 o valor "{}" por padrão.
+	 * @enclosers - Caracteres que isolam o grupo de ITEM=VAL.
+	 * 							 Exemplo: Se o formato for {ITEM=VAL} use no {@code enclosers} "{}"
+	 * 							 ou simplesmente nem especifique o {@code enclosers}, pois é passado
+	 * 							 o valor "{}" por padrão.
 	 */
 	public static LinkedHashMap<String, String> subItemStringToLinkedHashMap(String val, String enclosers) {
 		LinkedHashMap<String, String> subItems = new LinkedHashMap<>();
@@ -356,6 +460,13 @@ public class IniFile {
 	public static LinkedHashMap<String, String> subItemStringToLinkedHashMap(String val)
 		{ return subItemStringToLinkedHashMap(val, "{}"); }
 	
+	/** Converte uma string no formato {ITEM=VAL}{ITEM2=VAL}{ITEM3=VAL} em um
+	 *  LinkedHashMap<String, String> contendo esses itens e seus valores respectivamente.
+	 * @enclosers - Caracteres que isolam o grupo de ITEM=VAL.
+	 * 							 Exemplo: Se o formato for {ITEM=VAL} use no {@code enclosers} "{}"
+	 * 							 ou simplesmente nem especifique o {@code enclosers}, pois é passado
+	 * 							 o valor "{}" por padrão.
+	 */
 	public static String linkedHashMapToSubItemString(LinkedHashMap<String, String> map, String enclosers) {
 		StringBuilder str = new StringBuilder();
 		map.forEach((k, v) -> {

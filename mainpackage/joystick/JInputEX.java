@@ -197,7 +197,8 @@ public class JInputEX {
 	public static void closeAllJoysticks() {
 		for (JInputEX joy : joysticks) {
 			joy.close();
-			onJoystickDisconnected.accept(joy);
+			if (onJoystickDisconnected != null)
+				onJoystickDisconnected.accept(joy);
 		}
 	}
 	

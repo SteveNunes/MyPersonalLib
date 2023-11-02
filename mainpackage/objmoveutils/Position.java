@@ -1,8 +1,5 @@
 package objmoveutils;
 
-import java.awt.Rectangle;
-import java.awt.geom.Ellipse2D;
-import java.security.SecureRandom;
 import java.util.Objects;
 
 import enums.Direction;
@@ -12,7 +9,6 @@ public class Position {
 	private double x;
 	private double y;
 	private int tileSize;
-	private static SecureRandom secureRandom = null;
 	
 	public Position()
 		{ this(0, 0, 1); }
@@ -21,8 +17,6 @@ public class Position {
 		this.x = x;
 		this.y = y;
 		this.tileSize = tileSize;
-		if (secureRandom == null)
-			secureRandom = new SecureRandom();
 	}
 	
 	public Position(double x, double y)
@@ -148,76 +142,10 @@ public class Position {
 	public Boolean isOnSameTile(Position position)
 		{ return position.getTileX() == getTileX() && position.getTileY() == getTileY(); }
 	
-	public static Position getRandomPositionFromAnEllipse(Ellipse2D ellipse) {
-    double centerX = ellipse.getCenterX();
-    double centerY = ellipse.getCenterY();
-    double semiMajorAxis = ellipse.getWidth() / 2.0;
-    double semiMinorAxis = ellipse.getHeight() / 2.0;
-    double randomAngle = 2 * Math.PI * secureRandom.nextDouble();
-    double randomRadius = Math.sqrt(secureRandom.nextDouble());
-    double randomX = centerX + semiMajorAxis * randomRadius * Math.cos(randomAngle);
-    double randomY = centerY + semiMinorAxis * randomRadius * Math.sin(randomAngle);
-    return new Position(randomX, randomY);
-	}
-	
-	public static Position getRandomPositionFromASquare(Rectangle rectangle) {
-    int randomX = rectangle.x + secureRandom.nextInt(rectangle.width);
-    int randomY = rectangle.y + secureRandom.nextInt(rectangle.height);
-    return new Position(randomX, randomY);
-	}
-	
 	/** Retorna {@code true} se os valores X e Y do Position atual estiverem perfeitamente centralizados em um Tile  */
 	public Boolean isPerfectTileCentred()
 		{ return (int)x % tileSize == 0 && (int)y % tileSize == 0; }
 	
-  /*
-   * Retorna um {@code Position} com valores {@code X, Y} referentes
-   * ao incremento para que um objeto na coordenada {@code position1}
-   * chegue até a coordenada {@code position2} no total de {@code frames}
-   */
-	public static Position getIncrementForMoveBetweenPositions(Position position1, Position position2, int frames) {
-	  double x = (position2.getX() - position1.getX()) / frames;
-	  double y = (position2.getY() - position1.getY()) / frames;
-	  return new Position(x, y);
-	}
-	
-	public static Position getIncrementForMoveBetweenPositions(double startX, double startY, double endX, double endY, int frames)
-		{ return getIncrementForMoveBetweenPositions(new Position(startX, startY), new Position(endX, endY), frames); }
-
-	public static Position getIncrementForMoveBetweenPositions(double startX, double startY, Position endPosition, int frames)
-		{ return getIncrementForMoveBetweenPositions(startX, startY, endPosition.getX(), endPosition.getY(), frames); }
-
-	public static Position getIncrementForMoveBetweenPositions(Position startPosition, double endX, double endY, int frames)
-		{ return getIncrementForMoveBetweenPositions(startPosition.getX(), startPosition.getY(), endX, endY, frames); }
-	
-  /** Informe as coordenadas {@code x, y} do centro do círculo, e seu raio  para retornar
-   * a coordenada de um dos pontos utilizados para formar esse círculo.
-   * 
-   * @param pts - Quantidade de pontos para desenhar o circulo
-   * @param pos - O ponto do circulo desejado. Ex: Se {@code qts} for {@code 10}, será calculado {@code 10} pontos separados igualmente de forma á formar o circulo desejado. Então, {@code pos 2} retorna a coordenada do segundo ponto usado para formar o circulo.
-  */
-	public static Position circleDot(double x, double y, double r, int pts, long pos) {
-	  double dis = 2 * Math.PI / pts;
-	  double co = Math.cos(pos * dis);
-	  double si = Math.sin(pos * dis);
-	  return new Position(co * r, si * r);
-	}
-	
-  /** Informe as coordenadas {@code x, y} do centro da elipse, e seu raio  para retornar
-   * a coordenada de um dos pontos utilizados para formar essa elipse.
-   * 
-   * @param pts - Quantidade de pontos para desenhar a elipse
-   * @param pos - O ponto da elipse desejado. Ex: Se {@code qts} for {@code 10}, será calculado {@code 10} pontos separados igualmente de forma á formar a elipse desejada. Então, {@code pos 2} retorna a coordenada do segundo ponto usado para formar a elipse.
-  */
-	public static Position ellipseDot(double x, double y, double rw, double rh, int pts, long pos) {
-	  double dis = 2 * Math.PI / pts;
-	  double co = Math.cos(pos * dis);
-	  double si = Math.sin(pos * dis);
-	  return new Position(co * rw, si * rh);
-	}
-	
-	
-
 	@Override
 	public int hashCode()
 		{ return Objects.hash(x, y); }
