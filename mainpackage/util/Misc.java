@@ -1,30 +1,30 @@
 package util;
 
 import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
-import enums.TextMatchType;
 import javafx.application.Platform;
 
 public abstract class Misc {
 	
 	private static Map<String, Map<Long, ?>> uniqueId = new HashMap<>();
+
+	/** Retorna alternadamente entre os valores {@code v1} e {@code v2} baseadp no valor atual de {@code var} (Versão para tipos numéricos) */
+	public static <T extends Number & Comparable<? super T>> T toogleValues(T var, T v1, T v2)
+		{ return var == v1 ? v2 : v1; }
+	
+	/** Retorna alternadamente entre os valores {@code v1} e {@code v2} baseadp no valor atual de {@code var} (Versão para objetos) */
+	public static <T> T toogleValues(T var, T v1, T v2)
+		{ return var.equals(v1) ? v2 : v1; }
 	
 	/** Define um evento que será disparado quando o programa for encerrado */
 	public static void setShutdownEvent(Runnable runnable) {
@@ -177,5 +177,51 @@ public abstract class Misc {
 		}
 		return moved;
 	}
-
+	
+	public static <T> void copyArray(T[] sourceArray, T[] targetArray) {
+		for (int i = 0; i < sourceArray.length; i++)
+			targetArray[i] = sourceArray[i];
+	}
+	
+	public static <T> void copyArray(T[][] sourceArray, T[][] targetArray) {
+		for (int y = 0; y < sourceArray.length; y++)
+			for (int x = 0; x < sourceArray[0].length; x++)
+			targetArray[y][x] = sourceArray[y][x];
+	}
+	
+	public static void copyArray(boolean[] sourceArray, boolean[] targetArray) {
+		for (int i = 0; i < sourceArray.length; i++)
+			targetArray[i] = sourceArray[i];
+	}
+	
+	public static void copyArray(byte[] sourceArray, byte[] targetArray) {
+		for (int i = 0; i < sourceArray.length; i++)
+			targetArray[i] = sourceArray[i];
+	}
+	
+	public static void copyArray(short[] sourceArray, short[] targetArray) {
+		for (int i = 0; i < sourceArray.length; i++)
+			targetArray[i] = sourceArray[i];
+	}
+	
+	public static void copyArray(int[] sourceArray, int[] targetArray) {
+		for (int i = 0; i < sourceArray.length; i++)
+			targetArray[i] = sourceArray[i];
+	}
+	
+	public static void copyArray(long[] sourceArray, long[] targetArray) {
+		for (int i = 0; i < sourceArray.length; i++)
+			targetArray[i] = sourceArray[i];
+	}
+	
+	public static void copyArray(float[] sourceArray, float[] targetArray) {
+		for (int i = 0; i < sourceArray.length; i++)
+			targetArray[i] = sourceArray[i];
+	}
+	
+	public static void copyArray(double[] sourceArray, double[] targetArray) {
+		for (int i = 0; i < sourceArray.length; i++)
+			targetArray[i] = sourceArray[i];
+	}
+	
 }
