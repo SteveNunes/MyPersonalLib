@@ -1,10 +1,8 @@
 package gui.util;
 
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class NewWindow {
@@ -12,23 +10,21 @@ public class NewWindow {
 	private FXMLLoader loader;
 	private Stage stage;
 	
-	public NewWindow() {}
+	@SuppressWarnings("unused")
+	private NewWindow() {}
 	
-	public <T> NewWindow(Class<? extends T> cLass, Node anyNodeFromParentWindow, String fxml) {
+	public NewWindow(String fxml) {
 		try {
-			loader = new FXMLLoader(cLass.getResource(fxml));
+			loader = new FXMLLoader(NewWindow.class.getResource(fxml));
 			Pane pane = loader.load();
 			stage = new Stage();
 			stage.setScene(new Scene(pane));
-			stage.initOwner(anyNodeFromParentWindow.getScene().getWindow());
-			stage.initModality(Modality.WINDOW_MODAL);
+			stage.show();
 		}
-		catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException("Não foi possível carregar a janela \"" + fxml + "\"");
-		}
+		catch (Exception e)
+			{ throw new RuntimeException("Unable to create window"); }
 	}
-	
+
 	public Stage getStage()
 		{ return stage; }
 	

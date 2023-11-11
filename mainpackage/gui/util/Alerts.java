@@ -1,4 +1,4 @@
-package util;
+package gui.util;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -296,12 +296,8 @@ public abstract class Alerts {
 			Stage stage = (Stage) dialog.getDialogPane().getScene().getWindow();
 			stage.getIcons().add(new Image(this.getClass().getResource("arquivo.png").toString()));
 			
-			Another option is to remove the icon and use only minimal window decorations.
+			Como criar uma janela sem barras de contorno e sem titulo
 			dialog.initStyle(StageStyle.UTILITY);
-			
-			You can specify the owner Window for a dialog.
-			If no owner or null is specified for the owner, it is a top-level, unowned dialog.
-			dialog.initOwner(parentWindow);
 			
 			You can specify the modality for a dialog.
 			The modality must be one of Modality.NONE, Modality.WINDOW_MODAL, or Modality.APPLICATION_MODAL.
