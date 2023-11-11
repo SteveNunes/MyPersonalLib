@@ -11,6 +11,7 @@ public enum Icons {
 	ICON_NEW_FILE("/icons/newfile.png"),
 	ICON_COPY("/icons/copy.png"),
 	ICON_CLIPBOARD("/icons/clipboard.png"),
+	ICON_CONFIG("/icons/config.png"),
 	ICON_DELETE("/icons/delete.png"),
 	ICON_EDIT("/icons/edit.png"),
 	ICON_ERASER("/icons/eraser.png"),
