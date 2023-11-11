@@ -28,7 +28,6 @@ public class NewWindow {
 				stage.initModality(modality);
 			if (style != null)
 				stage.initStyle(style);
-			stage.show();
 		}
 		catch (Exception e)
 			{ throw new RuntimeException("Unable to create window"); }
@@ -61,6 +60,12 @@ public class NewWindow {
 	
 	public <T> T getController()
 		{ return loader.getController(); }
+	
+	public void show()
+		{ stage.show(); }
+
+	public void showAndWait()
+		{ stage.showAndWait(); }
 	
 }
 
