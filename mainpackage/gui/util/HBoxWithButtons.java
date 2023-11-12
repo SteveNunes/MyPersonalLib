@@ -173,7 +173,7 @@ public class HBoxWithButtons {
 		{ editableHBox.setEditableHBoxThroughComboBox(hBoxText, comboBoxItems, comboBoxChangeListener); }
 	
 	public void addIcon()
-		{ setIcon(Icons.ICON_BLANK); }
+		{ setIcon(Icons.BLANK); }
 
 	public void setIcon(Icons icon) {
 		Boolean add = this.icon == null;
