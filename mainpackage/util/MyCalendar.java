@@ -90,7 +90,7 @@ public abstract class MyCalendar {
 		{ return changeTimeFromDate(date, "00:00:00"); }
 	
 	public static Date getDateAtMidnight()
-		{ return getDateAt1SecBeforeMidnight(new Date()); }
+		{ return getDateAtMidnight(new Date()); }
 
 	private static int intFromSDF(Date dt, String format)
 		{ return Integer.parseInt(new SimpleDateFormat(format).format(dt)); }
