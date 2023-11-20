@@ -649,5 +649,45 @@ public abstract class ImageUtils {
 		return Color.rgb(r, g, b, a / 255.0);
 	}
 	
+	/**
+	 * Converte uma java.awt.Image em javafx.Image, redimensionando o tamanho final
+	 * @param awtImage - java.awt.Image á ser convertida
+	 * @param width - Largura da imagem convertida
+	 * @param height - Altura da imagem convertida
+	 * @return - Uma javafx.Image redimensionada
+	 */
+	public static Image toResizedFXImage(java.awt.Image awtImage, int width, int height) {
+		BufferedImage bufferedImage = new BufferedImage(awtImage.getWidth(null), awtImage.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+		bufferedImage.getGraphics().drawImage(awtImage, 0, 0, null);
+		BufferedImage novaBufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		novaBufferedImage.getGraphics().drawImage(bufferedImage, 0, 0, width, height, null);
+		return SwingFXUtils.toFXImage(novaBufferedImage, null);
+	}
+	
+	/** Converte uma java.awt.Image em javafx.Image */
+	public static Image toFXImage(java.awt.Image awtImage)
+		{ return SwingFXUtils.toFXImage((BufferedImage) awtImage, null); }
+	
+	/**
+	 * Converte uma javafx.Image em java.awt.Image, redimensionando o tamanho final
+	 * @param fxImage - javafx.Image á ser convertida
+	 * @param width - Largura da imagem convertida
+	 * @param height - Altura da imagem convertida
+	 * @param scale - Escala da imagem convertida (Usar uma constante de java.awt.Image.* para pegar um valor compatível)
+	 * @return - Uma java.awt.Image redimensionada
+	 */
+	public static java.awt.Image toResizedAWTImage(Image fxImage, int width, int height, int scale) {
+    BufferedImage bufferedImage = SwingFXUtils.fromFXImage(fxImage, null);
+    BufferedImage novaBufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    novaBufferedImage.getGraphics().drawImage(bufferedImage, 0, 0, width, height, null);
+    return novaBufferedImage.getScaledInstance(width, height, scale);
+	}
+
+	public static java.awt.Image toResizedAWTImage(Image fxImage, int width, int height)
+		{ return toResizedAWTImage(fxImage, width, height, java.awt.Image.SCALE_DEFAULT); }
+
+	public static java.awt.Image toAWTImage(Image fxImage)
+		{ return SwingFXUtils.fromFXImage(fxImage, null); }
+	
 }
 

@@ -6,37 +6,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import javazoom.jl.player.advanced.AdvancedPlayer;
 
 public abstract class Sounds {
 	
 	private static Map<String, List<AdvancedPlayer>> players = new HashMap<>();
 	private static Map<String, List<Clip>> clipes = new HashMap<>();
-
-	public static void main(String[] args) {
-		String wavFilePath = "D:\\audio.wav";
-		String mp3FilePath = "D:\\Audio & Video\\Audios\\Vozes Cave Johnson\\ACHO QUE VOCÊ LIGOU PRO NÚMERO ERRADO.mp3";
-		Scanner sc = new Scanner(System.in);
-		System.out.println("Pressione ENTER para iniciar...");
-		sc.nextLine();
-		long ct = System.currentTimeMillis();
-		for (int n = 1; n <= 100; n++) {
-			playWav(wavFilePath, true);
-			playMp3(mp3FilePath, true);
-		}
-		System.out.println((System.currentTimeMillis() - ct) + "ms");
-		sc.nextLine();
-		stopAllMp3();
-		stopAllWaves();
-		sc.nextLine();
-		sc.close();
-	}
 
 	public static void playWav(String wavFilePath)
 		{ playWav(wavFilePath, false); }
@@ -78,7 +60,7 @@ public abstract class Sounds {
 			}
 		}).start();
 	}
-	
+
 	public static void stopWav(Clip clip) {
 		if (clip == null)
 			throw new RuntimeException("stopWav(): 'clip' is null");
@@ -152,6 +134,19 @@ public abstract class Sounds {
 		new Thread(new Runnable() {      @Override	    public void run() {
     		try (FileInputStream fileInputStream = new FileInputStream(mp3FilePath)) {
     			AdvancedPlayer player = new AdvancedPlayer(fileInputStream);
+    			/** FORMA DE COMO CRIAR LISTENER PRA DISPARAR QUANDO ARQUIVO COMECAR OU TERMINAR DE TOCAR
+					player.setPlayBackListener(new PlaybackListener() {
+						@Override
+						public void playbackStarted(PlaybackEvent evt) {
+							System.out.println("Playback started");
+						}
+
+						@Override
+						public void playbackFinished(PlaybackEvent evt) {
+							System.out.println("Playback finished");
+						}
+					});
+					*/
     			if (saveOnCache)
 	    			synchronized (players) {
 							if (players.get(mp3FilePath) == null)
@@ -231,6 +226,15 @@ public abstract class Sounds {
 			for (AdvancedPlayer player : getPlayers(key))
 				list.add(player);
 		return list.isEmpty() ? null : list;
+	}
+	
+	public static void javaFxAudioPlayer(String fileName) {
+		try {
+			Media media = new Media(new File(fileName).toURI().toString());
+			new MediaPlayer(media).play();
+		}
+		catch (Exception e)
+			{ e.printStackTrace(); }
 	}
 	
 }

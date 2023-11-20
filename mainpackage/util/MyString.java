@@ -4,6 +4,8 @@ import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import enums.TextMatchType;
 
@@ -149,6 +151,32 @@ public abstract class MyString {
 	    	ignore = 0;
 	  }
 	  return result.toString();
+	}
+	
+	/** remove letras repetidas da frase, se for encontradas mais de 2 ocorrências da mesma letra em sequência */
+	public static String removeRepeatedChar(String text) {
+		StringBuilder result = new StringBuilder();
+		int consecutive = 1;
+		char lastChar = 0;
+		for (int i = 0; i < text.length(); i++) {
+			char ch = text.charAt(i);
+			if (ch == lastChar)
+				consecutive++;
+			else
+				consecutive = 1;
+			if (consecutive < 3)
+					result.append(ch);
+			lastChar = ch;
+		}
+		return result.toString();
+	}
+	
+	public static String removeEmojis(String input) {
+    String emojiRegex = "[\\x{1F600}-\\x{1F64F}\\x{1F300}-\\x{1F5FF}\\x{1F680}-\\x{1F6FF}\\x{1F700}-\\x{1F77F}\\x{1F780}-\\x{1F7FF}\\x{1F800}-\\x{1F8FF}\\x{1F900}-\\x{1F9FF}\\x{1FA00}-\\x{1FA6F}\\x{1FA70}-\\x{1FAFF}\\x{2600}-\\x{26FF}\\x{2700}-\\x{27BF}]";
+    Pattern emojiPattern = Pattern.compile(emojiRegex, Pattern.UNICODE_CASE | Pattern.CASE_INSENSITIVE);
+    Matcher emojiMatcher = emojiPattern.matcher(input);
+    String stringWithoutEmojis = emojiMatcher.replaceAll("");
+    return stringWithoutEmojis;
 	}
 
 }

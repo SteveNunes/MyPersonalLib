@@ -4,6 +4,11 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +52,10 @@ public abstract class Misc {
 	 */
 	public static ScheduledExecutorService createTimer(TimeUnit timeUnit, long startDelay, long repeatDelay, Runnable runnable) {
 		ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-		executor.scheduleAtFixedRate(runnable, startDelay, repeatDelay, timeUnit);
+		if (repeatDelay != 0)
+			executor.scheduleAtFixedRate(runnable, startDelay, repeatDelay, timeUnit);
+		else
+			executor.schedule(runnable, startDelay, timeUnit);
 		return executor;
 	}
 
@@ -59,6 +67,9 @@ public abstract class Misc {
 	
 	public static ScheduledExecutorService createTimer(long repeatDelay, Runnable runnable)
 		{ return createTimer(TimeUnit.MILLISECONDS, 0, repeatDelay, runnable); }
+
+	public static ScheduledExecutorService createTimer(TimeUnit timeUnit, Runnable runnable)
+		{ return createTimer(timeUnit, 0, 0, runnable); }
 
 	/** Atalho para pausar a thread, sem precisar se preocupar com o try catch envolvido. */
 	public static void sleep(long millis) {
@@ -222,6 +233,31 @@ public abstract class Misc {
 	public static void copyArray(double[] sourceArray, double[] targetArray) {
 		for (int i = 0; i < sourceArray.length; i++)
 			targetArray[i] = sourceArray[i];
+	}
+	
+	public static String getMyIpOnline() {
+		try {
+			URL url = new URL("https://api64.ipify.org?format=json");
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+				String line;
+				StringBuilder response = new StringBuilder();
+
+				while ((line = reader.readLine()) != null)
+					response.append(line);
+
+				reader.close();
+				System.out.println("Public IP Address: " + response.toString());
+			}
+			else
+				System.out.println("Failed to retrieve public IP address. HTTP Response Code: " + connection.getResponseCode());
+
+			connection.disconnect();
+		}
+		catch (IOException e)
+			{ e.printStackTrace(); }
+		return null;
 	}
 	
 }
