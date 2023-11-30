@@ -7,8 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -19,11 +17,11 @@ import java.util.regex.Pattern;
 
 public class IniFile {
 	
+	long changedTime = 0;
 	private Path file;
 	private String fileName, lastReadVal = null;
 	private List<String> fileBuffer;
 	private LinkedHashMap<String, LinkedHashMap<String, String>> iniBody;
-	long changedTime = 0;
 	static LinkedHashMap<String, IniFile> openedIniFiles = new LinkedHashMap<>();
 	
 	static void saveAllFilesToDisk() {
@@ -85,13 +83,15 @@ public class IniFile {
 		changedTime = System.currentTimeMillis();
 	}
 
-	public static Boolean stringIsSection(String s)
-		{ return s.split(" ")[0].matches(("\\Q" + "[*]*" + "\\E").replace("*", "\\E.*\\Q")); }
+	private static Boolean stringIsSection(String s) {
+		String[] split = s.split(" ");
+		return split.length == 0 ? false : s.split(" ")[0].matches(("\\Q" + "[*]*" + "\\E").replace("*", "\\E.*\\Q"));
+	}
 
-	public static Boolean stringIsItem(String s) 
+	private static Boolean stringIsItem(String s) 
 		{ return !s.isEmpty() && s.charAt(0) != '=' && s.contains("="); }
 
-	public static String getSectionFromString(String s)
+	private static String getSectionFromString(String s)
 		{ return s.split("]")[0].split(" ")[0].substring(1); }
 
 	public void loadIniFromDisk(String fileName) {
@@ -123,7 +123,7 @@ public class IniFile {
 	private void insertMissingItens(String section, List<String> fileBuffer, Map<String, List<String>> items) {
 		if (!section.isEmpty()) {
 			if (!items.containsKey(section)) {
-				if (!fileBuffer.isEmpty())
+				if (!fileBuffer.isEmpty() && !fileBuffer.get(fileBuffer.size() - 1).trim().isEmpty())
 					fileBuffer.add("");
 				fileBuffer.add("[" + section + "]");
 				items.put(section, new ArrayList<>());
@@ -231,6 +231,9 @@ public class IniFile {
 			return (lastReadVal = iniBody.get(iniSection).get(iniItem));
 		return (lastReadVal = null);
 	}
+
+	public String read(String iniSection, String iniItem, String defaultValue)
+		{ return read(iniSection, iniItem) != null ? lastReadVal : (lastReadVal = defaultValue); }
 
   public <T extends Enum<T>> T readAsEnum(String section, String item, Class<T> enumClass, T defaultReturnValue) {
 		try

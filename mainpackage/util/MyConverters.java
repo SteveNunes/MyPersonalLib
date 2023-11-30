@@ -40,10 +40,10 @@ public abstract class MyConverters {
 	/**
 	 * Converte uma {@code Array} em {@code String}.
 	 */
-	public static String arrayToString(String[] array, int startIndex, int endIndex, String regexSeparator) {
+	public static String arrayToString(String[] array, int startIndex, int endIndex, String separator) {
 		StringBuilder result = new StringBuilder(); 
 		for (int n = startIndex; n <= endIndex; n++)
-			result.append((n > startIndex ? regexSeparator : "") + array[n]);
+			result.append((n > startIndex ? separator : "") + array[n]);
 		return result.toString();
 	}
 	
@@ -58,8 +58,8 @@ public abstract class MyConverters {
 	 * Sobrecarga do método {@code arrayToString(String[] array, int startIndex, int endIndex, String spacing)}<br>
 	 * que não pede o parâmetro {@code endIndex} (Pega a {@code Array} inteira á partir do índice informado como inciial)
 	 */
-	public static String arrayToString(String[] array, int startIndex, String regexSeparator)
-		{ return arrayToString(array, startIndex, array.length - 1, regexSeparator); }
+	public static String arrayToString(String[] array, int startIndex, String separator)
+		{ return arrayToString(array, startIndex, array.length - 1, separator); }
 
 	/**
 	 * Sobrecarga do método {@code arrayToString(String[] array, int startIndex, int endIndex, String spacing)}<br>
@@ -72,8 +72,8 @@ public abstract class MyConverters {
 	 * Sobrecarga do método {@code arrayToString(String[] array, int startIndex, int endIndex, String spacing)}<br>
 	 * que não pede os parâmetros {@code startIndex} e {@code endIndex}<br>
 	 */
-	public static String arrayToString(String[] array, String regexSeparator)
-		{ return arrayToString(array, 0, array.length - 1, regexSeparator); }
+	public static String arrayToString(String[] array, String separator)
+		{ return arrayToString(array, 0, array.length - 1, separator); }
 	
   /**
 	 * Sobrecarga do método {@code arrayToString(String[] array, int startIndex, int endIndex, String spacing)}<br>

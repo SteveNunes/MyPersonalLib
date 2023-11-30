@@ -20,6 +20,10 @@ public abstract class Sounds {
 	private static Map<String, List<AdvancedPlayer>> players = new HashMap<>();
 	private static Map<String, List<Clip>> clipes = new HashMap<>();
 
+	public static void main(String[] args) {
+		playMp3("Z:/teste2.wav");
+	}
+	
 	public static void playWav(String wavFilePath)
 		{ playWav(wavFilePath, false); }
 	
@@ -35,7 +39,7 @@ public abstract class Sounds {
 									clipes.put(wavFilePath, new ArrayList<>());
 								clipes.get(wavFilePath).add(clip);
 		    			}
-						clip.open(audioInputStream);
+            clip.open(audioInputStream);
 						clip.start();
 						while (!clip.isRunning())
 							Misc.sleep(50);
@@ -153,7 +157,7 @@ public abstract class Sounds {
 								players.put(mp3FilePath, new ArrayList<>());
 	    				players.get(mp3FilePath).add(player);
 	    			}
-    			player.play();
+          player.play();
     			if (saveOnCache)
 	  				synchronized (players) {
 	  					if (players.get(mp3FilePath) != null)
