@@ -88,6 +88,20 @@ public class MoveBetweenDots {
 	public MoveBetweenDots(DirectionOrientation orientation, double startX, double startY, int speedInFrames)
 		{ this(new Position(), orientation, new Position(startX, startY), speedInFrames, true); }
 
+	public MoveBetweenDots(MoveBetweenDots moveBetweenDots) {
+		dots = moveBetweenDots.dots;
+		pos = moveBetweenDots.pos;
+	  inc = moveBetweenDots.inc;
+		position = moveBetweenDots.position;
+		startPosition = moveBetweenDots.startPosition;
+		orientation = moveBetweenDots.orientation;
+		speedInFrames = moveBetweenDots.speedInFrames;
+		resetAfterFullCycle = moveBetweenDots.resetAfterFullCycle;
+		dotIndex = moveBetweenDots.dotIndex;
+		currentFrame = moveBetweenDots.currentFrame;
+		cycleWasCompleted = moveBetweenDots.cycleWasCompleted;
+	}
+
 	public void move() {
 		checkError();
 		if (!cycleWasCompleted) {

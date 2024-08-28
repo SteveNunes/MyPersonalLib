@@ -12,6 +12,11 @@ public class JInputEXComponent {
 	private Component component;
 	private JInputEXComponent delta;
 	private String name;
+	private int componentId;
+	private int triggerId;
+	private int povId;
+	private int axisId;
+	private int buttonId;
 	private long startHold;
 	private int heldTime;
 	private float value;
@@ -56,6 +61,14 @@ public class JInputEXComponent {
 		value = 0;
 		startHold = 0;
 		heldTime = 0;
+	}
+	
+	void setIds(int componentId, int povId, int buttonId, int axisId, int triggerId) {
+		this.componentId = componentId;
+		this.triggerId = triggerId;
+		this.povId = povId;
+		this.axisId = axisId;
+		this.buttonId = buttonId;
 	}
 	
 	Component getComponent()
@@ -104,10 +117,16 @@ public class JInputEXComponent {
 			else if (onlyTriggerValues.contains(delta.value) && !onlyTriggerValues.contains(value))
 				setHoldTime();
 		}
-		else {
-			if (delta.value == 0 && value != 0)
+		else if (minTriggerValue < maxTriggerValue) {
+			if (delta.value <= maxTriggerValue * deadZone && value > maxTriggerValue * deadZone)
 				setStartHold();
-			else if (delta.value != 0 && value == 0)
+			else if (value <= maxTriggerValue * deadZone && delta.value > maxTriggerValue * deadZone)
+				setHoldTime();
+		}
+		else {
+			if (delta.value >= maxTriggerValue * deadZone && value < maxTriggerValue * deadZone)
+				setStartHold();
+			else if (value >= maxTriggerValue * deadZone && delta.value < maxTriggerValue * deadZone)
 				setHoldTime();
 		}
 	}
@@ -184,5 +203,25 @@ public class JInputEXComponent {
 	/** Return {@code true} if the component was released on the last poll */
 	public boolean wasReleased()
 		{ return delta.isHold() && !isHold(); }
+	
+	/** Return the component ID */
+	public int getComponentId()
+		{ return componentId; }
+
+	/** Return the button ID (If the component is not a button, returns -1) */
+	public int getButtonId()
+		{ return buttonId; }
+
+	/** Return the trigger ID (If the component is not a trigger, returns -1) */
+	public int getTriggerId()
+		{ return triggerId; }
+
+	/** Return the axis ID (If the component is not an axis, returns -1) */
+	public int getAxisId()
+		{ return axisId; }
+
+	/** Return the POV ID (If the component is not a POV, returns -1) */
+	public int getPovId()
+		{ return povId; }
 
 }

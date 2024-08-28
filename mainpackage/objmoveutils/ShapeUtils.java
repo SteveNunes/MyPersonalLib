@@ -30,9 +30,9 @@ public abstract class ShapeUtils {
 			point.setLocation(point.getX(), point.getY() - incVal);
 		else if (direction == Direction.DOWN)
 			point.setLocation(point.getX(), point.getY() + incVal);
-		else if (direction == Direction.TOP_LEFT)
+		else if (direction == Direction.UP_LEFT)
 			point.setLocation(point.getX() - incVal, point.getY() - incVal);
-		else if (direction == Direction.TOP_RIGHT)
+		else if (direction == Direction.UP_RIGHT)
 			point.setLocation(point.getX() + incVal, point.getY() - incVal);
 		else if (direction == Direction.DOWN_LEFT)
 			point.setLocation(point.getX() - incVal, point.getY() + incVal);

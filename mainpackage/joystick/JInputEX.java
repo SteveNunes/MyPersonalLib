@@ -13,6 +13,7 @@ import net.java.games.input.Component.Identifier.Button;
 import net.java.games.input.Component.POV;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
+import util.Sounds;
 
 public class JInputEX {
 	
@@ -67,6 +68,7 @@ public class JInputEX {
 		scanComponents();
 		setDefaultDeadZoneValues();
 		sortComponents();
+		setComponentsId();
 	}
 	
 	private void scanComponents() {
@@ -132,8 +134,33 @@ public class JInputEX {
 		});
 	}
 	
+	private void setComponentsId() {
+		int componentId = -1;
+		for (JInputEXComponent component : components)
+			component.setIds(++componentId, -1, -1, -1, -1);
+		int povId = -1;
+		for (JInputEXComponent pov : povs)
+			pov.setIds(-1, ++povId, -1, -1, -1);
+		int buttonId = -1;
+		for (JInputEXComponent button : buttons)
+			button.setIds(-1, -1, ++buttonId, -1, -1);
+		int axisId = -1;
+		for (JInputEXComponent axis : axes)
+			axis.setIds(-1, -1, -1, ++axisId, -1);
+		int triggerId = -1;
+		for (JInputEXComponent trigger : triggers)
+			trigger.setIds(-1, -1, -1, -1, ++triggerId);
+	}
+
 	public void poll() {
-		if (!joystick.poll())
+		boolean poll = false;
+		try
+			{ poll = joystick.poll(); }
+		catch (Exception e) {
+			Sounds.playWav("D:\\mIRC\\mIRC\\sounds\\beep4.wav");
+			System.err.println("POLL FAILED!\n" + e.getMessage());
+		}
+		if (!poll)
 			throw new RuntimeException("The joystick is disconnected");
 		for (JInputEXComponent axis : axes) {
 			axis.poll();

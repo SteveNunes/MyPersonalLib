@@ -6,7 +6,7 @@ public class EliticMove {
 	
 	private Position centerPosition, currentPosition;
 	private DirectionOrientation orientation;
-	private double radiusW, radiusH, speed, angle = 0;
+	private double radiusW, radiusH, speed, angle;
 
 	/**
 	 * 
@@ -27,7 +27,20 @@ public class EliticMove {
 		currentPosition = outputPosition;
 		this.radiusW = radiusW;
 		this.radiusH = radiusH;
+		this.speed = 0;
+		move();
 		this.speed = speed;
+		angle = 0;
+	}
+	
+	public EliticMove(EliticMove eliticMove) {
+		centerPosition = eliticMove.centerPosition;
+		orientation = eliticMove.orientation;
+		currentPosition = eliticMove.currentPosition;
+		radiusW = eliticMove.radiusW;
+		radiusH = eliticMove.radiusH;
+		speed = eliticMove.speed;
+		angle = eliticMove.angle;
 	}
 
 	/**
@@ -36,8 +49,27 @@ public class EliticMove {
 	public EliticMove(Position centerPosition, DirectionOrientation orientation, double radiusW, double radiusH, double speed)
 		{ this(new Position(centerPosition.getX(), centerPosition.getY()), centerPosition, orientation, radiusW, radiusH, speed); }
 
+	/**
+	 * Sobrecarga do construtor que não pede os parâmetros {@code outputPosition} e  {@code centerPosition}. 
+	 */
+	public EliticMove(DirectionOrientation orientation, double radiusW, double radiusH, double speed)
+		{ this(new Position(), new Position(), orientation, radiusW, radiusH, speed); }
+
+	/**
+	 * Chame esse método continuamente para que as coordenadas do objeto que realizará o movimento circular sejam atualizadas com a nova posição.
+	 */
 	public void move() {
 		angle += orientation == DirectionOrientation.CLOCKWISE ? speed : -speed;
+		refreshPosition();
+	}
+	
+	public double getAngle()
+		{ return angle; }
+	
+	/**
+	 * Chame esse método continuamente para que as coordenadas do objeto que realizará o movimento circular sejam sincronizadas com as coordenadas do objeto central
+	 */
+	public void refreshPosition() {
 		currentPosition.setX(centerPosition.getX() + radiusW * Math.cos(Math.toRadians(angle)));
 		currentPosition.setY(centerPosition.getY() + radiusH * Math.sin(Math.toRadians(angle)));
 	}

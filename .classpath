@@ -6,11 +6,17 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JavaFX"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JavaFX">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="D:/Java/java-libs/JavaLayer/jl1.0.1.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JInput"/>
 	<classpathentry kind="lib" path="D:/Java/java-libs/jnativehook-2.2.2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JXInput"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Beads"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JNA"/>
+	<classpathentry kind="lib" path="D:/Java/java-libs/jinput-2.0.10.jar"/>
+	<classpathentry kind="lib" path="D:/Java/java-libs/GifDecoder.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

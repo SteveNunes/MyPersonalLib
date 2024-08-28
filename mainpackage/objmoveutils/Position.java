@@ -1,8 +1,7 @@
 package objmoveutils;
 
-import java.util.Objects;
-
 import enums.Direction;
+import javafx.scene.input.KeyCode;
 
 public class Position {
 
@@ -103,6 +102,9 @@ public class Position {
 	public void incPosition(Position posWithIncrements)
 		{ incPosition(posWithIncrements.getX(), posWithIncrements.getY()); }
 	
+	public void decPosition(Position posWithIncrements)
+		{ incPosition(-posWithIncrements.getX(), -posWithIncrements.getY()); }
+
 	public void incPositionByDirection(Direction direction, double val) {
 		if (direction == null)
 			throw new RuntimeException("direction is 'null'");
@@ -114,18 +116,33 @@ public class Position {
 			incY(-val);
 		else if (direction == Direction.DOWN)
 			incY(val);
-		else if (direction == Direction.TOP_LEFT)
+		else if (direction == Direction.UP_LEFT)
 			incPosition(-val, -val);
-		else if (direction == Direction.TOP_RIGHT)
+		else if (direction == Direction.UP_RIGHT)
 			incPosition(val, -val);
 		else if (direction == Direction.DOWN_LEFT)
 			incPosition(-val, val);
 		else 
 			incPosition(val, val);
 	}
-	
+
 	public void incPositionByDirection(Direction direction)
 		{ incPositionByDirection(direction, 1); }
+	
+	public void incPositionByDirection(KeyCode code, double val) {
+		if (code == KeyCode.LEFT || code == KeyCode.A)
+			incPositionByDirection(Direction.LEFT, val);
+		else if (code == KeyCode.UP || code == KeyCode.W)
+			incPositionByDirection(Direction.UP, val);
+		else if (code == KeyCode.RIGHT || code == KeyCode.D)
+			incPositionByDirection(Direction.RIGHT, val);
+		else if (code == KeyCode.DOWN || code == KeyCode.S)
+			incPositionByDirection(Direction.DOWN, val);
+		else throw new RuntimeException("Invalid KeyCode for direction - " + code + " Valid KeyCodes: LEFT, DOWN, RIGHT, UP, A, S, D, W");
+	}
+	
+	public void incPositionByDirection(KeyCode code)
+		{ incPositionByDirection(code, 1); }
 	
 	public Position getTilePosition()
 		{ return new Position(getTileX(), getTileY()); }
@@ -146,16 +163,6 @@ public class Position {
 	public Boolean isPerfectTileCentred()
 		{ return (int)x % tileSize == 0 && (int)y % tileSize == 0; }
 	
-	@Override
-	public int hashCode()
-		{ return Objects.hash(x, y); }
-
-	@Override
-	public boolean equals(Object obj) {
-		Position other = (Position) obj;
-		return obj != null && (int)y == (int)other.y && (int)x == (int)other.x;
-	}
-
 	public static Boolean equals(Position position1, Position position2)
 		{ return position1.getX() == position2.getX() && position1.getY() == position2.getY(); }
 	

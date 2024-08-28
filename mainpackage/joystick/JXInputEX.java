@@ -2,6 +2,8 @@ package joystick;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,13 +11,19 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.github.strikerx3.jxinput.XInputAxes;
+import com.github.strikerx3.jxinput.XInputBatteryInformation;
+import com.github.strikerx3.jxinput.XInputCapabilities;
+import com.github.strikerx3.jxinput.XInputCapsResolutions;
 import com.github.strikerx3.jxinput.XInputComponents;
-import com.github.strikerx3.jxinput.XInputDevice;
+import com.github.strikerx3.jxinput.XInputDevice14;
+import com.github.strikerx3.jxinput.enums.XInputBatteryDeviceType;
+import com.github.strikerx3.jxinput.enums.XInputBatteryLevel;
+import com.github.strikerx3.jxinput.enums.XInputBatteryType;
 import com.github.strikerx3.jxinput.enums.XInputButton;
+import com.github.strikerx3.jxinput.enums.XInputDeviceSubType;
+import com.github.strikerx3.jxinput.enums.XInputDeviceType;
 import com.github.strikerx3.jxinput.listener.SimpleXInputDeviceListener;
 import com.github.strikerx3.jxinput.listener.XInputDeviceListener;
-
-import util.Misc;
 
 public class JXInputEX {
 	
@@ -39,12 +47,16 @@ public class JXInputEX {
 			XInputButton.DPAD_DOWN,
 	};
 	
-	private static Consumer<XInputDevice> onJoystickConnectedEvent;
-	private static Consumer<XInputDevice> onJoystickDisconnectedEvent;
+	private static Consumer<XInputDevice14> onJoystickConnectedEvent;
+	private static Consumer<XInputDevice14> onJoystickDisconnectedEvent;
 
-	private XInputDevice device;
+	private XInputDevice14 device;
 	private XInputComponents components;
 	private XInputAxes axes;
+	private XInputCapabilities caps;
+	private XInputBatteryInformation batteryInfo;
+	private XInputBatteryType batteryType;
+	private XInputBatteryLevel batteryLevel; 
 	private Consumer<Integer> onPressButtonEvent;
 	private BiConsumer<Integer, Long> onHoldButtonEvent;
 	private BiConsumer<Integer, Long> onReleaseButtonEvent;
@@ -57,10 +69,10 @@ public class JXInputEX {
 	private List<Float> deltaAxesValues;
 	private Map<Integer, Long> isHold;
 	
-	public static void setOnJoystickConnectedEvent(Consumer<XInputDevice> consumer)
+	public static void setOnJoystickConnectedEvent(Consumer<XInputDevice14> consumer)
 		{	onJoystickConnectedEvent = consumer; }
 
-	public static void setOnJoystickDisconnectedEvent(Consumer<XInputDevice> consumer)
+	public static void setOnJoystickDisconnectedEvent(Consumer<XInputDevice14> consumer)
 		{	onJoystickDisconnectedEvent = consumer; }
 
 	public void setOnHoldButtonEvent(BiConsumer<Integer, Long> biConsumer)
@@ -84,7 +96,7 @@ public class JXInputEX {
 	public void setOnReleaseAnyComponentEvent(BiConsumer<Integer, Long> biConsumer)
 		{	onReleaseAnyComponentEvent = biConsumer; }
 	
-	private JXInputEX(final XInputDevice device) {
+	private JXInputEX(final XInputDevice14 device) {
 		if (device == null)
 			throw new RuntimeException("'device' value is null");
 		try {
@@ -94,6 +106,10 @@ public class JXInputEX {
 			axesValues = new ArrayList<>(Arrays.asList(0f, 0f, 0f, 0f, 0f, 0f));
 			deltaAxesValues = new ArrayList<>(Arrays.asList(0f, 0f, 0f, 0f, 0f, 0f));
 			isHold = new HashMap<>();
+			caps = device.getCapabilities();
+			batteryInfo = device.getBatteryInformation(XInputBatteryDeviceType.GAMEPAD);
+			batteryType = batteryInfo.getType();
+			batteryLevel = batteryInfo.getLevel();
 			
 			XInputDeviceListener listener = new SimpleXInputDeviceListener() {
 				@Override
@@ -123,9 +139,9 @@ public class JXInputEX {
 	}
 	
 	public static void refreshJoysticks() {
-		if (XInputDevice.isAvailable()) {
+		if (XInputDevice14.isAvailable()) {
 			try {
-				for (XInputDevice device : XInputDevice.getAllDevices()) {
+				for (XInputDevice14 device : XInputDevice14.getAllDevices()) {
 					JXInputEX d = new JXInputEX(device);
 					devices.add(d);
 				}
@@ -144,6 +160,9 @@ public class JXInputEX {
 			throw new RuntimeException(joystickID + " - ID de joystick inválido (" + (devices.size() - 1));
 		return devices.get(joystickID);
 	}
+	
+	public static List<JXInputEX> getJoystickList()
+		{ return Collections.unmodifiableList(devices); }
 	
 	public static void pollJoysticks() {
 		for (JXInputEX device : devices)
@@ -226,7 +245,28 @@ public class JXInputEX {
 	private void onButtonChanged(int buttonID, float value)
 		{ onButtonChanged(buttonID, null, value); }
 	
-	public XInputDevice getXInputDevice()
+	public XInputDevice14 getXInputDevice()
 		{ return device; }
+	
+	public String getJoystickName()
+		{ return device.toString(); }
+	
+	public XInputBatteryType getBatteryType()
+		{ return batteryType; }
+	
+	public XInputBatteryLevel getBatteryLevel()
+		{ return batteryLevel; }
+	
+	public XInputDeviceType getType()
+		{ return caps.getType(); }
+	
+	public XInputDeviceSubType getSubType()
+		{ return caps.getSubType(); }
+	
+	public EnumSet<XInputButton> getSupportedButtons()
+		{ return caps.getSupportedButtons(); }
+	
+	public XInputCapsResolutions getResolutions()
+		{ return caps.getResolutions(); }
 	
 }

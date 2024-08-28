@@ -6,19 +6,19 @@ import java.util.List;
 import objmoveutils.Position;
 
 public enum Direction {
-	DOWN(0),
-	DOWN_RIGHT(1),
+	UP(0),
+	UP_RIGHT(1),
 	RIGHT(2),
-	TOP_RIGHT(3),
-	UP(4),
-	TOP_LEFT(5),
+	DOWN_RIGHT(3),
+	DOWN(4),
+	DOWN_LEFT(5),
 	LEFT(6),
-	DOWN_LEFT(7);
+	UP_LEFT(7);
 	
 	final int value;
 	
 	final static List<Direction> listOfAll = 
-		Arrays.asList(DOWN, DOWN_RIGHT, RIGHT, TOP_RIGHT, UP, TOP_LEFT, LEFT, DOWN_LEFT);
+		Arrays.asList(UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT);
 	
 	Direction(int val)
 		{ value = val; }
@@ -43,21 +43,42 @@ public enum Direction {
 			p += 8;
 		return listOfAll.get(p);
 	}
-
-	public Direction getClockwiseDirection(int inc)
-		{ return getClockwiseDirection(this, inc); }
 	
+	public Direction getNext4WayClockwiseDirection()
+		{ return getClockwiseDirection(this, 2); }
+
+	public Direction getPreview4WayClockwiseDirection()
+		{ return getClockwiseDirection(this, -2); }
+
+	public Direction getNext8WayClockwiseDirection()
+		{ return getClockwiseDirection(this, 1); }
+	
+	public Direction getPreview8WayClockwiseDirection()
+		{ return getClockwiseDirection(this, -1); }
+	
+	public Direction getNext4WayClockwiseDirection(int value)
+		{ return getClockwiseDirection(this, 2 * value); }
+	
+	public Direction getPreview4WayClockwiseDirection(int value)
+		{ return getClockwiseDirection(this, 2 * -value); }
+	
+	public Direction getNext8WayClockwiseDirection(int value)
+		{ return getClockwiseDirection(this, value); }
+	
+	public Direction getPreview8WayClockwiseDirection(int value)
+		{ return getClockwiseDirection(this, -value); }
+
 	public static Direction getDirectionThroughPositions(Position p1, Position p2) {
 		if (p2.getX() < p1.getX()) {
 			if (p2.getY() < p1.getY())
-				return Direction.TOP_LEFT;
+				return Direction.UP_LEFT;
 			if (p2.getY() > p1.getY())
 				return Direction.DOWN_LEFT;
 			return Direction.LEFT;
 		}
 		if (p2.getX() > p1.getX()) {
 			if (p2.getY() < p1.getY())
-				return Direction.TOP_RIGHT;
+				return Direction.UP_RIGHT;
 			if (p2.getY() > p1.getY())
 				return Direction.DOWN_RIGHT;
 			return Direction.RIGHT;

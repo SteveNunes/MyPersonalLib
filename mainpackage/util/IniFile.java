@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 
 public class IniFile {
 	
-	long changedTime = 0;
+	long changedTime;
 	private Path file;
 	private String fileName, lastReadVal = null;
 	private List<String> fileBuffer;
@@ -42,6 +42,7 @@ public class IniFile {
 		refresh();
 		loadIniFromDisk(fileName);
 		openedIniFiles.put(fileName, this);
+		changedTime = 0;
 	}
 	
 	static { TextFile.enableAutoSave(); }
@@ -717,7 +718,8 @@ public class IniFile {
 	 */
 	public static LinkedHashMap<String, String> subItemStringToLinkedHashMap(String val, String enclosers) {
 		LinkedHashMap<String, String> subItems = new LinkedHashMap<>();
-		Pattern pattern = Pattern.compile("(\\" + enclosers.substring(0, 1) + "[^\\" + enclosers.substring(1, 2) + ".]+\\" + enclosers.substring(1, 2) + ")", Pattern.CASE_INSENSITIVE);
+		Pattern pattern = Pattern.compile("(\\" + enclosers.substring(0, 1) + "[^" + enclosers.substring(1, 2) + "]+\\" + enclosers.substring(1, 2) + ")", Pattern.CASE_INSENSITIVE);
+//		Pattern pattern = Pattern.compile("(\\" + enclosers.substring(0, 1) + "[^\\" + enclosers.substring(1, 2) + ".]+\\" + enclosers.substring(1, 2) + ")", Pattern.CASE_INSENSITIVE);
 		Matcher matcher = pattern.matcher(val);
 		StringBuilder result;
 		while (matcher.find()) {
@@ -747,6 +749,7 @@ public class IniFile {
 	 * 							 ou simplesmente nem especifique o {@code enclosers}, pois é passado
 	 * 							 o valor "{}" por padrão.
 	 */
+	
 	public static String linkedHashMapToSubItemString(LinkedHashMap<String, String> map, String enclosers) {
 		StringBuilder str = new StringBuilder();
 		map.forEach((k, v) -> {

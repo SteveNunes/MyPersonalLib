@@ -14,9 +14,24 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
+import drawimage_stuffs.DrawImageEffects;
+import enums.ImageFlip;
 import enums.ImageScanOrientation;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.SnapshotParameters;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.effect.Blend;
+import javafx.scene.effect.Bloom;
+import javafx.scene.effect.ColorAdjust;
+import javafx.scene.effect.ColorInput;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.effect.GaussianBlur;
+import javafx.scene.effect.Glow;
+import javafx.scene.effect.InnerShadow;
+import javafx.scene.effect.MotionBlur;
+import javafx.scene.effect.SepiaTone;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelReader;
@@ -67,13 +82,16 @@ public abstract class ImageUtils {
 			}
 		return rotatedImage;
 	}
-
+	
   public static Image getRotatedImage(Image image, double angle) {
     BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
     BufferedImage rotatedBufferedImage = getRotatedImage(bufferedImage, angle);
     return SwingFXUtils.toFXImage(rotatedBufferedImage, null);
   }
   
+	public static BufferedImage cloneBufferedImage(BufferedImage image)
+		{ return removeBgColor(image, -Integer.MAX_VALUE, -1); }
+
 	/**
 	 * Remove a cor especificada da imagem (de acordo com o valor
 	 * de {@code toleranceThreshold} (Que vai de 0 a 255) Quanto mais próximo de
@@ -84,10 +102,9 @@ public abstract class ImageUtils {
 	 * @param toleranceThreshold - Valor de tolerância
 	 * @return A imagem com a cor de fundo removida
 	 */
-
+	
 	public static BufferedImage removeBgColor(BufferedImage image, int removeColorArgb, int toleranceThreshold) {
-		int w = (int)image.getWidth();
-		int h = (int)image.getHeight();
+		int w = (int)image.getWidth(), h = (int)image.getHeight();
 		BufferedImage outputImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
 		int[] rgba = getRgbaArray(removeColorArgb);
 		int r = rgba[0], g = rgba[1], b = rgba[2];
@@ -101,7 +118,7 @@ public abstract class ImageUtils {
 				int r3 = (r + toleranceThreshold) > 255 ? 255 : r + toleranceThreshold;
 				int g3 = (g + toleranceThreshold) > 255 ? 255 : g + toleranceThreshold;
 				int b3 = (b + toleranceThreshold) > 255 ? 255 : b + toleranceThreshold;
-				if (rr <= r3 && rr >= r2 && gg <= g3 && gg >= g2 && bb <= b3 && bb >= b2)
+				if (removeColorArgb != -Integer.MAX_VALUE && toleranceThreshold != -1 && rr <= r3 && rr >= r2 && gg <= g3 && gg >= g2 && bb <= b3 && bb >= b2)
 					outputImage.setRGB(x, y, getRgba(0, 0, 0, 0));
 				else
 					outputImage.setRGB(x, y, image.getRGB(x, y));
@@ -111,6 +128,9 @@ public abstract class ImageUtils {
 	
 	public static BufferedImage removeBgColor(BufferedImage image, int removeColorArgb)
 		{ return removeBgColor(image, removeColorArgb, 0); }
+
+	public static WritableImage cloneWritableImage(WritableImage image)
+		{ return removeBgColor(image, -Integer.MAX_VALUE, -1); }
 
 	public static WritableImage removeBgColor(WritableImage image, int removeColorArgb, int toleranceThreshold) {
 		int w = (int)image.getWidth();
@@ -130,7 +150,7 @@ public abstract class ImageUtils {
 				int r3 = (r + toleranceThreshold) > 255 ? 255 : r + toleranceThreshold;
 				int g3 = (g + toleranceThreshold) > 255 ? 255 : g + toleranceThreshold;
 				int b3 = (b + toleranceThreshold) > 255 ? 255 : b + toleranceThreshold;
-				if (rr <= r3 && rr >= r2 && gg <= g3 && gg >= g2 && bb <= b3 && bb >= b2)
+				if (removeColorArgb != -1 && toleranceThreshold != -1 && rr <= r3 && rr >= r2 && gg <= g3 && gg >= g2 && bb <= b3 && bb >= b2)
 					pixelWriter.setArgb(x, y, getRgba(0, 0, 0, 0));
 				else
 					pixelWriter.setArgb(x, y, pixelReader.getArgb(x, y));
@@ -142,7 +162,7 @@ public abstract class ImageUtils {
 		{ return removeBgColor(image, removeColorArgb, 0); }
 	
 	public static Image removeBgColor(Image image, Color removeColor, int toleranceThreshold)
-		{ return SwingFXUtils.toFXImage(removeBgColor(SwingFXUtils.fromFXImage(image, null), colorToArgb(removeColor), toleranceThreshold), null); }
+		{	return SwingFXUtils.toFXImage(removeBgColor(SwingFXUtils.fromFXImage(image, null), colorToArgb(removeColor), toleranceThreshold), null); }
 	
 	public static Image removeBgColor(Image image, int toleranceThreshold)
 		{ return removeBgColor(image, Color.valueOf("#FF00FF"), toleranceThreshold); }
@@ -153,7 +173,7 @@ public abstract class ImageUtils {
 	public static Image removeBgColor(Image image)
 		{ return removeBgColor(image, Color.WHITE, 0); }
 
-	public static BufferedImage replaceColor(BufferedImage image, int[] beforeArgb, int[] afterArgb, Rectangle affectedArea) {
+	public static BufferedImage replaceColor(BufferedImage image, Integer[] beforeArgb, Integer[] afterArgb, Rectangle affectedArea) {
 		int w = (int)image.getWidth();
 		int h = (int)image.getHeight();
 		boolean ok;
@@ -178,15 +198,15 @@ public abstract class ImageUtils {
 	}
 	
 	public static BufferedImage replaceColor(BufferedImage image, int beforeColor, int afterColor, Rectangle affectedArea)
-		{ return replaceColor(image, new int[] {beforeColor}, new int[] {afterColor}, affectedArea); }
+		{ return replaceColor(image, new Integer[] {beforeColor}, new Integer[] {afterColor}, affectedArea); }
 	
-	public static BufferedImage replaceColor(BufferedImage image, int[] beforeColors, int[] afterColors)
+	public static BufferedImage replaceColor(BufferedImage image, Integer[] beforeColors, Integer[] afterColors)
 		{ return replaceColor(image, beforeColors, afterColors, null); }
 	
 	public static BufferedImage replaceColor(BufferedImage image, int beforeColor, int afterColor)
-		{ return replaceColor(image, new int[] {beforeColor}, new int[] {afterColor}, null); }
+		{ return replaceColor(image, new Integer[] {beforeColor}, new Integer[] {afterColor}, null); }
 
-	public static WritableImage replaceColor(WritableImage image, int[] beforeArgb, int[] afterArgb, Rectangle affectedArea) {
+	public static WritableImage replaceColor(WritableImage image, Integer[] beforeArgb, Integer[] afterArgb, Rectangle affectedArea) {
 		int w = (int)image.getWidth();
 		int h = (int)image.getHeight();
 		boolean ok;
@@ -213,17 +233,17 @@ public abstract class ImageUtils {
 	}
 	
 	public static WritableImage replaceColor(WritableImage image, int beforeColor, int afterColor, Rectangle affectedArea)
-		{ return replaceColor(image, new int[] {beforeColor}, new int[] {afterColor}, affectedArea); }
+		{ return replaceColor(image, new Integer[] {beforeColor}, new Integer[] {afterColor}, affectedArea); }
 	
-	public static WritableImage replaceColor(WritableImage image, int[] beforeColors, int[] afterColors)
+	public static WritableImage replaceColor(WritableImage image, Integer[] beforeColors, Integer[] afterColors)
 		{ return replaceColor(image, beforeColors, afterColors, null); }
 	
 	public static WritableImage replaceColor(WritableImage image, int beforeColor, int afterColor)
-		{ return replaceColor(image, new int[] {beforeColor}, new int[] {afterColor}, null); }
+		{ return replaceColor(image, new Integer[] {beforeColor}, new Integer[] {afterColor}, null); }
 
 	public static Image replaceColor(Image image, Color[] beforeColors, Color[] afterColors, Rectangle affectedArea) {
-		int[] before = new int[beforeColors.length];
-		int[] after = new int[beforeColors.length];
+		Integer[] before = new Integer[beforeColors.length];
+		Integer[] after = new Integer[beforeColors.length];
 		for (int n = 0; n < before.length; n++) {
 			before[n] = colorToArgb(beforeColors[n]);
 			after[n] = colorToArgb(afterColors[n]);
@@ -292,46 +312,126 @@ public abstract class ImageUtils {
 		return bufferedImage;
 	}	
 
-	public static void copyArea(BufferedImage sourceImage, BufferedImage targetImage, Rectangle sourceArea, Point targetCoordinate) {
+	public static void copyArea(BufferedImage sourceImage, Rectangle sourceArea, BufferedImage targetImage, Rectangle targetArea) {
 		BufferedImage bufferedImage = sourceImage.getSubimage((int)sourceArea.getX(), (int)sourceArea.getY(), (int)sourceArea.getWidth(), (int)sourceArea.getHeight());
 		Graphics2D g2d = targetImage.createGraphics();
-		g2d.drawImage(bufferedImage, (int)targetCoordinate.getX(), (int)targetCoordinate.getY(), null);
+		g2d.drawImage(bufferedImage, (int)targetArea.getX(), (int)targetArea.getY(), (int)targetArea.getWidth(), (int)targetArea.getHeight(), null);
 		g2d.dispose();
 	}
 	
-	public static void copyArea(BufferedImage source, BufferedImage target, Rectangle sourceArea)
-		{ copyArea(source, target, sourceArea, new Point(0, 0)); }
+	public static void copyArea(BufferedImage sourceImage, Rectangle sourceArea, BufferedImage targetImage, Point targetCoordinate)
+		{ copyArea(sourceImage, sourceArea, targetImage, new Rectangle((int)targetCoordinate.getX(), (int)targetCoordinate.getY(), (int)sourceArea.getWidth(), (int)sourceArea.getHeight())); }
 	
-	public static void copyArea(BufferedImage source, BufferedImage target)
-		{ copyArea(source, target, new Rectangle(0, 0, (int)target.getWidth(), (int)target.getHeight())); }
+	public static void copyArea(BufferedImage sourceImage, Rectangle sourceArea, BufferedImage targetImage)
+		{ copyArea(sourceImage, sourceArea, targetImage, new Rectangle(0, 0, (int)targetImage.getWidth(), (int)targetImage.getHeight())); }
+	
+	public static void copyArea(BufferedImage sourceImage, BufferedImage targetImage, Point targetCoordinate)
+		{ copyArea(sourceImage, new Rectangle(0, 0, (int)sourceImage.getWidth(), (int)sourceImage.getHeight()), targetImage, targetCoordinate); }
+	
+	public static void copyArea(BufferedImage sourceImage, BufferedImage targetImage)
+		{ copyArea(sourceImage, new Rectangle(0, 0, (int)sourceImage.getWidth(), (int)sourceImage.getHeight()), targetImage, new Rectangle(0, 0, (int)targetImage.getWidth(), (int)targetImage.getHeight())); }
 
-	public static BufferedImage copyFrom(BufferedImage target, Rectangle targetArea) {
-		BufferedImage newWI = new BufferedImage((int)targetArea.getWidth(), (int)targetArea.getHeight(), BufferedImage.TYPE_INT_ARGB);
-		copyArea(target, newWI, targetArea, new Point(0, 0));
-		return newWI;
+	public static BufferedImage copyArea(BufferedImage image, Rectangle area) {
+		BufferedImage output = new BufferedImage((int)area.getWidth(), (int)area.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		copyArea(image, new Rectangle(0, 0, (int)image.getWidth(), (int)image.getHeight()), output, area);
+		return output;
 	}
 	
-	public static void copyArea(WritableImage sourceImage, WritableImage targetImage, Rectangle sourceArea, Point targetCoordinate) {
-		targetImage.getPixelWriter().setPixels(
-				(int)targetCoordinate.getX(), (int)targetCoordinate.getY(),
-				(int)sourceArea.getWidth(), (int)sourceArea.getHeight(),
-				sourceImage.getPixelReader(),
-				(int)sourceArea.getX(),
-				(int)sourceArea.getY());
+	public static void copyImageGPT(WritableImage source, WritableImage target, int rotation) {
+		int width = (int) source.getWidth(), height = (int) source.getHeight();
+		PixelReader pixelReader = source.getPixelReader();
+		PixelWriter pixelWriter = target.getPixelWriter();
+		if (rotation == 0)
+			for (int x = 0; x < width; x++)
+				for (int y = 0; y < height; y++)
+					pixelWriter.setArgb(x, y, pixelReader.getArgb(x, y));
+		else if (rotation == 1)
+			for (int x = 0; x < width; x++)
+				for (int y = 0; y < height; y++)
+					pixelWriter.setArgb(height - 1 - y, x, pixelReader.getArgb(x, y));
+		else if (rotation == 2)
+			for (int x = 0; x < width; x++)
+				for (int y = 0; y < height; y++)
+					pixelWriter.setArgb(width - 1 - x, height - 1 - y, pixelReader.getArgb(x, y));
+		else if (rotation == 3)
+			for (int x = 0; x < width; x++)
+				for (int y = 0; y < height; y++)
+					pixelWriter.setArgb(y, width - 1 - x, pixelReader.getArgb(x, y));
+		else
+			throw new IllegalArgumentException("Valor de rotação inválido. Use 0, 1, 2 ou 3.");
 	}
 
-	public static void copyArea(WritableImage source, WritableImage target, Rectangle sourceArea)
-		{ copyArea(source, target, sourceArea, new Point(0, 0)); }
-
-	public static void copyArea(WritableImage source, WritableImage target)
-		{ copyArea(source, target, new Rectangle(0, 0, (int)target.getWidth(), (int)target.getHeight())); }
-
-	public static WritableImage copyFrom(WritableImage target, Rectangle targetArea) {
-		WritableImage newWI = new WritableImage((int)targetArea.getWidth(), (int)targetArea.getHeight());
-		copyArea(target, newWI, targetArea, new Point(0, 0));
-		return newWI;
+	public static void copyArea(WritableImage sourceImage, Rectangle sourceArea, WritableImage targetImage, Rectangle targetArea, int rotateDegrees, ImageFlip flip) {
+		PixelReader pixelReader = sourceImage.getPixelReader();
+		PixelWriter pixelWriter = targetImage.getPixelWriter();
+		double targetWidth = targetArea.getWidth();
+		double targetHeight = targetArea.getHeight();
+		boolean vf = flip == ImageFlip.VERTICAL || flip == ImageFlip.BOTH;
+		boolean hf = flip == ImageFlip.HORIZONTAL || flip == ImageFlip.BOTH;
+		Color transparent = Color.rgb(0, 0, 0, 0);
+		for (double y = vf ? targetHeight - 1 : 0; (!vf && y < targetHeight) || (vf && y >= 0); y += vf ? -1 : 1) {
+			for (double x = hf ? targetWidth - 1 : 0; (!hf && x < targetWidth) || (hf && x >= 0); x += hf ? -1 : 1) {
+				double sourceX = sourceArea.getMinX() + x / targetWidth * sourceArea.getWidth();
+				double sourceY = sourceArea.getMinY() + y / targetHeight * sourceArea.getHeight();
+				sourceX = Math.min(Math.max(sourceX, sourceArea.getMinX()), sourceArea.getMaxX());
+				sourceY = Math.min(Math.max(sourceY, sourceArea.getMinY()), sourceArea.getMaxY());
+				Color color = pixelReader.getColor((int) sourceX, (int) sourceY);
+				double targetX;
+				double targetY;
+				if (rotateDegrees == 90) {
+					targetX = targetArea.getMinY() + targetHeight - 1 - y;
+					targetY = targetArea.getMinX() + x;
+				}
+				else if (rotateDegrees == 180) {
+					targetX = targetArea.getMinX() + targetWidth - 1 - x;
+					targetY = targetArea.getMinY() + targetHeight - 1 - y;
+				}
+				else if (rotateDegrees == 270) {
+					targetX = targetArea.getMinY() + y;
+					targetY = targetArea.getMinX() + targetWidth - 1 - x;
+				}
+				else {
+					targetX = targetArea.getMinX() + x;
+					targetY = targetArea.getMinY() + y;
+				}
+				
+				targetX = Math.min(Math.max(targetX, targetArea.getMinX()), targetArea.getMaxX());
+				targetY = Math.min(Math.max(targetY, targetArea.getMinY()), targetArea.getMaxY());
+				if (!color.equals(transparent))
+					try
+						{ pixelWriter.setColor((int) targetX, (int) targetY, color); }
+					catch (Exception e) {}
+			}
+		}
 	}
+	/*
+	public static void copyArea(WritableImage sourceImage, Rectangle sourceArea, WritableImage targetImage, Point targetCoordinate, ImageFlip flip)
+		{ copyArea(sourceImage, sourceArea, targetImage, new Rectangle((int)targetCoordinate.getX(), (int)targetCoordinate.getY(), (int)sourceArea.getWidth(), (int)sourceArea.getHeight()), flip); }
 	
+	public static void copyArea(WritableImage sourceImage, Rectangle sourceArea, WritableImage targetImage, ImageFlip flip)
+		{ copyArea(sourceImage, sourceArea, targetImage, new Rectangle(0, 0, (int)targetImage.getWidth(), (int)targetImage.getHeight()), flip); }
+	
+	public static void copyArea(WritableImage sourceImage, WritableImage targetImage, Point targetCoordinate, ImageFlip flip)
+		{ copyArea(sourceImage, new Rectangle(0, 0, (int)sourceImage.getWidth(), (int)sourceImage.getHeight()), targetImage, targetCoordinate, flip); }
+
+	public static void copyArea(WritableImage sourceImage, WritableImage targetImage, ImageFlip flip)
+		{ copyArea(sourceImage, new Rectangle(0, 0, (int)sourceImage.getWidth(), (int)sourceImage.getHeight()), targetImage, new Rectangle(0, 0, (int)targetImage.getWidth(), (int)targetImage.getHeight()), flip); }
+
+	public static void copyArea(WritableImage sourceImage, Rectangle sourceArea, WritableImage targetImage, Rectangle targetArea)
+		{ copyArea(sourceImage, sourceArea, targetImage, targetArea, ImageFlip.NONE); }
+	
+	public static void copyArea(WritableImage sourceImage, Rectangle sourceArea, WritableImage targetImage, Point targetCoordinate)
+		{ copyArea(sourceImage, sourceArea, targetImage, new Rectangle((int)targetCoordinate.getX(), (int)targetCoordinate.getY(), (int)sourceArea.getWidth(), (int)sourceArea.getHeight()), ImageFlip.NONE); }
+	
+	public static void copyArea(WritableImage sourceImage, Rectangle sourceArea, WritableImage targetImage)
+		{ copyArea(sourceImage, sourceArea, targetImage, new Rectangle(0, 0, (int)targetImage.getWidth(), (int)targetImage.getHeight()), ImageFlip.NONE); }
+	
+	public static void copyArea(WritableImage sourceImage, WritableImage targetImage, Point targetCoordinate)
+		{ copyArea(sourceImage, new Rectangle(0, 0, (int)sourceImage.getWidth(), (int)sourceImage.getHeight()), targetImage, targetCoordinate, ImageFlip.NONE); }
+	
+	public static void copyArea(WritableImage sourceImage, WritableImage targetImage)
+		{ copyArea(sourceImage, new Rectangle(0, 0, (int)sourceImage.getWidth(), (int)sourceImage.getHeight()), targetImage, new Rectangle(0, 0, (int)targetImage.getWidth(), (int)targetImage.getHeight()), ImageFlip.NONE); }
+	*/
 	public static boolean areEqualImages(WritableImage image1, WritableImage image2, int tolerance) {
 		if (image1.getWidth() != image2.getWidth() || image1.getHeight() != image2.getHeight())
 			return false;
@@ -376,19 +476,25 @@ public abstract class ImageUtils {
 	public static boolean areEqualImages(BufferedImage image1, BufferedImage image2)
 		{ return areEqualImages(image1, image2, 0); }
 	
-	
-	
 	public static int getRgba(int red, int green, int blue, int alpha)
-		{ return (alpha << 24) | (blue << 16) | (green << 8) | red; }
-
+		{ return (alpha << 24) | (red << 16) | (green << 8) | blue; }
+	
 	public static int getRgba(int red, int green, int blue)
-		{ return getRgba(red, green, blue, 0); }
+		{ return getRgba(red, green, blue, 255); }
+	
+	public static int[] getRgbaArray(int rgba) {
+	  int alpha = (rgba >> 24) & 0xFF;
+	  int red = (rgba >> 16) & 0xFF;
+	  int green = (rgba >> 8) & 0xFF;
+	  int blue = rgba & 0xFF;
+	  return new int[] {alpha, red, green, blue};
+	}
 
-	public static int[] getRgbaArray(int rgbaValue)
-		{ return new int[] { rgbaValue & 0xFF, (rgbaValue >> 8) & 0xFF, (rgbaValue >> 16) & 0xFF, (rgbaValue >> 24) & 0xFF }; }
-
-	public static WritableImage convertImageToWritableImage(Image image)
-		{ return new ImageView(image).snapshot(new SnapshotParameters(), null); }
+	public static WritableImage convertImageToWritableImage(Image image) {
+    SnapshotParameters params = new SnapshotParameters();
+    params.setFill(Color.TRANSPARENT);
+    return new ImageView(image).snapshot(params, null);
+	}
 	
 	public static BufferedImage convertImageToBufferedImage(Image image)
 		{ return SwingFXUtils.fromFXImage(image, new BufferedImage((int)image.getWidth(), (int)image.getHeight(), BufferedImage.TYPE_INT_ARGB)); }
@@ -399,17 +505,37 @@ public abstract class ImageUtils {
 	public static Image convertBufferedImageToImage(BufferedImage bufferedImage)
 		{ return SwingFXUtils.toFXImage(bufferedImage, null); }
 
+	public static BufferedImage loadBufferedImageFromFile(File file, Color removeBgColor) {
+		Image image = new Image("file:" + file.getAbsolutePath());
+		if (removeBgColor != null)
+			image = removeBgColor(image, removeBgColor);
+		return convertImageToBufferedImage(image);
+	}
+	
 	public static BufferedImage loadBufferedImageFromFile(File file)
-		{ return convertImageToBufferedImage(new Image("file:" + file.getAbsolutePath())); }
+		{ return loadBufferedImageFromFile(file, null); }
+	
+	public static BufferedImage loadBufferedImageFromFile(String filePath, Color removeBgColor)
+		{ return loadBufferedImageFromFile(new File(filePath), removeBgColor); }
 	
 	public static BufferedImage loadBufferedImageFromFile(String filePath)
-		{ return loadBufferedImageFromFile(new File(filePath)); }
+		{ return loadBufferedImageFromFile(filePath, null); }
 
+	public static WritableImage loadWritableImageFromFile(File file, Color removeBgColor) {
+		Image image = new Image("file:" + file.getAbsolutePath());
+		if (removeBgColor != null)
+			image = removeBgColor(image, removeBgColor);
+		return convertImageToWritableImage(image);
+	}
+	
 	public static WritableImage loadWritableImageFromFile(File file)
-		{ return convertImageToWritableImage(new Image("file:" + file.getAbsolutePath())); }
-
+		{ return loadWritableImageFromFile(file, null); }
+	
+	public static WritableImage loadWritableImageFromFile(String filePath, Color removeBgColor)
+		{ return loadWritableImageFromFile(new File(filePath), removeBgColor); }
+	
 	public static WritableImage loadWritableImageFromFile(String filePath)
-		{ return loadWritableImageFromFile(new File(filePath)); }
+		{ return loadWritableImageFromFile(filePath, null); }
 
 	public static void saveImageToFile(BufferedImage image, File file) {
 		try
@@ -689,5 +815,188 @@ public abstract class ImageUtils {
 	public static java.awt.Image toAWTImage(Image fxImage)
 		{ return SwingFXUtils.fromFXImage(fxImage, null); }
 	
+	public static BufferedImage tintImage(BufferedImage image, Color tint, float tintStrenght) {
+		BufferedImage tintedImage = new BufferedImage((int)image.getWidth(), (int)image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		for (int x = 0; x < tintedImage.getWidth(); x++)
+			for (int y = 0; y < tintedImage.getHeight(); y++) {
+				Color originalColor = ImageUtils.argbToColor(image.getRGB(x, y));
+				Color tintedColor = originalColor.interpolate(tint, tintStrenght);
+				if (!originalColor.equals(Color.TRANSPARENT))
+					tintedImage.setRGB(x, y, ImageUtils.colorToArgb(tintedColor));
+			}
+		return tintedImage;
+	}
+	
+	public static Image tintImage(Image image, Color tint, float tintStrenght) {
+		WritableImage tintedImage = new WritableImage((int)image.getWidth(), (int)image.getHeight());
+		PixelReader pixelReader = image.getPixelReader();
+		PixelWriter pixelWriter = tintedImage.getPixelWriter();
+		for (int x = 0; x < tintedImage.getWidth(); x++)
+			for (int y = 0; y < tintedImage.getHeight(); y++) {
+				Color originalColor = pixelReader.getColor(x, y);
+				Color tintedColor = originalColor.interpolate(tint, tintStrenght);
+				if (!originalColor.equals(Color.TRANSPARENT))
+				pixelWriter.setColor(x, y, tintedColor);
+			}
+		return tintedImage;
+	}
+	
+	public static WritableImage copyAreaFrom(Canvas canvas, Rectangle2D captureArea) {
+    SnapshotParameters params = new SnapshotParameters();
+    params.setFill(Color.TRANSPARENT);
+    params.setViewport(captureArea);
+    return canvas.snapshot(params, null);
+	}
+	
+	public static WritableImage copyAreaFrom(Canvas canvas, Rectangle2D captureArea, int outputWidth, int outputHeight) {
+		SnapshotParameters params = new SnapshotParameters();
+		params.setFill(Color.TRANSPARENT);
+		params.setViewport(captureArea);
+		WritableImage capturedImage = canvas.snapshot(params, null);
+		WritableImage resizedImage = new WritableImage(outputWidth, outputHeight);
+		PixelWriter pixelWriter = resizedImage.getPixelWriter();
+		PixelReader pixelReader = capturedImage.getPixelReader();
+		for (int y = 0; y < outputHeight; y++) {
+			for (int x = 0; x < outputWidth; x++) {
+				double sourceX = x * (capturedImage.getWidth() / outputWidth);
+				double sourceY = y * (capturedImage.getHeight() / outputHeight);
+				pixelWriter.setColor(x, y, pixelReader.getColor((int) sourceX, (int) sourceY));
+			}
+		}
+		return resizedImage;
+	}
+
+	public static WritableImage copyAreaFrom(WritableImage image, Rectangle2D captureArea) {
+    PixelReader pixelReader = image.getPixelReader();
+    WritableImage croppedImage = new WritableImage((int)captureArea.getWidth(), (int)captureArea.getHeight());
+    croppedImage.getPixelWriter().setPixels(0, 0, (int)captureArea.getWidth(), (int)captureArea.getHeight(), pixelReader, (int)captureArea.getMinX(), (int)captureArea.getMinY());
+    return croppedImage;
+	}
+	
+	public static WritableImage copyAreaFrom(WritableImage image, Rectangle2D captureArea, int outputWidth, int outputHeight) {
+		PixelReader pixelReader = image.getPixelReader();
+		WritableImage doubledSizeImage = new WritableImage(outputWidth, outputHeight);
+		PixelWriter pixelWriter = doubledSizeImage.getPixelWriter();
+		for (int y = 0; y < outputHeight; y++) {
+			for (int x = 0; x < outputWidth; x++) {
+				double sourceX = x * (captureArea.getWidth() / outputWidth);
+				double sourceY = y * (captureArea.getHeight() / outputHeight);
+				pixelWriter.setColor(x, y, pixelReader.getColor((int) sourceX + (int) captureArea.getMinX(), (int) sourceY + (int) captureArea.getMinY()));
+			}
+		}
+		return doubledSizeImage;
+	}
+
+  public static void drawImage(GraphicsContext gc, Image image, int sourceX, int sourceY, int sourceWidth, int sourceHeight, int targetX, int targetY, int targetWidth, int targetHeight, ImageFlip flip, double rotateAngle, double opacity, DrawImageEffects effects) {
+  	gc.save();
+    gc.translate(targetX + targetWidth / 2, targetY + targetHeight / 2);
+    if (rotateAngle != 0 && rotateAngle % 360 != 0)
+    	gc.rotate(rotateAngle);
+    gc.translate(-targetWidth / 2, -targetHeight / 2);
+   	gc.setGlobalAlpha(opacity);
+    Blend blend = new Blend();
+    boolean hasEffect = false;
+    if (effects.getColorTint() != null) {
+    	Blend blend2 = new Blend(effects.getColorTint().getBlendMode());
+    	ColorInput colorInput = new ColorInput();
+    	colorInput.setPaint(new Color(effects.getColorTint().getRed(), effects.getColorTint().getGreen(), effects.getColorTint().getBlue(), effects.getColorTint().getAlpha()));
+    	colorInput.setX(0);
+    	colorInput.setY(0);
+    	colorInput.setWidth(sourceWidth);
+    	colorInput.setHeight(sourceHeight);
+	    blend2.setTopInput(colorInput);
+	    blend = blend2;
+	    hasEffect = true;
+    }
+		if (effects.getColorAdjust() != null) {
+			Blend blend2 = new Blend(effects.getColorAdjust().getBlendMode());
+			ColorAdjust colorAdjust = new ColorAdjust();
+			colorAdjust.setHue(effects.getColorAdjust().getHue());
+			colorAdjust.setSaturation(effects.getColorAdjust().getSaturation());
+			colorAdjust.setBrightness(effects.getColorAdjust().getBrightness());
+			blend2.setTopInput(colorAdjust);
+	    blend2.setBottomInput(blend);
+	    blend = blend2;
+	    hasEffect = true;
+		}
+		if (effects.getGlow() != null) {
+			Blend blend2 = new Blend(effects.getGlow().getBlendMode());
+	    Glow glow = new Glow();
+	    glow.setLevel(effects.getGlow().getLevel());
+			blend2.setTopInput(glow);
+	    blend2.setBottomInput(blend);
+      blend = blend2;
+	    hasEffect = true;
+		}
+		if (effects.getBloom() != null) {
+			Blend blend2 = new Blend(effects.getBloom().getBlendMode());
+	    Bloom bloom = new Bloom();
+	    bloom.setThreshold(effects.getBloom().getThreshold());
+			blend2.setTopInput(bloom);
+	    blend2.setBottomInput(blend);
+      blend = blend2;
+	    hasEffect = true;
+		}
+		if (effects.getSepiaTone() != null) {
+			Blend blend2 = new Blend(effects.getSepiaTone().getBlendMode());
+	    SepiaTone sepiaTone = new SepiaTone();
+	    sepiaTone.setLevel(effects.getSepiaTone().getLevel());
+			blend2.setTopInput(sepiaTone);
+	    blend2.setBottomInput(blend);
+      blend = blend2;
+	    hasEffect = true;
+		}
+		if (effects.getInnerShadow() != null) {
+			Blend blend2 = new Blend(effects.getInnerShadow().getBlendMode());
+			InnerShadow innerShadow = new InnerShadow();
+			innerShadow.setOffsetX(effects.getInnerShadow().getOffsetX());
+			innerShadow.setOffsetY(effects.getInnerShadow().getOffsetY());
+			innerShadow.setColor(effects.getInnerShadow().getColor());
+			blend2.setTopInput(innerShadow);
+      blend2.setBottomInput(blend);
+      blend = blend2;
+	    hasEffect = true;
+		}
+		if (effects.getDropShadow() != null) {
+			Blend blend2 = new Blend(effects.getDropShadow().getBlendMode());
+			DropShadow dropShadow = new DropShadow();
+			dropShadow.setOffsetX(effects.getDropShadow().getOffsetX());
+			dropShadow.setOffsetY(effects.getDropShadow().getOffsetY());
+			dropShadow.setColor(effects.getDropShadow().getColor());
+			blend2.setTopInput(dropShadow);
+      blend2.setBottomInput(blend);
+      blend = blend2;
+	    hasEffect = true;
+		}
+		if (effects.getMotionBlur() != null) {
+			Blend blend2 = new Blend(effects.getMotionBlur().getBlendMode());
+	    MotionBlur motionBlur = new MotionBlur();
+	    motionBlur.setAngle(effects.getMotionBlur().getAngle());
+	    motionBlur.setRadius(effects.getMotionBlur().getRadius());
+			blend2.setTopInput(motionBlur);
+	    blend2.setBottomInput(blend);
+      blend = blend2;
+	    hasEffect = true;
+		}
+		if (effects.getGaussianBlur() != null) {
+			Blend blend2 = new Blend(effects.getGaussianBlur().getBlendMode());
+	    GaussianBlur gaussianBlur = new GaussianBlur();
+	    gaussianBlur.setRadius(effects.getGaussianBlur().getRadius());
+			blend2.setTopInput(gaussianBlur);
+      blend2.setBottomInput(blend);
+      blend = blend2;
+	    hasEffect = true;
+		}
+		if (hasEffect)
+			gc.setEffect(blend);
+    gc.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight,
+    		flip == ImageFlip.HORIZONTAL || flip == ImageFlip.BOTH ? targetWidth : 0,
+        flip == ImageFlip.VERTICAL || flip == ImageFlip.BOTH ? targetHeight : 0,
+    		flip == ImageFlip.HORIZONTAL || flip == ImageFlip.BOTH ? -targetWidth : targetWidth,
+     		flip == ImageFlip.VERTICAL || flip == ImageFlip.BOTH ? -targetHeight : targetHeight);
+    gc.restore();
+
+  }
+  
 }
 

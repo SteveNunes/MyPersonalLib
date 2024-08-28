@@ -4,6 +4,9 @@ import enums.DirectionOrientation;
 
 public class GotoMove extends MoveBetweenDots {
 	
+	public GotoMove(GotoMove gotoMove)
+		{ super((MoveBetweenDots) gotoMove); }
+	
 	/**
 	 * 
 	 * @param outputPosition - {@code Position} pertencente á um objeto externo, que será atualizado

@@ -4,6 +4,9 @@ import enums.DirectionOrientation;
 
 public class RectangleMove extends MoveBetweenDots {
 	
+	public RectangleMove(RectangleMove rectangleMove)
+		{ super((MoveBetweenDots) rectangleMove); }
+		
 	/**
 	 * 
 	 * @param outputPosition - {@code Position} pertencente á um objeto externo, que será atualizado

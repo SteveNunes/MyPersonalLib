@@ -196,17 +196,17 @@ public abstract class MyCalendar {
 	public static Boolean isSameDate(Date date)
 		{ return isSameDate(date, new Date()); }
 	
-	public static Date getIncrementedDate(Date date, PeriodToMillis period, int inc)
+	public static Date getIncrementDate(Date date, PeriodToMillis period, int inc)
 		{ return new Date(date.getTime() + period.getValue() * inc); }
 
-	public static Date getIncrementedDate(Date date, PeriodToMillis period)
-		{ return getIncrementedDate(date, period, 1); }
+	public static Date getIncrementDate(Date date, PeriodToMillis period)
+		{ return getIncrementDate(date, period, 1); }
 	
-	public static Date getIncrementedDate(PeriodToMillis period, int inc)
-		{ return getIncrementedDate(new Date(), period, inc); }
+	public static Date getIncrementDate(PeriodToMillis period, int inc)
+		{ return getIncrementDate(new Date(), period, inc); }
 	
-	public static Date getIncrementedDate(PeriodToMillis period)
-		{ return getIncrementedDate(new Date(), period); }
+	public static Date getIncrementDate(PeriodToMillis period)
+		{ return getIncrementDate(new Date(), period); }
 
 	/**
 	 * Compara o dia da data informada por parâmetro com o dia da data atual.

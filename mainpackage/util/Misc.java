@@ -17,8 +17,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import javafx.application.Platform;
-
 public abstract class Misc {
 	
 	private static Map<String, Map<Long, ?>> uniqueId = new HashMap<>();
@@ -36,11 +34,6 @@ public abstract class Misc {
 		Thread shutdownHook = new Thread(runnable);
 		Runtime.getRuntime().addShutdownHook(shutdownHook);
 	}
-	
-	/** Chame esse método no final do seu main loop, passando no consumer a
-	  * chamada do mesmo método para um efetivo loop infinito sem dar freezing */
-	public static void runLater(Runnable runnable)
-		{ Platform.runLater(runnable); }
 	
 	/**
 	 * Criar um timer que fica executando determinada(s) tarefa(s) em intervalos fixos.
