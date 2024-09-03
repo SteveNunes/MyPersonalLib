@@ -1,9 +1,11 @@
 package gui.util;
 
+import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.MultiResolutionImage;
 import java.io.File;
@@ -56,16 +58,7 @@ public abstract class ImageUtils {
 	}
 	
 	public static BufferedImage getRotatedImage(BufferedImage image, double angle) {
-		int width = (int)image.getWidth(), height = (int)image.getHeight();
-		BufferedImage rotatedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-		for (int y = 0; y < height; y++)
-			for (int x = 0; x < width; x++) {
-				double sourceX = Math.cos(Math.toRadians(angle)) * (x - width / 2) - Math.sin(Math.toRadians(angle)) * (y - height / 2) + width / 2;
-				double sourceY = Math.sin(Math.toRadians(angle)) * (x - width / 2) + Math.cos(Math.toRadians(angle)) * (y - height / 2) + height / 2;
-				if (sourceX >= 0 && sourceX < width && sourceY >= 0 && sourceY < height)
-					rotatedImage.setRGB(x, y, image.getRGB((int)sourceX, (int)sourceY));
-			}
-		return rotatedImage;
+		return null;
 	}
 
 	public static WritableImage getRotatedImage(WritableImage image, double angle) {
@@ -274,27 +267,58 @@ public abstract class ImageUtils {
 	public static BufferedImage getScreenShot()
 		{ return getScreenShot(1); }
 	
-	public static WritableImage convertToWritableImage(BufferedImage bufferedImage) {
-		WritableImage writableImage = new WritableImage(bufferedImage.getWidth(), bufferedImage.getHeight());
-		int width = bufferedImage.getWidth();
-		int height = bufferedImage.getHeight();
-		for (int y = 0; y < height; y++)
-			for (int x = 0; x < width; x++)
-				writableImage.getPixelWriter().setArgb(x, y, bufferedImage.getRGB(x, y));
-		return writableImage;
-	}	
+	public static WritableImage convertToWritableImage(BufferedImage bufferedImage)
+		{ return SwingFXUtils.toFXImage(bufferedImage, null); }	
 	
-	public static BufferedImage convertToBufferedImage(WritableImage writableImage) {
-		BufferedImage bufferedImage = new BufferedImage((int)writableImage.getWidth(), (int)writableImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
-		int width = (int)writableImage.getWidth();
-		int height = (int)writableImage.getHeight();
-		for (int y = 0; y < height; y++)
-			for (int x = 0; x < width; x++)
-				bufferedImage.setRGB(x, y, writableImage.getPixelReader().getArgb(x, y));
-		return bufferedImage;
-	}	
+	public static BufferedImage convertToBufferedImage(WritableImage writableImage)
+		{ return SwingFXUtils.fromFXImage(writableImage, null); }
+	
+	public static WritableImage convertToWritableImage(Image image)
+		{ return new WritableImage(image.getPixelReader(), (int)image.getWidth(), (int)image.getHeight()); }
 
-	public static int[][] convertToIntArray(BufferedImage image) {
+	/**
+	 * Converte uma java.awt.Image em javafx.Image, redimensionando o tamanho final
+	 * @param awtImage - java.awt.Image á ser convertida
+	 * @param width - Largura da imagem convertida
+	 * @param height - Altura da imagem convertida
+	 * @return - Uma javafx.Image redimensionada
+	 */
+	public static Image toResizedFXImage(java.awt.Image awtImage, Dimension newSize) {
+		BufferedImage bufferedImage = new BufferedImage(awtImage.getWidth(null), awtImage.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+		bufferedImage.getGraphics().drawImage(awtImage, 0, 0, null);
+		int width = (int)newSize.getWidth(), height = (int)newSize.getHeight();
+		BufferedImage novaBufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		novaBufferedImage.getGraphics().drawImage(bufferedImage, 0, 0, width, height, null);
+		return SwingFXUtils.toFXImage(novaBufferedImage, null);
+	}
+	
+	/** Converte uma java.awt.Image em javafx.Image */
+	public static Image toFXImage(java.awt.Image awtImage)
+		{ return SwingFXUtils.toFXImage((BufferedImage) awtImage, null); }
+	
+	/**
+	 * Converte uma javafx.Image em java.awt.Image, redimensionando o tamanho final
+	 * @param fxImage - javafx.Image á ser convertida
+	 * @param width - Largura da imagem convertida
+	 * @param height - Altura da imagem convertida
+	 * @param scale - Escala da imagem convertida (Usar uma constante de java.awt.Image.* para pegar um valor compatível)
+	 * @return - Uma java.awt.Image redimensionada
+	 */
+	public static java.awt.Image toResizedAWTImage(Image fxImage, Dimension newSize, int scale) {
+		int width = (int)newSize.getWidth(), height = (int)newSize.getHeight();
+    BufferedImage bufferedImage = SwingFXUtils.fromFXImage(fxImage, null);
+    BufferedImage novaBufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    novaBufferedImage.getGraphics().drawImage(bufferedImage, 0, 0, width, height, null);
+    return novaBufferedImage.getScaledInstance(width, height, scale);
+	}
+
+	public static java.awt.Image toResizedAWTImage(Image fxImage, Dimension newSize)
+		{ return toResizedAWTImage(fxImage, newSize, java.awt.Image.SCALE_DEFAULT); }
+
+	public static java.awt.Image toAWTImage(Image fxImage)
+		{ return SwingFXUtils.fromFXImage(fxImage, null); }
+	
+	public static int[][] convertToRgbArray(BufferedImage image) {
 		int width = (int)image.getWidth();
 		int height = (int)image.getHeight();
 		int[][] array = new int[height][width];
@@ -304,134 +328,512 @@ public abstract class ImageUtils {
 		return array;
 	}	
 	
-	public static BufferedImage convertToBufferedImage(int[][] array) {
-		BufferedImage bufferedImage = new BufferedImage((int)array[0].length, (int)array.length, BufferedImage.TYPE_INT_ARGB);
-		for (int y = 0; y < array.length; y++)
-			for (int x = 0; x < array[y].length; x++)
-				bufferedImage.setRGB(x, y, array[y][x]);
+	public static BufferedImage convertToBufferedImage(int[][] rgbArray) {
+		BufferedImage bufferedImage = new BufferedImage((int)rgbArray[0].length, (int)rgbArray.length, BufferedImage.TYPE_INT_ARGB);
+		for (int y = 0; y < rgbArray.length; y++)
+			for (int x = 0; x < rgbArray[y].length; x++)
+				bufferedImage.setRGB(x, y, rgbArray[y][x]);
 		return bufferedImage;
 	}	
 
-	public static void copyArea(BufferedImage sourceImage, Rectangle sourceArea, BufferedImage targetImage, Rectangle targetArea) {
+	// Retorna uma BufferedImage contendo uma parte de outra BufferedImage
+	public static BufferedImage copyAreaFromBufferedImage(BufferedImage sourceImage, Rectangle sourceArea, int rotateAngle, ImageFlip flip) {
 		BufferedImage bufferedImage = sourceImage.getSubimage((int)sourceArea.getX(), (int)sourceArea.getY(), (int)sourceArea.getWidth(), (int)sourceArea.getHeight());
+		BufferedImage targetImage = new BufferedImage((int)sourceArea.getWidth(), (int)sourceArea.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = targetImage.createGraphics();
-		g2d.drawImage(bufferedImage, (int)targetArea.getX(), (int)targetArea.getY(), (int)targetArea.getWidth(), (int)targetArea.getHeight(), null);
+    AffineTransform flipAndRotate = new AffineTransform();
+    int imageWidth = targetImage.getWidth(), imageHeight = targetImage.getHeight();
+    if (flip != null && flip != ImageFlip.NONE) {
+	    flipAndRotate.scale(flip == ImageFlip.HORIZONTAL || flip == ImageFlip.BOTH ?  -1 : 1,
+	    										flip == ImageFlip.VERTICAL || flip == ImageFlip.BOTH ?  -1 : 1);
+	    flipAndRotate.translate(-imageWidth, 0);
+    }
+    if (rotateAngle != 0) {
+	    double angle = Math.toRadians(rotateAngle);
+	    flipAndRotate.rotate(angle, imageWidth / 2, imageHeight / 2);
+    }
+    if (flip != ImageFlip.NONE || rotateAngle != 0)
+    	g2d.setTransform(flipAndRotate);
+		g2d.drawImage(bufferedImage, 0 , 0, null);
 		g2d.dispose();
+		return targetImage;
 	}
 	
-	public static void copyArea(BufferedImage sourceImage, Rectangle sourceArea, BufferedImage targetImage, Point targetCoordinate)
-		{ copyArea(sourceImage, sourceArea, targetImage, new Rectangle((int)targetCoordinate.getX(), (int)targetCoordinate.getY(), (int)sourceArea.getWidth(), (int)sourceArea.getHeight())); }
+	public static BufferedImage copyAreaFromBufferedImage(BufferedImage sourceImage, Rectangle sourceArea)
+		{ return copyAreaFromBufferedImage(sourceImage, sourceArea, 0, null); }
 	
-	public static void copyArea(BufferedImage sourceImage, Rectangle sourceArea, BufferedImage targetImage)
-		{ copyArea(sourceImage, sourceArea, targetImage, new Rectangle(0, 0, (int)targetImage.getWidth(), (int)targetImage.getHeight())); }
+	public static BufferedImage copyAreaFromBufferedImage(BufferedImage sourceImage, Rectangle sourceArea, ImageFlip flip)
+		{ return copyAreaFromBufferedImage(sourceImage, sourceArea, 0, flip); }
 	
-	public static void copyArea(BufferedImage sourceImage, BufferedImage targetImage, Point targetCoordinate)
-		{ copyArea(sourceImage, new Rectangle(0, 0, (int)sourceImage.getWidth(), (int)sourceImage.getHeight()), targetImage, targetCoordinate); }
-	
-	public static void copyArea(BufferedImage sourceImage, BufferedImage targetImage)
-		{ copyArea(sourceImage, new Rectangle(0, 0, (int)sourceImage.getWidth(), (int)sourceImage.getHeight()), targetImage, new Rectangle(0, 0, (int)targetImage.getWidth(), (int)targetImage.getHeight())); }
+	public static BufferedImage copyAreaFromBufferedImage(BufferedImage sourceImage, Rectangle sourceArea, int rotateAngle)
+		{ return copyAreaFromBufferedImage(sourceImage, sourceArea, rotateAngle, null); }
 
-	public static BufferedImage copyArea(BufferedImage image, Rectangle area) {
-		BufferedImage output = new BufferedImage((int)area.getWidth(), (int)area.getHeight(), BufferedImage.TYPE_INT_ARGB);
-		copyArea(image, new Rectangle(0, 0, (int)image.getWidth(), (int)image.getHeight()), output, area);
-		return output;
-	}
+	public static BufferedImage copyAreaFromBufferedImage(BufferedImage sourceImage, int rotateAngle, ImageFlip flip)
+		{ return copyAreaFromBufferedImage(sourceImage, new Rectangle(0, 0, sourceImage.getWidth(), sourceImage.getHeight()), rotateAngle, flip); }
+
+	public static BufferedImage copyAreaFromBufferedImage(BufferedImage sourceImage)
+		{ return copyAreaFromBufferedImage(sourceImage, 0, null); }
 	
-	public static void copyImageGPT(WritableImage source, WritableImage target, int rotation) {
-		int width = (int) source.getWidth(), height = (int) source.getHeight();
-		PixelReader pixelReader = source.getPixelReader();
-		PixelWriter pixelWriter = target.getPixelWriter();
-		if (rotation == 0)
-			for (int x = 0; x < width; x++)
-				for (int y = 0; y < height; y++)
-					pixelWriter.setArgb(x, y, pixelReader.getArgb(x, y));
-		else if (rotation == 1)
-			for (int x = 0; x < width; x++)
-				for (int y = 0; y < height; y++)
-					pixelWriter.setArgb(height - 1 - y, x, pixelReader.getArgb(x, y));
-		else if (rotation == 2)
-			for (int x = 0; x < width; x++)
-				for (int y = 0; y < height; y++)
-					pixelWriter.setArgb(width - 1 - x, height - 1 - y, pixelReader.getArgb(x, y));
-		else if (rotation == 3)
-			for (int x = 0; x < width; x++)
-				for (int y = 0; y < height; y++)
-					pixelWriter.setArgb(y, width - 1 - x, pixelReader.getArgb(x, y));
-		else
-			throw new IllegalArgumentException("Valor de rotação inválido. Use 0, 1, 2 ou 3.");
+	public static BufferedImage copyAreaFromBufferedImage(BufferedImage sourceImage, ImageFlip flip)
+		{ return copyAreaFromBufferedImage(sourceImage, 0, flip); }
+	
+	public static BufferedImage copyAreaFromBufferedImage(BufferedImage sourceImage, int rotateAngle)
+		{ return copyAreaFromBufferedImage(sourceImage, rotateAngle, null); }
+
+	// Retorna uma WritableImage contendo uma parte de outra WritableImage
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea, Dimension targetSize, Integer rotateAngle, ImageFlip flip, Double opacity, DrawImageEffects effects) {
+		if (sourceArea == null)
+			sourceArea = new Rectangle(0, 0, (int)sourceImage.getWidth(), (int)sourceImage.getHeight());
+		if (targetSize == null)
+			targetSize = sourceArea.getSize();
+		if (rotateAngle == null)
+			rotateAngle = 0;
+		if (opacity == null)
+			opacity = 1d;
+		if (flip == null)
+			flip = ImageFlip.NONE;
+		Canvas canvas = new Canvas(targetSize.getWidth(), targetSize.getHeight());
+		canvas.getGraphicsContext2D().setImageSmoothing(false);
+		drawImage(canvas.getGraphicsContext2D(), sourceImage, (int)sourceArea.getX(), (int)sourceArea.getY(), (int)sourceArea.getWidth(), (int)sourceArea.getHeight(), 0, 0, (int)targetSize.getWidth(), (int)targetSize.getHeight(), flip, rotateAngle, null, null);
+		return canvas.snapshot(null, null);
 	}
 
-	public static void copyArea(WritableImage sourceImage, Rectangle sourceArea, WritableImage targetImage, Rectangle targetArea, int rotateDegrees, ImageFlip flip) {
-		PixelReader pixelReader = sourceImage.getPixelReader();
-		PixelWriter pixelWriter = targetImage.getPixelWriter();
-		double targetWidth = targetArea.getWidth();
-		double targetHeight = targetArea.getHeight();
-		boolean vf = flip == ImageFlip.VERTICAL || flip == ImageFlip.BOTH;
-		boolean hf = flip == ImageFlip.HORIZONTAL || flip == ImageFlip.BOTH;
-		Color transparent = Color.rgb(0, 0, 0, 0);
-		for (double y = vf ? targetHeight - 1 : 0; (!vf && y < targetHeight) || (vf && y >= 0); y += vf ? -1 : 1) {
-			for (double x = hf ? targetWidth - 1 : 0; (!hf && x < targetWidth) || (hf && x >= 0); x += hf ? -1 : 1) {
-				double sourceX = sourceArea.getMinX() + x / targetWidth * sourceArea.getWidth();
-				double sourceY = sourceArea.getMinY() + y / targetHeight * sourceArea.getHeight();
-				sourceX = Math.min(Math.max(sourceX, sourceArea.getMinX()), sourceArea.getMaxX());
-				sourceY = Math.min(Math.max(sourceY, sourceArea.getMinY()), sourceArea.getMaxY());
-				Color color = pixelReader.getColor((int) sourceX, (int) sourceY);
-				double targetX;
-				double targetY;
-				if (rotateDegrees == 90) {
-					targetX = targetArea.getMinY() + targetHeight - 1 - y;
-					targetY = targetArea.getMinX() + x;
-				}
-				else if (rotateDegrees == 180) {
-					targetX = targetArea.getMinX() + targetWidth - 1 - x;
-					targetY = targetArea.getMinY() + targetHeight - 1 - y;
-				}
-				else if (rotateDegrees == 270) {
-					targetX = targetArea.getMinY() + y;
-					targetY = targetArea.getMinX() + targetWidth - 1 - x;
-				}
-				else {
-					targetX = targetArea.getMinX() + x;
-					targetY = targetArea.getMinY() + y;
-				}
-				
-				targetX = Math.min(Math.max(targetX, targetArea.getMinX()), targetArea.getMaxX());
-				targetY = Math.min(Math.max(targetY, targetArea.getMinY()), targetArea.getMaxY());
-				if (!color.equals(transparent))
-					try
-						{ pixelWriter.setColor((int) targetX, (int) targetY, color); }
-					catch (Exception e) {}
-			}
-		}
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea, Dimension targetSize, Integer rotateAngle, ImageFlip flip, Double opacity)
+		{ return copyAreaFromWritableImage(sourceImage, sourceArea, targetSize, rotateAngle, flip, opacity, null); }
+
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea, Dimension targetSize, Integer rotateAngle, ImageFlip flip)
+		{ return copyAreaFromWritableImage(sourceImage, sourceArea, targetSize, rotateAngle, flip, null, null); }
+
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea, Dimension targetSize, Integer rotateAngle, Double opacity)
+		{ return copyAreaFromWritableImage(sourceImage, sourceArea, targetSize, rotateAngle, ImageFlip.NONE, opacity, null); }
+
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea, Dimension targetSize, Integer rotateAngle)
+		{ return copyAreaFromWritableImage(sourceImage, sourceArea, targetSize, rotateAngle, ImageFlip.NONE, null, null); }
+
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea, Dimension targetSize, ImageFlip flip, Double opacity)
+		{ return copyAreaFromWritableImage(sourceImage, sourceArea, targetSize, null, flip, opacity, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea, Dimension targetSize, ImageFlip flip)
+		{ return copyAreaFromWritableImage(sourceImage, sourceArea, targetSize, null, flip, null, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea, Dimension targetSize, Double opacity)
+		{ return copyAreaFromWritableImage(sourceImage, sourceArea, targetSize, null, ImageFlip.NONE, opacity, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea, Dimension targetSize)
+		{ return copyAreaFromWritableImage(sourceImage, sourceArea, targetSize, null, ImageFlip.NONE, null, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea, Integer rotateAngle, ImageFlip flip, Double opacity)
+		{ return copyAreaFromWritableImage(sourceImage, sourceArea, null, rotateAngle, flip, opacity, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea, Integer rotateAngle, ImageFlip flip)
+		{ return copyAreaFromWritableImage(sourceImage, sourceArea, null, rotateAngle, flip, null, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea, Integer rotateAngle, Double opacity)
+		{ return copyAreaFromWritableImage(sourceImage, sourceArea, null, rotateAngle, ImageFlip.NONE, opacity, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea, Integer rotateAngle)
+		{ return copyAreaFromWritableImage(sourceImage, sourceArea, null, rotateAngle, ImageFlip.NONE, null, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea, ImageFlip flip, Double opacity)
+		{ return copyAreaFromWritableImage(sourceImage, sourceArea, null, null, flip, opacity, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea, ImageFlip flip)
+		{ return copyAreaFromWritableImage(sourceImage, sourceArea, null, null, flip, null, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea, Double opacity)
+		{ return copyAreaFromWritableImage(sourceImage, sourceArea, null, null, ImageFlip.NONE, opacity, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Rectangle sourceArea)
+		{ return copyAreaFromWritableImage(sourceImage, sourceArea, null, null, ImageFlip.NONE, null, null); }
+
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Dimension targetSize, Integer rotateAngle, ImageFlip flip, Double opacity, DrawImageEffects effects)
+		{ return copyAreaFromWritableImage(sourceImage, null, targetSize, rotateAngle, flip, opacity, effects); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Dimension targetSize, Integer rotateAngle, ImageFlip flip, Double opacity)
+		{ return copyAreaFromWritableImage(sourceImage, null, targetSize, rotateAngle, flip, opacity, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Dimension targetSize, Integer rotateAngle, ImageFlip flip)
+		{ return copyAreaFromWritableImage(sourceImage, null, targetSize, rotateAngle, flip, null, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Dimension targetSize, Integer rotateAngle, Double opacity)
+		{ return copyAreaFromWritableImage(sourceImage, null, targetSize, rotateAngle, ImageFlip.NONE, opacity, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Dimension targetSize, Integer rotateAngle)
+		{ return copyAreaFromWritableImage(sourceImage, null, targetSize, rotateAngle, ImageFlip.NONE, null, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Dimension targetSize, ImageFlip flip, Double opacity)
+		{ return copyAreaFromWritableImage(sourceImage, null, targetSize, null, flip, opacity, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Dimension targetSize, ImageFlip flip)
+		{ return copyAreaFromWritableImage(sourceImage, null, targetSize, null, flip, null, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Dimension targetSize, Double opacity)
+		{ return copyAreaFromWritableImage(sourceImage, null, targetSize, null, ImageFlip.NONE, opacity, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Dimension targetSize)
+		{ return copyAreaFromWritableImage(sourceImage, null, targetSize, null, ImageFlip.NONE, null, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Integer rotateAngle, ImageFlip flip, Double opacity)
+		{ return copyAreaFromWritableImage(sourceImage, null, null, rotateAngle, flip, opacity, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Integer rotateAngle, ImageFlip flip)
+		{ return copyAreaFromWritableImage(sourceImage, null, null, rotateAngle, flip, null, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Integer rotateAngle, Double opacity)
+		{ return copyAreaFromWritableImage(sourceImage, null, null, rotateAngle, ImageFlip.NONE, opacity, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Integer rotateAngle)
+		{ return copyAreaFromWritableImage(sourceImage, null, null, rotateAngle, ImageFlip.NONE, null, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, ImageFlip flip, Double opacity)
+		{ return copyAreaFromWritableImage(sourceImage, null, null, null, flip, opacity, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, ImageFlip flip)
+		{ return copyAreaFromWritableImage(sourceImage, null, null, null, flip, null, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage, Double opacity)
+		{ return copyAreaFromWritableImage(sourceImage, null, null, null, ImageFlip.NONE, opacity, null); }
+	
+	public static WritableImage copyAreaFromWritableImage(WritableImage sourceImage)
+		{ return copyAreaFromWritableImage(sourceImage, null, null, null, ImageFlip.NONE, null, null); }
+	
+	// Retorna uma WritableImage contendo uma parte de um Canvas
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea, Dimension targetSize, Integer rotateAngle, ImageFlip flip, Double opacity, DrawImageEffects effects) {
+		if (sourceArea == null)
+			sourceArea = new Rectangle2D(0, 0, (int)canvas.getWidth(), (int)canvas.getHeight());
+		if (targetSize == null)
+			targetSize = new Dimension((int)canvas.getWidth(), (int)canvas.getHeight());
+		if (rotateAngle == null)
+			rotateAngle = 0;
+		if (opacity == null)
+			opacity = 1d;
+		if (flip == null)
+			flip = ImageFlip.NONE;
+		SnapshotParameters params = new SnapshotParameters();
+		params.setFill(Color.TRANSPARENT);
+		params.setViewport(sourceArea);
+		WritableImage capturedImage = canvas.snapshot(params, null);
+		int width = (int)targetSize.getWidth(), height = (int)targetSize.getHeight();
+		Canvas canvas2 = new Canvas(width, height);
+		canvas2.getGraphicsContext2D().setImageSmoothing(false);
+		drawImage(canvas2.getGraphicsContext2D(), capturedImage, (int)sourceArea.getMinX(), (int)sourceArea.getMinY(), (int)sourceArea.getWidth(), (int)sourceArea.getHeight(), 0, 0, (int)targetSize.getWidth(), (int)targetSize.getHeight(), flip, rotateAngle, null, null);
+		return canvas2.snapshot(params, null);
 	}
-	/*
-	public static void copyArea(WritableImage sourceImage, Rectangle sourceArea, WritableImage targetImage, Point targetCoordinate, ImageFlip flip)
-		{ copyArea(sourceImage, sourceArea, targetImage, new Rectangle((int)targetCoordinate.getX(), (int)targetCoordinate.getY(), (int)sourceArea.getWidth(), (int)sourceArea.getHeight()), flip); }
-	
-	public static void copyArea(WritableImage sourceImage, Rectangle sourceArea, WritableImage targetImage, ImageFlip flip)
-		{ copyArea(sourceImage, sourceArea, targetImage, new Rectangle(0, 0, (int)targetImage.getWidth(), (int)targetImage.getHeight()), flip); }
-	
-	public static void copyArea(WritableImage sourceImage, WritableImage targetImage, Point targetCoordinate, ImageFlip flip)
-		{ copyArea(sourceImage, new Rectangle(0, 0, (int)sourceImage.getWidth(), (int)sourceImage.getHeight()), targetImage, targetCoordinate, flip); }
 
-	public static void copyArea(WritableImage sourceImage, WritableImage targetImage, ImageFlip flip)
-		{ copyArea(sourceImage, new Rectangle(0, 0, (int)sourceImage.getWidth(), (int)sourceImage.getHeight()), targetImage, new Rectangle(0, 0, (int)targetImage.getWidth(), (int)targetImage.getHeight()), flip); }
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea, Dimension targetSize, Integer rotateAngle, ImageFlip flip, Double opacity)
+		{ return copyAreaFromCanvas(canvas, sourceArea, targetSize, rotateAngle, flip, opacity, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea, Dimension targetSize, Integer rotateAngle, ImageFlip flip)
+		{ return copyAreaFromCanvas(canvas, sourceArea, targetSize, rotateAngle, flip, null, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea, Dimension targetSize, Integer rotateAngle, Double opacity)
+		{ return copyAreaFromCanvas(canvas, sourceArea, targetSize, rotateAngle, ImageFlip.NONE, opacity, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea, Dimension targetSize, Integer rotateAngle)
+		{ return copyAreaFromCanvas(canvas, sourceArea, targetSize, rotateAngle, ImageFlip.NONE, null, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea, Dimension targetSize, ImageFlip flip, Double opacity)
+		{ return copyAreaFromCanvas(canvas, sourceArea, targetSize, null, flip, opacity, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea, Dimension targetSize, ImageFlip flip)
+		{ return copyAreaFromCanvas(canvas, sourceArea, targetSize, null, flip, null, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea, Dimension targetSize, Double opacity)
+		{ return copyAreaFromCanvas(canvas, sourceArea, targetSize, null, ImageFlip.NONE, opacity, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea, Dimension targetSize)
+		{ return copyAreaFromCanvas(canvas, sourceArea, targetSize, null, ImageFlip.NONE, null, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea, Integer rotateAngle, ImageFlip flip, Double opacity)
+		{ return copyAreaFromCanvas(canvas, sourceArea, null, rotateAngle, flip, opacity, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea, Integer rotateAngle, ImageFlip flip)
+		{ return copyAreaFromCanvas(canvas, sourceArea, null, rotateAngle, flip, null, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea, Integer rotateAngle, Double opacity)
+		{ return copyAreaFromCanvas(canvas, sourceArea, null, rotateAngle, ImageFlip.NONE, opacity, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea, Integer rotateAngle)
+		{ return copyAreaFromCanvas(canvas, sourceArea, null, rotateAngle, ImageFlip.NONE, null, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea, ImageFlip flip, Double opacity)
+		{ return copyAreaFromCanvas(canvas, sourceArea, null, null, flip, opacity, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea, ImageFlip flip)
+		{ return copyAreaFromCanvas(canvas, sourceArea, null, null, flip, null, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea, Double opacity)
+		{ return copyAreaFromCanvas(canvas, sourceArea, null, null, ImageFlip.NONE, opacity, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Rectangle2D sourceArea)
+		{ return copyAreaFromCanvas(canvas, sourceArea, null, null, ImageFlip.NONE, null, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Dimension targetSize, Integer rotateAngle, ImageFlip flip, Double opacity, DrawImageEffects effects)
+		{ return copyAreaFromCanvas(canvas, null, targetSize, rotateAngle, flip, opacity, effects); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Dimension targetSize, Integer rotateAngle, ImageFlip flip, Double opacity)
+		{ return copyAreaFromCanvas(canvas, null, targetSize, rotateAngle, flip, opacity, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Dimension targetSize, Integer rotateAngle, ImageFlip flip)
+		{ return copyAreaFromCanvas(canvas, null, targetSize, rotateAngle, flip, null, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Dimension targetSize, Integer rotateAngle, Double opacity)
+		{ return copyAreaFromCanvas(canvas, null, targetSize, rotateAngle, ImageFlip.NONE, opacity, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Dimension targetSize, Integer rotateAngle)
+		{ return copyAreaFromCanvas(canvas, null, targetSize, rotateAngle, ImageFlip.NONE, null, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Dimension targetSize, ImageFlip flip, Double opacity)
+		{ return copyAreaFromCanvas(canvas, null, targetSize, null, flip, opacity, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Dimension targetSize, ImageFlip flip)
+		{ return copyAreaFromCanvas(canvas, null, targetSize, null, flip, null, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Dimension targetSize, Double opacity)
+		{ return copyAreaFromCanvas(canvas, null, targetSize, null, ImageFlip.NONE, opacity, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Dimension targetSize)
+		{ return copyAreaFromCanvas(canvas, null, targetSize, null, ImageFlip.NONE, null, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Integer rotateAngle, ImageFlip flip, Double opacity)
+		{ return copyAreaFromCanvas(canvas, null, null, rotateAngle, flip, opacity, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Integer rotateAngle, ImageFlip flip)
+		{ return copyAreaFromCanvas(canvas, null, null, rotateAngle, flip, null, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Integer rotateAngle, Double opacity)
+		{ return copyAreaFromCanvas(canvas, null, null, rotateAngle, ImageFlip.NONE, opacity, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Integer rotateAngle)
+		{ return copyAreaFromCanvas(canvas, null, null, rotateAngle, ImageFlip.NONE, null, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, ImageFlip flip, Double opacity)
+		{ return copyAreaFromCanvas(canvas, null, null, null, flip, opacity, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, ImageFlip flip)
+		{ return copyAreaFromCanvas(canvas, null, null, null, flip, null, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas, Double opacity)
+		{ return copyAreaFromCanvas(canvas, null, null, null, ImageFlip.NONE, opacity, null); }
+	
+	public static WritableImage copyAreaFromCanvas(Canvas canvas)
+		{ return copyAreaFromCanvas(canvas, null, null, null, ImageFlip.NONE, null, null); }
 
-	public static void copyArea(WritableImage sourceImage, Rectangle sourceArea, WritableImage targetImage, Rectangle targetArea)
-		{ copyArea(sourceImage, sourceArea, targetImage, targetArea, ImageFlip.NONE); }
+	// Copia o conteudo de uma WritableImage, sobrepondo a outra WritableImage, e retorna uma nova WritableImage com o resultado da sobreposição
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Rectangle2D targetArea, Integer rotateAngle, ImageFlip flip, Double opacity, DrawImageEffects effects) {
+		if (sourceArea == null)
+			sourceArea = new Rectangle2D(0, 0, (int)sourceImage.getWidth(), (int)sourceImage.getHeight());
+		if (targetArea == null)
+			targetArea = new Rectangle2D(0, 0, (int)sourceArea.getWidth(), (int)sourceArea.getHeight());
+		if (rotateAngle == null)
+			rotateAngle = 0;
+		if (opacity == null)
+			opacity = 1d;
+		if (flip == null)
+			flip = ImageFlip.NONE;
+		Canvas tCanvas = new Canvas(targetImage.getWidth(), targetImage.getHeight());
+		GraphicsContext tGc = tCanvas.getGraphicsContext2D();
+		tCanvas.getGraphicsContext2D().setImageSmoothing(false);
+		tGc.drawImage(targetImage, 0, 0);
+		drawImage(tGc, sourceImage, (int)sourceArea.getMinX(), (int)sourceArea.getMinY(),
+							(int)sourceArea.getWidth(), (int)sourceArea.getHeight(),
+							(int)targetArea.getMinX(), (int)targetArea.getMinY(),
+							(int)targetArea.getWidth(), (int)targetArea.getHeight(),
+							flip, rotateAngle, opacity, effects);
+		SnapshotParameters params = new SnapshotParameters();
+		params.setFill(Color.TRANSPARENT);
+		return tCanvas.snapshot(params, null);
+	}
+
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Rectangle2D targetArea, ImageFlip flip, Double opacity, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, targetArea, null, flip, opacity, effects); }
+
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Rectangle2D targetArea, Integer rotateAngle, Double opacity, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, targetArea, rotateAngle, null, opacity, effects); }
+
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Rectangle2D targetArea, Integer rotateAngle, ImageFlip flip, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, targetArea, rotateAngle, flip, null, effects); }
+
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Rectangle2D targetArea, Integer rotateAngle, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, targetArea, rotateAngle, null, null, effects); }
+
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Rectangle2D targetArea, ImageFlip flip, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, targetArea, null, flip, null, effects); }
+
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Rectangle2D targetArea, Double opacity, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, targetArea, null, null, opacity, effects); }
+
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Rectangle2D targetArea, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, targetArea, null, null, null, effects); }
+
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Rectangle2D targetArea, Integer rotateAngle, ImageFlip flip, Double opacity)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, targetArea, rotateAngle, flip, opacity, null); }
 	
-	public static void copyArea(WritableImage sourceImage, Rectangle sourceArea, WritableImage targetImage, Point targetCoordinate)
-		{ copyArea(sourceImage, sourceArea, targetImage, new Rectangle((int)targetCoordinate.getX(), (int)targetCoordinate.getY(), (int)sourceArea.getWidth(), (int)sourceArea.getHeight()), ImageFlip.NONE); }
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Rectangle2D targetArea, ImageFlip flip, Double opacity)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, targetArea, null, flip, opacity, null); }
 	
-	public static void copyArea(WritableImage sourceImage, Rectangle sourceArea, WritableImage targetImage)
-		{ copyArea(sourceImage, sourceArea, targetImage, new Rectangle(0, 0, (int)targetImage.getWidth(), (int)targetImage.getHeight()), ImageFlip.NONE); }
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Rectangle2D targetArea, Integer rotateAngle, Double opacity)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, targetArea, rotateAngle, null, opacity, null); }
 	
-	public static void copyArea(WritableImage sourceImage, WritableImage targetImage, Point targetCoordinate)
-		{ copyArea(sourceImage, new Rectangle(0, 0, (int)sourceImage.getWidth(), (int)sourceImage.getHeight()), targetImage, targetCoordinate, ImageFlip.NONE); }
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Rectangle2D targetArea, Integer rotateAngle, ImageFlip flip)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, targetArea, rotateAngle, flip, null, null); }
 	
-	public static void copyArea(WritableImage sourceImage, WritableImage targetImage)
-		{ copyArea(sourceImage, new Rectangle(0, 0, (int)sourceImage.getWidth(), (int)sourceImage.getHeight()), targetImage, new Rectangle(0, 0, (int)targetImage.getWidth(), (int)targetImage.getHeight()), ImageFlip.NONE); }
-	*/
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Rectangle2D targetArea, Integer rotateAngle)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, targetArea, rotateAngle, null, null, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Rectangle2D targetArea, ImageFlip flip)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, targetArea, null, flip, null, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Rectangle2D targetArea, Double opacity)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, targetArea, null, null, opacity, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Rectangle2D targetArea)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, targetArea, null, null, null, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Integer rotateAngle, ImageFlip flip, Double opacity, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, null, rotateAngle, flip, opacity, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, ImageFlip flip, Double opacity, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, null, null, flip, opacity, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Integer rotateAngle, Double opacity, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, null, rotateAngle, null, opacity, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Integer rotateAngle, ImageFlip flip, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, null, rotateAngle, flip, null, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Integer rotateAngle, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, null, rotateAngle, null, null, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, ImageFlip flip, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, null, null, flip, null, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Double opacity, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, null, null, null, opacity, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, null, null, null, null, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Integer rotateAngle, ImageFlip flip, Double opacity)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, null, rotateAngle, flip, opacity, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, ImageFlip flip, Double opacity)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, null, null, flip, opacity, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Integer rotateAngle, Double opacity)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, null, rotateAngle, null, opacity, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Integer rotateAngle, ImageFlip flip)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, null, rotateAngle, flip, null, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Integer rotateAngle)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, null, rotateAngle, null, null, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, ImageFlip flip)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, null, null, flip, null, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage, Double opacity)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, null, null, null, opacity, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, Rectangle2D sourceArea, WritableImage targetImage)
+		{ return drawImageToImage(sourceImage, sourceArea, targetImage, null, null, null, null, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Rectangle2D targetArea, Integer rotateAngle, ImageFlip flip, Double opacity, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, null, targetImage, targetArea, rotateAngle, flip, opacity, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Rectangle2D targetArea, ImageFlip flip, Double opacity, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, null, targetImage, targetArea, null, flip, opacity, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Rectangle2D targetArea, Integer rotateAngle, Double opacity, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, null, targetImage, targetArea, rotateAngle, null, opacity, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Rectangle2D targetArea, Integer rotateAngle, ImageFlip flip, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, null, targetImage, targetArea, rotateAngle, flip, null, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Rectangle2D targetArea, Integer rotateAngle, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, null, targetImage, targetArea, rotateAngle, null, null, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Rectangle2D targetArea, ImageFlip flip, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, null, targetImage, targetArea, null, flip, null, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Rectangle2D targetArea, Double opacity, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, null, targetImage, targetArea, null, null, opacity, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Rectangle2D targetArea, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, null, targetImage, targetArea, null, null, null, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Rectangle2D targetArea, Integer rotateAngle, ImageFlip flip, Double opacity)
+		{ return drawImageToImage(sourceImage, null, targetImage, targetArea, rotateAngle, flip, opacity, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Rectangle2D targetArea, ImageFlip flip, Double opacity)
+		{ return drawImageToImage(sourceImage, null, targetImage, targetArea, null, flip, opacity, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Rectangle2D targetArea, Integer rotateAngle, Double opacity)
+		{ return drawImageToImage(sourceImage, null, targetImage, targetArea, rotateAngle, null, opacity, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Rectangle2D targetArea, Integer rotateAngle, ImageFlip flip)
+		{ return drawImageToImage(sourceImage, null, targetImage, targetArea, rotateAngle, flip, null, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Rectangle2D targetArea, Integer rotateAngle)
+		{ return drawImageToImage(sourceImage, null, targetImage, targetArea, rotateAngle, null, null, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Rectangle2D targetArea, ImageFlip flip)
+		{ return drawImageToImage(sourceImage, null, targetImage, targetArea, null, flip, null, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Rectangle2D targetArea, Double opacity)
+		{ return drawImageToImage(sourceImage, null, targetImage, targetArea, null, null, opacity, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Rectangle2D targetArea)
+		{ return drawImageToImage(sourceImage, null, targetImage, targetArea, null, null, null, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Integer rotateAngle, ImageFlip flip, Double opacity, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, null, targetImage, null, rotateAngle, flip, opacity, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, ImageFlip flip, Double opacity, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, null, targetImage, null, null, flip, opacity, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Integer rotateAngle, Double opacity, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, null, targetImage, null, rotateAngle, null, opacity, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Integer rotateAngle, ImageFlip flip, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, null, targetImage, null, rotateAngle, flip, null, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Integer rotateAngle, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, null, targetImage, null, rotateAngle, null, null, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, ImageFlip flip, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, null, targetImage, null, null, flip, null, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Double opacity, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, null, targetImage, null, null, null, opacity, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, DrawImageEffects effects)
+		{ return drawImageToImage(sourceImage, null, targetImage, null, null, null, null, effects); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Integer rotateAngle, ImageFlip flip, Double opacity)
+		{ return drawImageToImage(sourceImage, null, targetImage, null, rotateAngle, flip, opacity, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, ImageFlip flip, Double opacity)
+		{ return drawImageToImage(sourceImage, null, targetImage, null, null, flip, opacity, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Integer rotateAngle, Double opacity)
+		{ return drawImageToImage(sourceImage, null, targetImage, null, rotateAngle, null, opacity, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Integer rotateAngle, ImageFlip flip)
+		{ return drawImageToImage(sourceImage, null, targetImage, null, rotateAngle, flip, null, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Integer rotateAngle)
+		{ return drawImageToImage(sourceImage, null, targetImage, null, rotateAngle, null, null, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, ImageFlip flip)
+		{ return drawImageToImage(sourceImage, null, targetImage, null, null, flip, null, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage, Double opacity)
+		{ return drawImageToImage(sourceImage, null, targetImage, null, null, null, opacity, null); }
+	
+	public static WritableImage drawImageToImage(WritableImage sourceImage, WritableImage targetImage)
+		{ return drawImageToImage(sourceImage, null, targetImage, null, null, null, null, null); }
+	
 	public static boolean areEqualImages(WritableImage image1, WritableImage image2, int tolerance) {
 		if (image1.getWidth() != image2.getWidth() || image1.getHeight() != image2.getHeight())
 			return false;
@@ -490,12 +892,6 @@ public abstract class ImageUtils {
 	  return new int[] {alpha, red, green, blue};
 	}
 
-	public static WritableImage convertImageToWritableImage(Image image) {
-    SnapshotParameters params = new SnapshotParameters();
-    params.setFill(Color.TRANSPARENT);
-    return new ImageView(image).snapshot(params, null);
-	}
-	
 	public static BufferedImage convertImageToBufferedImage(Image image)
 		{ return SwingFXUtils.fromFXImage(image, new BufferedImage((int)image.getWidth(), (int)image.getHeight(), BufferedImage.TYPE_INT_ARGB)); }
 
@@ -525,7 +921,7 @@ public abstract class ImageUtils {
 		Image image = new Image("file:" + file.getAbsolutePath());
 		if (removeBgColor != null)
 			image = removeBgColor(image, removeBgColor);
-		return convertImageToWritableImage(image);
+		return convertToWritableImage(image);
 	}
 	
 	public static WritableImage loadWritableImageFromFile(File file)
@@ -718,18 +1114,6 @@ public abstract class ImageUtils {
 	public static Point isImageContained(WritableImage smallerImage, WritableImage largerImage)
 		{ return isImageContained(smallerImage, largerImage, 0); }
 
-	public static Point screenContainsAnImage(BufferedImage image, Rectangle searchingArea, int tolerance)
-		{ return isImageContained(image, getScreenShot(searchingArea), tolerance); }
-	
-	public static Point screenContainsAnImage(BufferedImage image, Rectangle searchingArea)
-		{ return screenContainsAnImage(image, searchingArea, 0); }
-	
-	public static Point screenContainsAnImage(BufferedImage image, int tolerance)
-		{ return screenContainsAnImage(image, new Rectangle(0, 0, DesktopUtils.getHardwareScreenWidth(), DesktopUtils.getHardwareScreenHeight()), tolerance); }
-	
-	public static Point screenContainsAnImage(BufferedImage image)
-		{ return screenContainsAnImage(image, 0); }
-	
 	public static List<Color> getColorList() {
 		List<Color> colorList = new ArrayList<>();
 		Field[] fields = Color.class.getDeclaredFields();
@@ -775,46 +1159,6 @@ public abstract class ImageUtils {
 		return Color.rgb(r, g, b, a / 255.0);
 	}
 	
-	/**
-	 * Converte uma java.awt.Image em javafx.Image, redimensionando o tamanho final
-	 * @param awtImage - java.awt.Image á ser convertida
-	 * @param width - Largura da imagem convertida
-	 * @param height - Altura da imagem convertida
-	 * @return - Uma javafx.Image redimensionada
-	 */
-	public static Image toResizedFXImage(java.awt.Image awtImage, int width, int height) {
-		BufferedImage bufferedImage = new BufferedImage(awtImage.getWidth(null), awtImage.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-		bufferedImage.getGraphics().drawImage(awtImage, 0, 0, null);
-		BufferedImage novaBufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-		novaBufferedImage.getGraphics().drawImage(bufferedImage, 0, 0, width, height, null);
-		return SwingFXUtils.toFXImage(novaBufferedImage, null);
-	}
-	
-	/** Converte uma java.awt.Image em javafx.Image */
-	public static Image toFXImage(java.awt.Image awtImage)
-		{ return SwingFXUtils.toFXImage((BufferedImage) awtImage, null); }
-	
-	/**
-	 * Converte uma javafx.Image em java.awt.Image, redimensionando o tamanho final
-	 * @param fxImage - javafx.Image á ser convertida
-	 * @param width - Largura da imagem convertida
-	 * @param height - Altura da imagem convertida
-	 * @param scale - Escala da imagem convertida (Usar uma constante de java.awt.Image.* para pegar um valor compatível)
-	 * @return - Uma java.awt.Image redimensionada
-	 */
-	public static java.awt.Image toResizedAWTImage(Image fxImage, int width, int height, int scale) {
-    BufferedImage bufferedImage = SwingFXUtils.fromFXImage(fxImage, null);
-    BufferedImage novaBufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-    novaBufferedImage.getGraphics().drawImage(bufferedImage, 0, 0, width, height, null);
-    return novaBufferedImage.getScaledInstance(width, height, scale);
-	}
-
-	public static java.awt.Image toResizedAWTImage(Image fxImage, int width, int height)
-		{ return toResizedAWTImage(fxImage, width, height, java.awt.Image.SCALE_DEFAULT); }
-
-	public static java.awt.Image toAWTImage(Image fxImage)
-		{ return SwingFXUtils.fromFXImage(fxImage, null); }
-	
 	public static BufferedImage tintImage(BufferedImage image, Color tint, float tintStrenght) {
 		BufferedImage tintedImage = new BufferedImage((int)image.getWidth(), (int)image.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		for (int x = 0; x < tintedImage.getWidth(); x++)
@@ -827,7 +1171,7 @@ public abstract class ImageUtils {
 		return tintedImage;
 	}
 	
-	public static Image tintImage(Image image, Color tint, float tintStrenght) {
+	public static WritableImage tintImage(Image image, Color tint, float tintStrenght) {
 		WritableImage tintedImage = new WritableImage((int)image.getWidth(), (int)image.getHeight());
 		PixelReader pixelReader = image.getPixelReader();
 		PixelWriter pixelWriter = tintedImage.getPixelWriter();
@@ -841,154 +1185,212 @@ public abstract class ImageUtils {
 		return tintedImage;
 	}
 	
-	public static WritableImage copyAreaFrom(Canvas canvas, Rectangle2D captureArea) {
-    SnapshotParameters params = new SnapshotParameters();
-    params.setFill(Color.TRANSPARENT);
-    params.setViewport(captureArea);
-    return canvas.snapshot(params, null);
-	}
+	public static void drawImage(GraphicsContext gc, Image image, Integer sourceX, Integer sourceY, Integer sourceWidth, Integer sourceHeight, Integer targetX, Integer targetY, Integer targetWidth, Integer targetHeight, ImageFlip flip, Integer rotateAngle, DrawImageEffects effects)
+		{ drawImage(gc, image, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, targetWidth, targetHeight, flip, rotateAngle, null, effects); }
 	
-	public static WritableImage copyAreaFrom(Canvas canvas, Rectangle2D captureArea, int outputWidth, int outputHeight) {
-		SnapshotParameters params = new SnapshotParameters();
-		params.setFill(Color.TRANSPARENT);
-		params.setViewport(captureArea);
-		WritableImage capturedImage = canvas.snapshot(params, null);
-		WritableImage resizedImage = new WritableImage(outputWidth, outputHeight);
-		PixelWriter pixelWriter = resizedImage.getPixelWriter();
-		PixelReader pixelReader = capturedImage.getPixelReader();
-		for (int y = 0; y < outputHeight; y++) {
-			for (int x = 0; x < outputWidth; x++) {
-				double sourceX = x * (capturedImage.getWidth() / outputWidth);
-				double sourceY = y * (capturedImage.getHeight() / outputHeight);
-				pixelWriter.setColor(x, y, pixelReader.getColor((int) sourceX, (int) sourceY));
-			}
-		}
-		return resizedImage;
-	}
+	public static void drawImage(GraphicsContext gc, Image image, Integer sourceX, Integer sourceY, Integer sourceWidth, Integer sourceHeight, Integer targetX, Integer targetY, Integer targetWidth, Integer targetHeight, ImageFlip flip, Double opacity, DrawImageEffects effects)
+		{ drawImage(gc, image, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, targetWidth, targetHeight, flip, null, null, effects); }
 
-	public static WritableImage copyAreaFrom(WritableImage image, Rectangle2D captureArea) {
-    PixelReader pixelReader = image.getPixelReader();
-    WritableImage croppedImage = new WritableImage((int)captureArea.getWidth(), (int)captureArea.getHeight());
-    croppedImage.getPixelWriter().setPixels(0, 0, (int)captureArea.getWidth(), (int)captureArea.getHeight(), pixelReader, (int)captureArea.getMinX(), (int)captureArea.getMinY());
-    return croppedImage;
-	}
+	public static void drawImage(GraphicsContext gc, Image image, Integer sourceX, Integer sourceY, Integer sourceWidth, Integer sourceHeight, Integer targetX, Integer targetY, Integer targetWidth, Integer targetHeight, Integer rotateAngle, Double opacity, DrawImageEffects effects)
+		{ drawImage(gc, image, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, targetWidth, targetHeight, null, rotateAngle, null, effects); }
+
+	public static void drawImage(GraphicsContext gc, Image image, Integer sourceX, Integer sourceY, Integer sourceWidth, Integer sourceHeight, Integer targetX, Integer targetY, Integer targetWidth, Integer targetHeight, Integer rotateAngle, DrawImageEffects effects)
+		{ drawImage(gc, image, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, targetWidth, targetHeight, null, rotateAngle, null, effects); }
+
+	public static void drawImage(GraphicsContext gc, Image image, Integer sourceX, Integer sourceY, Integer sourceWidth, Integer sourceHeight, Integer targetX, Integer targetY, Integer targetWidth, Integer targetHeight, Double opacity, DrawImageEffects effects)
+		{ drawImage(gc, image, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, targetWidth, targetHeight, null, null, opacity, effects); }
+
+	public static void drawImage(GraphicsContext gc, Image image, Integer sourceX, Integer sourceY, Integer sourceWidth, Integer sourceHeight, Integer targetX, Integer targetY, Integer targetWidth, Integer targetHeight, ImageFlip flip, DrawImageEffects effects)
+		{ drawImage(gc, image, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, targetWidth, targetHeight, flip, null, null, effects); }
+
+	public static void drawImage(GraphicsContext gc, Image image, Integer sourceX, Integer sourceY, Integer sourceWidth, Integer sourceHeight, Integer targetX, Integer targetY, Integer targetWidth, Integer targetHeight, DrawImageEffects effects)
+		{ drawImage(gc, image, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, targetWidth, targetHeight, null, null, null, effects); }
+
+	public static void drawImage(GraphicsContext gc, Image image, Integer sourceX, Integer sourceY, Integer sourceWidth, Integer sourceHeight, Integer targetX, Integer targetY, Integer targetWidth, Integer targetHeight, ImageFlip flip, Integer rotateAngle)
+		{ drawImage(gc, image, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, targetWidth, targetHeight, flip, rotateAngle, null, null); }
 	
-	public static WritableImage copyAreaFrom(WritableImage image, Rectangle2D captureArea, int outputWidth, int outputHeight) {
-		PixelReader pixelReader = image.getPixelReader();
-		WritableImage doubledSizeImage = new WritableImage(outputWidth, outputHeight);
-		PixelWriter pixelWriter = doubledSizeImage.getPixelWriter();
-		for (int y = 0; y < outputHeight; y++) {
-			for (int x = 0; x < outputWidth; x++) {
-				double sourceX = x * (captureArea.getWidth() / outputWidth);
-				double sourceY = y * (captureArea.getHeight() / outputHeight);
-				pixelWriter.setColor(x, y, pixelReader.getColor((int) sourceX + (int) captureArea.getMinX(), (int) sourceY + (int) captureArea.getMinY()));
-			}
-		}
-		return doubledSizeImage;
-	}
+	public static void drawImage(GraphicsContext gc, Image image, Integer sourceX, Integer sourceY, Integer sourceWidth, Integer sourceHeight, Integer targetX, Integer targetY, Integer targetWidth, Integer targetHeight, ImageFlip flip, Double opacity)
+		{ drawImage(gc, image, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, targetWidth, targetHeight, flip, null, null, null); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer sourceX, Integer sourceY, Integer sourceWidth, Integer sourceHeight, Integer targetX, Integer targetY, Integer targetWidth, Integer targetHeight, Integer rotateAngle, Double opacity)
+		{ drawImage(gc, image, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, targetWidth, targetHeight, null, rotateAngle, null, null); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer sourceX, Integer sourceY, Integer sourceWidth, Integer sourceHeight, Integer targetX, Integer targetY, Integer targetWidth, Integer targetHeight, Integer rotateAngle)
+		{ drawImage(gc, image, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, targetWidth, targetHeight, null, rotateAngle, null, null); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer sourceX, Integer sourceY, Integer sourceWidth, Integer sourceHeight, Integer targetX, Integer targetY, Integer targetWidth, Integer targetHeight, Double opacity)
+		{ drawImage(gc, image, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, targetWidth, targetHeight, null, null, opacity, null); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer sourceX, Integer sourceY, Integer sourceWidth, Integer sourceHeight, Integer targetX, Integer targetY, Integer targetWidth, Integer targetHeight, ImageFlip flip)
+		{ drawImage(gc, image, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, targetWidth, targetHeight, flip, null, null, null); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer sourceX, Integer sourceY, Integer sourceWidth, Integer sourceHeight, Integer targetX, Integer targetY, Integer targetWidth, Integer targetHeight)
+		{ drawImage(gc, image, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, targetWidth, targetHeight, null, null, null, null); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer targetX, Integer targetY, ImageFlip flip, Integer rotateAngle, Double opacity, DrawImageEffects effects) 
+		{ drawImage(gc, image, null, null, null, null, targetX, targetY, null, null, flip, rotateAngle, opacity, effects); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer targetX, Integer targetY, ImageFlip flip, Integer rotateAngle, DrawImageEffects effects)
+		{ drawImage(gc, image, null, null, null, null, targetX, targetY, null, null, flip, rotateAngle, null, effects); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer targetX, Integer targetY, ImageFlip flip, Double opacity, DrawImageEffects effects)
+		{ drawImage(gc, image, null, null, null, null, targetX, targetY, null, null, flip, null, null, effects); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer targetX, Integer targetY, Integer rotateAngle, Double opacity, DrawImageEffects effects)
+		{ drawImage(gc, image, null, null, null, null, targetX, targetY, null, null, null, rotateAngle, null, effects); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer targetX, Integer targetY, Integer rotateAngle, DrawImageEffects effects)
+		{ drawImage(gc, image, null, null, null, null, targetX, targetY, null, null, null, rotateAngle, null, effects); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer targetX, Integer targetY, Double opacity, DrawImageEffects effects)
+		{ drawImage(gc, image, null, null, null, null, targetX, targetY, null, null, null, null, opacity, effects); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer targetX, Integer targetY, ImageFlip flip, DrawImageEffects effects)
+		{ drawImage(gc, image, null, null, null, null, targetX, targetY, null, null, flip, null, null, effects); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer targetX, Integer targetY, DrawImageEffects effects)
+		{ drawImage(gc, image, null, null, null, null, targetX, targetY, null, null, null, null, null, effects); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer targetX, Integer targetY, ImageFlip flip, Integer rotateAngle)
+		{ drawImage(gc, image, null, null, null, null, targetX, targetY, null, null, flip, rotateAngle, null, null); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer targetX, Integer targetY, ImageFlip flip, Double opacity)
+		{ drawImage(gc, image, null, null, null, null, targetX, targetY, null, null, flip, null, null, null); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer targetX, Integer targetY, Integer rotateAngle, Double opacity)
+		{ drawImage(gc, image, null, null, null, null, targetX, targetY, null, null, null, rotateAngle, null, null); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer targetX, Integer targetY, Integer rotateAngle)
+		{ drawImage(gc, image, null, null, null, null, targetX, targetY, null, null, null, rotateAngle, null, null); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer targetX, Integer targetY, Double opacity)
+		{ drawImage(gc, image, null, null, null, null, targetX, targetY, null, null, null, null, opacity, null); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer targetX, Integer targetY, ImageFlip flip)
+		{ drawImage(gc, image, null, null, null, null, targetX, targetY, null, null, flip, null, null, null); }
+	
+	public static void drawImage(GraphicsContext gc, Image image, Integer targetX, Integer targetY)
+		{ drawImage(gc, image, null, null, null, null, targetX, targetY, null, null, null, null, null, null); }
 
-  public static void drawImage(GraphicsContext gc, Image image, int sourceX, int sourceY, int sourceWidth, int sourceHeight, int targetX, int targetY, int targetWidth, int targetHeight, ImageFlip flip, double rotateAngle, double opacity, DrawImageEffects effects) {
+	public static void drawImage(GraphicsContext gc, Image image, Integer sourceX, Integer sourceY, Integer sourceWidth, Integer sourceHeight, Integer targetX, Integer targetY, Integer targetWidth, Integer targetHeight, ImageFlip flip, Integer rotateAngle, Double opacity, DrawImageEffects effects) {
+		if (sourceX == null)
+			sourceX = 0;
+		if (sourceY == null)
+			sourceY = 0;
+		if (sourceWidth == null)
+			sourceWidth = (int)image.getWidth();
+		if (sourceHeight == null)
+			sourceHeight = (int)image.getHeight();
+		if (targetWidth == null)
+			targetWidth = sourceWidth;
+		if (targetHeight == null)
+			targetHeight = sourceHeight;
   	gc.save();
     gc.translate(targetX + targetWidth / 2, targetY + targetHeight / 2);
-    if (rotateAngle != 0 && rotateAngle % 360 != 0)
+    if (rotateAngle != null && rotateAngle != 0 && rotateAngle % 360 != 0)
     	gc.rotate(rotateAngle);
     gc.translate(-targetWidth / 2, -targetHeight / 2);
-   	gc.setGlobalAlpha(opacity);
-    Blend blend = new Blend();
-    boolean hasEffect = false;
-    if (effects.getColorTint() != null) {
-    	Blend blend2 = new Blend(effects.getColorTint().getBlendMode());
-    	ColorInput colorInput = new ColorInput();
-    	colorInput.setPaint(new Color(effects.getColorTint().getRed(), effects.getColorTint().getGreen(), effects.getColorTint().getBlue(), effects.getColorTint().getAlpha()));
-    	colorInput.setX(0);
-    	colorInput.setY(0);
-    	colorInput.setWidth(sourceWidth);
-    	colorInput.setHeight(sourceHeight);
-	    blend2.setTopInput(colorInput);
-	    blend = blend2;
-	    hasEffect = true;
-    }
-		if (effects.getColorAdjust() != null) {
-			Blend blend2 = new Blend(effects.getColorAdjust().getBlendMode());
-			ColorAdjust colorAdjust = new ColorAdjust();
-			colorAdjust.setHue(effects.getColorAdjust().getHue());
-			colorAdjust.setSaturation(effects.getColorAdjust().getSaturation());
-			colorAdjust.setBrightness(effects.getColorAdjust().getBrightness());
-			blend2.setTopInput(colorAdjust);
-	    blend2.setBottomInput(blend);
-	    blend = blend2;
-	    hasEffect = true;
-		}
-		if (effects.getGlow() != null) {
-			Blend blend2 = new Blend(effects.getGlow().getBlendMode());
-	    Glow glow = new Glow();
-	    glow.setLevel(effects.getGlow().getLevel());
-			blend2.setTopInput(glow);
-	    blend2.setBottomInput(blend);
-      blend = blend2;
-	    hasEffect = true;
-		}
-		if (effects.getBloom() != null) {
-			Blend blend2 = new Blend(effects.getBloom().getBlendMode());
-	    Bloom bloom = new Bloom();
-	    bloom.setThreshold(effects.getBloom().getThreshold());
-			blend2.setTopInput(bloom);
-	    blend2.setBottomInput(blend);
-      blend = blend2;
-	    hasEffect = true;
-		}
-		if (effects.getSepiaTone() != null) {
-			Blend blend2 = new Blend(effects.getSepiaTone().getBlendMode());
-	    SepiaTone sepiaTone = new SepiaTone();
-	    sepiaTone.setLevel(effects.getSepiaTone().getLevel());
-			blend2.setTopInput(sepiaTone);
-	    blend2.setBottomInput(blend);
-      blend = blend2;
-	    hasEffect = true;
-		}
-		if (effects.getInnerShadow() != null) {
-			Blend blend2 = new Blend(effects.getInnerShadow().getBlendMode());
-			InnerShadow innerShadow = new InnerShadow();
-			innerShadow.setOffsetX(effects.getInnerShadow().getOffsetX());
-			innerShadow.setOffsetY(effects.getInnerShadow().getOffsetY());
-			innerShadow.setColor(effects.getInnerShadow().getColor());
-			blend2.setTopInput(innerShadow);
-      blend2.setBottomInput(blend);
-      blend = blend2;
-	    hasEffect = true;
-		}
-		if (effects.getDropShadow() != null) {
-			Blend blend2 = new Blend(effects.getDropShadow().getBlendMode());
-			DropShadow dropShadow = new DropShadow();
-			dropShadow.setOffsetX(effects.getDropShadow().getOffsetX());
-			dropShadow.setOffsetY(effects.getDropShadow().getOffsetY());
-			dropShadow.setColor(effects.getDropShadow().getColor());
-			blend2.setTopInput(dropShadow);
-      blend2.setBottomInput(blend);
-      blend = blend2;
-	    hasEffect = true;
-		}
-		if (effects.getMotionBlur() != null) {
-			Blend blend2 = new Blend(effects.getMotionBlur().getBlendMode());
-	    MotionBlur motionBlur = new MotionBlur();
-	    motionBlur.setAngle(effects.getMotionBlur().getAngle());
-	    motionBlur.setRadius(effects.getMotionBlur().getRadius());
-			blend2.setTopInput(motionBlur);
-	    blend2.setBottomInput(blend);
-      blend = blend2;
-	    hasEffect = true;
-		}
-		if (effects.getGaussianBlur() != null) {
-			Blend blend2 = new Blend(effects.getGaussianBlur().getBlendMode());
-	    GaussianBlur gaussianBlur = new GaussianBlur();
-	    gaussianBlur.setRadius(effects.getGaussianBlur().getRadius());
-			blend2.setTopInput(gaussianBlur);
-      blend2.setBottomInput(blend);
-      blend = blend2;
-	    hasEffect = true;
-		}
-		if (hasEffect)
-			gc.setEffect(blend);
+   	if (opacity != null)
+   		gc.setGlobalAlpha(opacity);
+   	if (flip == null)
+   		flip = ImageFlip.NONE;
+   	if (effects != null) {
+	    Blend blend = new Blend();
+	    boolean hasEffect = false;
+	    if (effects.getColorTint() != null) {
+	    	Blend blend2 = new Blend(effects.getColorTint().getBlendMode());
+	    	ColorInput colorInput = new ColorInput();
+	    	colorInput.setPaint(new Color(effects.getColorTint().getRed(), effects.getColorTint().getGreen(), effects.getColorTint().getBlue(), effects.getColorTint().getAlpha()));
+	    	colorInput.setX(0);
+	    	colorInput.setY(0);
+	    	colorInput.setWidth(sourceWidth);
+	    	colorInput.setHeight(sourceHeight);
+		    blend2.setTopInput(colorInput);
+		    blend = blend2;
+		    hasEffect = true;
+	    }
+			if (effects.getColorAdjust() != null) {
+				Blend blend2 = new Blend(effects.getColorAdjust().getBlendMode());
+				ColorAdjust colorAdjust = new ColorAdjust();
+				colorAdjust.setHue(effects.getColorAdjust().getHue());
+				colorAdjust.setSaturation(effects.getColorAdjust().getSaturation());
+				colorAdjust.setBrightness(effects.getColorAdjust().getBrightness());
+				blend2.setTopInput(colorAdjust);
+		    blend2.setBottomInput(blend);
+		    blend = blend2;
+		    hasEffect = true;
+			}
+			if (effects.getGlow() != null) {
+				Blend blend2 = new Blend(effects.getGlow().getBlendMode());
+		    Glow glow = new Glow();
+		    glow.setLevel(effects.getGlow().getLevel());
+				blend2.setTopInput(glow);
+		    blend2.setBottomInput(blend);
+	      blend = blend2;
+		    hasEffect = true;
+			}
+			if (effects.getBloom() != null) {
+				Blend blend2 = new Blend(effects.getBloom().getBlendMode());
+		    Bloom bloom = new Bloom();
+		    bloom.setThreshold(effects.getBloom().getThreshold());
+				blend2.setTopInput(bloom);
+		    blend2.setBottomInput(blend);
+	      blend = blend2;
+		    hasEffect = true;
+			}
+			if (effects.getSepiaTone() != null) {
+				Blend blend2 = new Blend(effects.getSepiaTone().getBlendMode());
+		    SepiaTone sepiaTone = new SepiaTone();
+		    sepiaTone.setLevel(effects.getSepiaTone().getLevel());
+				blend2.setTopInput(sepiaTone);
+		    blend2.setBottomInput(blend);
+	      blend = blend2;
+		    hasEffect = true;
+			}
+			if (effects.getInnerShadow() != null) {
+				Blend blend2 = new Blend(effects.getInnerShadow().getBlendMode());
+				InnerShadow innerShadow = new InnerShadow();
+				innerShadow.setOffsetX(effects.getInnerShadow().getOffsetX());
+				innerShadow.setOffsetY(effects.getInnerShadow().getOffsetY());
+				innerShadow.setColor(effects.getInnerShadow().getColor());
+				blend2.setTopInput(innerShadow);
+	      blend2.setBottomInput(blend);
+	      blend = blend2;
+		    hasEffect = true;
+			}
+			if (effects.getDropShadow() != null) {
+				Blend blend2 = new Blend(effects.getDropShadow().getBlendMode());
+				DropShadow dropShadow = new DropShadow();
+				dropShadow.setOffsetX(effects.getDropShadow().getOffsetX());
+				dropShadow.setOffsetY(effects.getDropShadow().getOffsetY());
+				dropShadow.setColor(effects.getDropShadow().getColor());
+				blend2.setTopInput(dropShadow);
+	      blend2.setBottomInput(blend);
+	      blend = blend2;
+		    hasEffect = true;
+			}
+			if (effects.getMotionBlur() != null) {
+				Blend blend2 = new Blend(effects.getMotionBlur().getBlendMode());
+		    MotionBlur motionBlur = new MotionBlur();
+		    motionBlur.setAngle(effects.getMotionBlur().getAngle());
+		    motionBlur.setRadius(effects.getMotionBlur().getRadius());
+				blend2.setTopInput(motionBlur);
+		    blend2.setBottomInput(blend);
+	      blend = blend2;
+		    hasEffect = true;
+			}
+			if (effects.getGaussianBlur() != null) {
+				Blend blend2 = new Blend(effects.getGaussianBlur().getBlendMode());
+		    GaussianBlur gaussianBlur = new GaussianBlur();
+		    gaussianBlur.setRadius(effects.getGaussianBlur().getRadius());
+				blend2.setTopInput(gaussianBlur);
+	      blend2.setBottomInput(blend);
+	      blend = blend2;
+		    hasEffect = true;
+			}
+			if (hasEffect)
+				gc.setEffect(blend);
+   	}
     gc.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight,
     		flip == ImageFlip.HORIZONTAL || flip == ImageFlip.BOTH ? targetWidth : 0,
         flip == ImageFlip.VERTICAL || flip == ImageFlip.BOTH ? targetHeight : 0,
