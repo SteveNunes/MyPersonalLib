@@ -1285,16 +1285,18 @@ public abstract class ImageUtils {
 			targetWidth = sourceWidth;
 		if (targetHeight == null)
 			targetHeight = sourceHeight;
-  	gc.save();
+    gc.save();
     gc.translate(targetX + targetWidth / 2, targetY + targetHeight / 2);
+    if (flip == null)
+    	flip = ImageFlip.NONE;
+    gc.scale((flip == ImageFlip.HORIZONTAL || flip == ImageFlip.BOTH) ? -1 : 1,
+    				 (flip == ImageFlip.VERTICAL || flip == ImageFlip.BOTH) ? -1 : 1);
     if (rotateAngle != null && rotateAngle != 0 && rotateAngle % 360 != 0)
     	gc.rotate(rotateAngle);
     gc.translate(-targetWidth / 2, -targetHeight / 2);
-   	if (opacity != null)
-   		gc.setGlobalAlpha(opacity);
-   	if (flip == null)
-   		flip = ImageFlip.NONE;
-   	if (effects != null) {
+    if (opacity != null)
+    	gc.setGlobalAlpha(opacity);
+    if (effects != null) {
 	    Blend blend = new Blend();
 	    boolean hasEffect = false;
 	    if (effects.getColorTint() != null) {
@@ -1391,13 +1393,8 @@ public abstract class ImageUtils {
 			if (hasEffect)
 				gc.setEffect(blend);
    	}
-    gc.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight,
-    		flip == ImageFlip.HORIZONTAL || flip == ImageFlip.BOTH ? targetWidth : 0,
-        flip == ImageFlip.VERTICAL || flip == ImageFlip.BOTH ? targetHeight : 0,
-    		flip == ImageFlip.HORIZONTAL || flip == ImageFlip.BOTH ? -targetWidth : targetWidth,
-     		flip == ImageFlip.VERTICAL || flip == ImageFlip.BOTH ? -targetHeight : targetHeight);
+    gc.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, targetWidth, targetHeight);
     gc.restore();
-
   }
   
 }
