@@ -61,13 +61,13 @@ public class FPSHandler {
 					callsWhileWaitingForFPS.run();
 				if (System.currentTimeMillis() < nextCicleAt)
 					Misc.sleep(1);
-				if (System.currentTimeMillis() >= fpsTimer) {
-					fpsTimer += 1000;
-					currentFPS = fps;
-					currentCPS = cps;
-					fps = 0;
-					cps = 0;
-				}
+			}
+			if (System.currentTimeMillis() >= fpsTimer) {
+				fpsTimer += 1000;
+				currentFPS = fps;
+				currentCPS = cps;
+				fps = 0;
+				cps = 0;
 			}
 			nextCicleAt += 1000d / gameCyclesPerSecond;
 		}

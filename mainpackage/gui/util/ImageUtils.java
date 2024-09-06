@@ -48,43 +48,22 @@ public abstract class ImageUtils {
 	private static Object ignoreColor = Color.TRANSPARENT;
 	private static ImageScanOrientation imageScanOrientation = ImageScanOrientation.HORIZONTAL;
 	
-	private static Robot getRobot() {
-		if (robot == null)
-			try
-				{ robot = new Robot(); }
-			catch (Exception e)
-				{ robot = null; }
-		return robot;
+	static {
+		try
+			{ robot = new Robot(); }
+		catch (Exception e)
+			{ robot = null; }
 	}
 	
-	public static BufferedImage getRotatedImage(BufferedImage image, double angle) {
-		return null;
-	}
-
-	public static WritableImage getRotatedImage(WritableImage image, double angle) {
-		int width = (int)image.getWidth(), height = (int)image.getHeight();
-		WritableImage rotatedImage = new WritableImage(width, height);
-		PixelReader pixelReader = image.getPixelReader();
-		PixelWriter pixelWriter = rotatedImage.getPixelWriter();
-		for (int y = 0; y < height; y++)
-			for (int x = 0; x < width; x++) {
-				double sourceX = Math.cos(Math.toRadians(angle)) * (x - width / 2) - Math.sin(Math.toRadians(angle)) * (y - height / 2) + width / 2;
-				double sourceY = Math.sin(Math.toRadians(angle)) * (x - width / 2) + Math.cos(Math.toRadians(angle)) * (y - height / 2) + height / 2;
-				if (sourceX >= 0 && sourceX < width && sourceY >= 0 && sourceY < height)
-					pixelWriter.setColor(x, y, pixelReader.getColor((int)sourceX, (int)sourceY));
-			}
-		return rotatedImage;
-	}
+	private static Robot getRobot()
+		{ return robot; }
 	
-  public static Image getRotatedImage(Image image, double angle) {
-    BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
-    BufferedImage rotatedBufferedImage = getRotatedImage(bufferedImage, angle);
-    return SwingFXUtils.toFXImage(rotatedBufferedImage, null);
-  }
-  
 	public static BufferedImage cloneBufferedImage(BufferedImage image)
 		{ return removeBgColor(image, -Integer.MAX_VALUE, -1); }
 
+	public static WritableImage cloneWritableImage(WritableImage image)
+		{ return removeBgColor(image, -Integer.MAX_VALUE, -1); }
+	
 	/**
 	 * Remove a cor especificada da imagem (de acordo com o valor
 	 * de {@code toleranceThreshold} (Que vai de 0 a 255) Quanto mais próximo de
@@ -121,9 +100,6 @@ public abstract class ImageUtils {
 	
 	public static BufferedImage removeBgColor(BufferedImage image, int removeColorArgb)
 		{ return removeBgColor(image, removeColorArgb, 0); }
-
-	public static WritableImage cloneWritableImage(WritableImage image)
-		{ return removeBgColor(image, -Integer.MAX_VALUE, -1); }
 
 	public static WritableImage removeBgColor(WritableImage image, int removeColorArgb, int toleranceThreshold) {
 		int w = (int)image.getWidth();
