@@ -26,12 +26,14 @@ public class TextFile {
 			autoSaveThread = new Thread(() -> {
 				while (true) {
 					synchronized (IniFile.openedIniFiles) {
-						for (IniFile iniFile : IniFile.openedIniFiles.values())
+						List<IniFile> list = new ArrayList<>(IniFile.openedIniFiles.values());
+						for (IniFile iniFile : list)
 							if (iniFile.changedTime > 0 && (System.currentTimeMillis() - iniFile.changedTime)  > 5000)
 								iniFile.saveToDisk();
 					}
 					synchronized (openedTextFiles) {
-						for (TextFile textFile : openedTextFiles.values())
+						List<TextFile> list = new ArrayList<>(openedTextFiles.values());
+						for (TextFile textFile : list)
 							if (textFile.changedTime > 0 && (System.currentTimeMillis() - textFile.changedTime)  > 5000)
 								MyFile.writeAllLinesOnFile(textFile.fileBuffer, textFile.fileName);				}
 					Misc.sleep(100);

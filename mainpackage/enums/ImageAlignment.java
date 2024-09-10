@@ -2,17 +2,18 @@ package enums;
 
 public enum ImageAlignment {
 	
-	LEFT_TOP(0),
-	TOP(1),
-	RIGHT_TOP(2),
-	RIGHT(3),
-	RIGHT_BOTTOM(4),
-	BOTTOM(5),
-	LEFT_BOTTOM(6),
-	LEFT(7),
-	CENTER(8);
+	NONE(0),
+	LEFT_TOP(1),
+	TOP(2),
+	RIGHT_TOP(3),
+	RIGHT(4),
+	RIGHT_BOTTOM(5),
+	BOTTOM(6),
+	LEFT_BOTTOM(7),
+	LEFT(8),
+	CENTER(9);
 	
-	private static ImageAlignment[] list = {LEFT_TOP, TOP, RIGHT_TOP, RIGHT, RIGHT_BOTTOM, BOTTOM, LEFT_BOTTOM, LEFT, CENTER};
+	private static ImageAlignment[] list = {NONE, LEFT_TOP, TOP, RIGHT_TOP, RIGHT, RIGHT_BOTTOM, BOTTOM, LEFT_BOTTOM, LEFT, CENTER};
 	private int value;
 	
 	ImageAlignment(int value)
