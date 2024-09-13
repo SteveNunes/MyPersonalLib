@@ -19,19 +19,19 @@ public abstract class Encrypter {
 	  while (chave.length() < palavra.length())
 	  	chave += chave;
 	  StringBuilder resultado = new StringBuilder();
-	  for(int n = 0, n2 = 0, pos; n < palavra.length(); n++) {
+	  for(int n = 0, n2 = 0, coord; n < palavra.length(); n++) {
 	  	char c1 = palavra.charAt(n);
     	int z1 = Character.isUpperCase(c1) ? 65 : 97;
 	    if (c1 != ' ') {
 		  	char c2 = chave.charAt(n2++);
 	    	int z2 = Character.isUpperCase(c2) ? 65 : 97;
-	      pos = opcao == 0 ? (c1 - z1) + (c2 - z2) :
+	      coord = opcao == 0 ? (c1 - z1) + (c2 - z2) :
 	      	(c1 - z1) - (c2 - z2);
-	      if (pos > 25)
-	      	pos -= 26;
-	      if (pos < 0)
-	      	pos += 26;
-	      resultado.append((char)(z1 + pos));
+	      if (coord > 25)
+	      	coord -= 26;
+	      if (coord < 0)
+	      	coord += 26;
+	      resultado.append((char)(z1 + coord));
 	    }
 	    else
 	    	resultado.append(' ');

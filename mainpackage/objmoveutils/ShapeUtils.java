@@ -47,7 +47,7 @@ public abstract class ShapeUtils {
    *  retornar o incremento para fazer a posição sair do centro e chegar nesse ponto.
    * 
    * @param pts - Quantidade de pontos para formar o círculo
-   * @param pos - O ponto do círculo desejado. Ex: Se {@code qts} for {@code 10}, será calculado {@code 10} pontos separados igualmente de forma á formar o círculo desejado. Então, {@code pos 2} retorna a coordenada do segundo ponto usado para formar o círculo.
+   * @param coord - O ponto do círculo desejado. Ex: Se {@code qts} for {@code 10}, será calculado {@code 10} pontos separados igualmente de forma á formar o círculo desejado. Então, {@code coord 2} retorna a coordenada do segundo ponto usado para formar o círculo.
   */
 	public static Point getPointFromCircle(double radius, int totalPoints, int point)
 		{ return getPointFromEllipse(radius, radius, totalPoints, point); }
@@ -56,7 +56,7 @@ public abstract class ShapeUtils {
    *  retornar o incremento para fazer a posição sair do centro e chegar nesse ponto.
    * 
    * @param pts - Quantidade de pontos para formar a elipse
-   * @param pos - O ponto da elipse desejado. Ex: Se {@code qts} for {@code 10}, será calculado {@code 10} pontos separados igualmente de forma á formar a elipse desejada. Então, {@code pos 2} retorna a coordenada do segundo ponto usado para formar a elipse.
+   * @param coord - O ponto da elipse desejado. Ex: Se {@code qts} for {@code 10}, será calculado {@code 10} pontos separados igualmente de forma á formar a elipse desejada. Então, {@code coord 2} retorna a coordenada do segundo ponto usado para formar a elipse.
   */
 	public static Point getPointFromEllipse(double vRadius, double hRadius, int totalPoints, int point) {
 	  double dis = 2 * Math.PI / totalPoints;

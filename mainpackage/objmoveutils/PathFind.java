@@ -320,11 +320,11 @@ public class PathFind {
 	}
 	
 	private Boolean tileIsFree(Position position, Direction direction, Boolean ignoreCurrentPathPositions) {
-		Position pos = new Position(position);
+		Position coord = new Position(position);
 		if (direction != null)
-			pos.incPositionByDirection(direction);
-		return tileIsFree.apply(pos) && !tempTiles.contains(pos) && !startPosition.equals(pos) &&
-						(ignoreCurrentPathPositions || !currentPath.contains(pos));
+			coord.incPositionByDirection(direction);
+		return tileIsFree.apply(coord) && !tempTiles.contains(coord) && !startPosition.equals(coord) &&
+						(ignoreCurrentPathPositions || !currentPath.contains(coord));
 	}
 
 	private Boolean tileIsFree(Position position, Direction direction)

@@ -33,6 +33,7 @@ public enum Icons {
 	NEW_ITEM("/icons/new_item.png"),
 	NOTE("/icons/note.png"),
 	OK("/icons/ok.png"),
+	OPEN_FILE("/icons/open_file.png"),
 	OPEN_TEXT("/icons/open_text.png"),
 	PAIR("/icons/pair.png"),
 	PASTE("/icons/paste.png"),
@@ -50,7 +51,9 @@ public enum Icons {
 	TEXT("/icons/text.png"),
 	UNPIN("/icons/unpin.png"),
 	VERIFY("/icons/verify.png"),
-	WHATSAPP("/icons/whatsapp.png");
+	WHATSAPP("/icons/whatsapp.png"),
+	ZOOM_PLUS("/icons/zoom+.png"),
+	ZOOM_MINUS("/icons/zoom-.png");
 	
 	private final String value;
 

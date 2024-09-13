@@ -9,7 +9,7 @@ public class MoveBetweenDots {
 	
 	private List<Position> dots;
 	private DirectionOrientation orientation;
-	private Position pos, inc, position, startPosition;
+	private Position coord, inc, position, startPosition;
 	private int dotIndex, speedInFrames, currentFrame;
 	private Boolean resetAfterFullCycle, cycleWasCompleted;
 	
@@ -34,7 +34,7 @@ public class MoveBetweenDots {
 		if (speedInFrames < 1)
 			throw new RuntimeException("'speed' must be equal or higher than 1");
 		dots = new ArrayList<>();
-		pos = new Position();
+		coord = new Position();
 	  inc = new Position();
 		position = outputPosition;
 		this.startPosition = startPosition;
@@ -90,7 +90,7 @@ public class MoveBetweenDots {
 
 	public MoveBetweenDots(MoveBetweenDots moveBetweenDots) {
 		dots = moveBetweenDots.dots;
-		pos = moveBetweenDots.pos;
+		coord = moveBetweenDots.coord;
 	  inc = moveBetweenDots.inc;
 		position = moveBetweenDots.position;
 		startPosition = moveBetweenDots.startPosition;
@@ -105,12 +105,12 @@ public class MoveBetweenDots {
 	public void move() {
 		checkError();
 		if (!cycleWasCompleted) {
-	    pos.incPosition(inc);
+	    coord.incPosition(inc);
 			if (++currentFrame >= speedInFrames) {
 				setCoordToNextDot();
 				currentFrame = 0;
 			}
-			position.setPosition(startPosition.getX() + pos.getX(), startPosition.getY() + pos.getY());
+			position.setPosition(startPosition.getX() + coord.getX(), startPosition.getY() + coord.getY());
 		}
 	}
 	
@@ -151,9 +151,9 @@ public class MoveBetweenDots {
 	private void setCoordTo(int index) {
 		checkError();
 		dotIndex = index;
-		pos.setPosition(getCurrentDot());
+		coord.setPosition(getCurrentDot());
 		dotIndex = getNextDotCoordIndex();
-		inc = ShapeUtils.getIncrementValueForMoveBetweenPositions(pos, getCurrentDot(), speedInFrames);
+		inc = ShapeUtils.getIncrementValueForMoveBetweenPositions(coord, getCurrentDot(), speedInFrames);
 		if (!resetAfterFullCycle && index != dotIndex &&
 				dotIndex == (orientation == DirectionOrientation.CLOCKWISE ? 0 : dots.size() - 1))
 					cycleWasCompleted = true;

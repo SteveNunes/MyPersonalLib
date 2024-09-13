@@ -610,12 +610,12 @@ public class IniFile {
 		return 0;
 	}
 
-	public String getSectionAtPos(int pos) {
+	public String getSectionAtPos(int coord) {
 		if (!iniBody.isEmpty()) {
 			List<String> list = getSectionList();
-			if (pos - 1 < 0 || pos - 1 >= list.size())
+			if (coord < 0 || coord >= list.size())
 				return null;
-			return list.get(pos - 1);
+			return list.get(coord);
 		}
 		return null;
 	}
@@ -636,12 +636,12 @@ public class IniFile {
 		return 0;
 	}
 
-	public String getItemAtPos(String iniSection, int pos) {
+	public String getItemAtPos(String iniSection, int coord) {
 		if (!iniBody.get(iniSection).isEmpty()) {
 			List<String> list = getItemList(iniSection);
-			if (pos - 1 < 0 || pos - 1 >= list.size())
+			if (coord < 0 || coord >= list.size())
 				return null;
-			return list.get(pos - 1);
+			return list.get(coord);
 		}
 		return null;
 	}

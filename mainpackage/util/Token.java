@@ -267,30 +267,30 @@ public abstract class Token {
 	 * dentro da String informada, por um novo token.
 	 * 
 	 * @param		text				a String que será alterada.
-	 * @param		pos					a posição do token atual que será substituido pelo novo token.
+	 * @param		coord					a posição do token atual que será substituido pelo novo token.
 	 * @param		delimiter		o delimitador dos tokens.
 	 * 
 	 * @return							.put("Esta é uma frase de exemplo", "eh", 2, " ")
 	 * 											irá retornar "Esta eh uma frase de exemplo"
 	 */
-	public static String put(String text, String word, int pos, String delimiter) {
+	public static String put(String text, String word, int coord, String delimiter) {
 		String[] ttokens = text.split(delimiter);
 		StringBuilder result = new StringBuilder();
 		ltokens.clear();
 		for (int n = 0, p = 1; n < ttokens.length; n++, p++) {
 			result.append(result.length() > 0 ? delimiter : "");
-			result.append(p == pos ? word : ttokens[n]);
-			ltokens.add(p == pos ? word : ttokens[n]);
+			result.append(p == coord ? word : ttokens[n]);
+			ltokens.add(p == coord ? word : ttokens[n]);
 		}
 		return result.toString();
 	}
 
 	/**
-	 * Sobrecarga do método 'put(String text, String word, int pos, String delimiter)'
+	 * Sobrecarga do método 'put(String text, String word, int coord, String delimiter)'
 	 * onde não é preciso informar o delimitador (É passado o 'espaço' por padrão). 
 	 */
-	public static String put(String text, String word, int pos)
-		{ return put(text, word, pos, " "); }
+	public static String put(String text, String word, int coord)
+		{ return put(text, word, coord, " "); }
 	
 	/**
 	 * Insere o token informado na posição informada dentro da
@@ -298,19 +298,19 @@ public abstract class Token {
 	 * em diante 1 posição para frente.
 	 * 
 	 * @param		text				a String que será alterada.
-	 * @param		pos					a posição onde será inserido o novo token.
+	 * @param		coord					a posição onde será inserido o novo token.
 	 * @param		delimiter		o delimitador dos tokens.
 	 * 
 	 * @return							.insert("Esta é uma frase de exemplo", "não", 2, " ")
 	 * 											irá retornar "Esta não é uma frase de exemplo"
 	 */
-	public static String insert(String text, String word, int pos, String delimiter) {
+	public static String insert(String text, String word, int coord, String delimiter) {
 		String[] ttokens = text.split(delimiter);
 		StringBuilder result = new StringBuilder();
 		ltokens.clear();
 		for (int n = 0, p = 1; n < ttokens.length; n++, p++) {
 			result.append(result.length() > 0 ? delimiter : "");
-			if (p == pos) {
+			if (p == coord) {
 				result.append(word);
 				result.append(delimiter);
 				result.append(ttokens[n]);
@@ -323,11 +323,11 @@ public abstract class Token {
 	}
 
 	/**
-	 * Sobrecarga do método 'insert(String text, String word, int pos, String delimiter)' 
+	 * Sobrecarga do método 'insert(String text, String word, int coord, String delimiter)' 
 	 * onde não é preciso informar o delimitador (É passado o 'espaço' por padrão). 
 	 */
-	public static String insert(String text, String word, int pos)
-		{ return insert(text, word, pos, " "); }
+	public static String insert(String text, String word, int coord)
+		{ return insert(text, word, coord, " "); }
 	
 	/**
 	 * Deleta da String informada, o token da posição informada.
@@ -352,8 +352,8 @@ public abstract class Token {
 			startPos = -startPos;
 		if (endPos < 1 || endPos > ttokens.length)
 			endPos = ttokens.length;
-		for (int n = 0, pos = 0; n < ttokens.length; n++)
-			if (++pos < startPos || pos > endPos) {
+		for (int n = 0, coord = 0; n < ttokens.length; n++)
+			if (++coord < startPos || coord > endPos) {
 				result.append(result.length() > 0 ? delimiter : "");
 				result.append(ttokens[n]);
 				ltokens.add(ttokens[n]);
@@ -447,13 +447,13 @@ public abstract class Token {
 
 	/**
 	 * Localiza um token dentro da String informada, e retorna o valor da sua posição.
-	 * Se 'pos' for '2' e houver mais de 1 ocorrência do token informado, retorna a
+	 * Se 'coord' for '2' e houver mais de 1 ocorrência do token informado, retorna a
 	 * posição da segunda ocorrência desse token.
-	 * Se 'pos' for '0', retorna o total de vezes que o token informado foi encontrado.
+	 * Se 'coord' for '0', retorna o total de vezes que o token informado foi encontrado.
 	 * 
 	 * @param		text				a String que será alterada.
 	 * @param		word				o token é ser localizado.
-	 * @param		pos					a ocorrência desse token que deverá retornar o valor. 
+	 * @param		coord					a ocorrência desse token que deverá retornar o valor. 
 	 * @param		delimiter		o delimitador dos tokens.
 	 * 
 	 * @return							.find("Esta é uma frase de exemplo de teste", "de", 0, " ")
@@ -465,30 +465,30 @@ public abstract class Token {
 	 * 											irá retornar '7' pois a segunda ocorrência do token 'de'
 	 * 											 está na posição 7 da String informada.
 	 */
-	public static int find(String text, String word, int pos, String delimiter) {
+	public static int find(String text, String word, int coord, String delimiter) {
 		String[] ttokens = text.split(delimiter);
-		if (pos < 0) pos = 1;
+		if (coord < 0) coord = 1;
 		int total = 0;
 		for (int n = 0, p = 0; n < ttokens.length; n++)
 			if (ttokens[n].equals(word)) {
-				if (pos > 0 && ++p == pos)
+				if (coord > 0 && ++p == coord)
 					return n + 1;
-				else if (pos == 0)
+				else if (coord == 0)
 					total++;
 			}
 		return total;
 	}
 
 	/**
-	 * Sobrecarga do método 'find(String text, String word, int pos, String delimiter)'
+	 * Sobrecarga do método 'find(String text, String word, int coord, String delimiter)'
 	 * onde não é preciso informar o delimitador (É passado o 'espaço' por padrão). 
 	 */
-	public static int find(String text, String word, int pos)
-		{ return find(text, word, pos, " "); }
+	public static int find(String text, String word, int coord)
+		{ return find(text, word, coord, " "); }
 
 	/**
-	 * Sobrecarga do método 'find(String text, String word, int pos, String delimiter)'
-	 * onde não é preciso informar a 'pos' (É passado o valor '1' por padrão). 
+	 * Sobrecarga do método 'find(String text, String word, int coord, String delimiter)'
+	 * onde não é preciso informar a 'coord' (É passado o valor '1' por padrão). 
 	 */
 	public static int find(String text, String word, String delimiter)
 		{ return find(text, word, 1, delimiter); }
@@ -523,13 +523,13 @@ public abstract class Token {
 	/**
 	 * Localiza um token dentro da String informada, usando um 'wildcard'
 	 * e retorna o valor da sua posição.
-	 * Se 'pos' for '2' e houver mais de 1 ocorrência do token informado, retorna a
+	 * Se 'coord' for '2' e houver mais de 1 ocorrência do token informado, retorna a
 	 * posição da segunda ocorrência desse token.
-	 * Se 'pos' for '0', retorna o total de vezes que o token informado foi encontrado.
+	 * Se 'coord' for '0', retorna o total de vezes que o token informado foi encontrado.
 	 * 
 	 * @param		text				a String que será alterada.
 	 * @param		wildcard		o wildcard á ser localizado dentro dos tokens da String informada.
-	 * @param		pos					a ocorrência desse token que deverá retornar o valor. 
+	 * @param		coord					a ocorrência desse token que deverá retornar o valor. 
 	 * @param		delimiter		o delimitador dos tokens.
 	 * 
 	 * @return							.wildcard("Esta é uma frase de exemplo", "*s*", 0, " ")
@@ -541,34 +541,34 @@ public abstract class Token {
 	 * 											irá retornar 'frase' pois é o segundo token encontrado na frase que
 	 * 											se encaixa com o wildcard '*s*'
 	 */
-	public static String wildcard(String text, String wildcard, int pos, String delimiter) {
+	public static String wildcard(String text, String wildcard, int coord, String delimiter) {
 		String[] ttokens = text.split(delimiter);
-		if (pos < 0)
-			pos = 1;
+		if (coord < 0)
+			coord = 1;
 		int total = 0;
 		ltokens.clear();
 		for (int n = 0, p = 0; n < ttokens.length; n++)
 			if (MyString.textMatch(ttokens[n], wildcard, TextMatchType.WILDCARD)) {
-				if (pos > 0 && ++p == pos)
+				if (coord > 0 && ++p == coord)
 					return ttokens[n];
-				else if (pos == 0) {
+				else if (coord == 0) {
 					total++;
 					ltokens.add(ttokens[n]);
 				}
 			}
-		return (pos == 0 ? Integer.toString(total) : new String());
+		return (coord == 0 ? Integer.toString(total) : new String());
 	}
 	
 	/**
-	 * Sobrecarga do método 'wildcard(String text, String wildcard, int pos, String delimiter)'
+	 * Sobrecarga do método 'wildcard(String text, String wildcard, int coord, String delimiter)'
 	 * onde não é preciso informar o delimitador (É passado o 'espaço' por padrão). 
 	 */
-	public static String wildcard(String text, String wildcard, int pos)
-	  { return wildcard(text, wildcard, pos, " "); }
+	public static String wildcard(String text, String wildcard, int coord)
+	  { return wildcard(text, wildcard, coord, " "); }
 	
 	/**
 	 * Sobrecarga do método 'wildcard(String text, String wildcard, String delimiter)'
-	 * onde não é preciso informar a 'pos' (É passado o valor '1' por padrão). 
+	 * onde não é preciso informar a 'coord' (É passado o valor '1' por padrão). 
 	 */
 	public static String wildcard(String text, String wildcard, String delimiter)
 		{ return wildcard(text, wildcard, 1, delimiter); }
@@ -583,13 +583,13 @@ public abstract class Token {
 	/**
 	 * Localiza um token dentro da String informada, que tenha parte
 	 * do parâmetro 'match' no seu conteúdo.
-	 * Se 'pos' for '2' e houver mais de 1 ocorrência do token informado, retorna a
+	 * Se 'coord' for '2' e houver mais de 1 ocorrência do token informado, retorna a
 	 * posição da segunda ocorrência desse token.
-	 * Se 'pos' for '0', retorna o total de vezes que o token informado foi encontrado.
+	 * Se 'coord' for '0', retorna o total de vezes que o token informado foi encontrado.
 	 * 
 	 * @param		text				a String que será alterada.
 	 * @param		match				o conteudo á ser localizado dentro dos tokens da String informada.
-	 * @param		pos					a ocorrência desse token que deverá retornar o valor. 
+	 * @param		coord					a ocorrência desse token que deverá retornar o valor. 
 	 * @param		delimiter		o delimitador dos tokens.
 	 * 
 	 * @return							.match("Esta é uma frase de exemplo", "s", 0, " ")
@@ -601,19 +601,19 @@ public abstract class Token {
 	 * 											irá retornar 'frase' pois é o segundo token encontrado na frase que
 	 * 											possui 's' no seu conteúdo.
 	 */
-	public static String match(String text, String match, int pos, String delimiter)
-		{ return wildcard(text, "*" + match + "*", pos, delimiter); }
+	public static String match(String text, String match, int coord, String delimiter)
+		{ return wildcard(text, "*" + match + "*", coord, delimiter); }
 	
 	/**
-	 * Sobrecarga do método 'match(String text, String match, int pos, String delimiter)'
+	 * Sobrecarga do método 'match(String text, String match, int coord, String delimiter)'
 	 * onde não é preciso informar o delimitador (É passado o 'espaço' por padrão). 
 	 */
-	public static String match(String text, String match, int pos)
-	  { return match(text, match, pos, " "); }
+	public static String match(String text, String match, int coord)
+	  { return match(text, match, coord, " "); }
 	
 	/**
-	 * Sobrecarga do método 'match(String text, String match, int pos, String delimiter)'
-	 * onde não é preciso informar a 'pos' (É passado o valor '1' por padrão). 
+	 * Sobrecarga do método 'match(String text, String match, int coord, String delimiter)'
+	 * onde não é preciso informar a 'coord' (É passado o valor '1' por padrão). 
 	 */
 	public static String match(String text, String match, String delimiter)
 		{ return match(text, match, 1, delimiter); }
