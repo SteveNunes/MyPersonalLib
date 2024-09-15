@@ -12,9 +12,6 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public abstract class Misc {
@@ -35,35 +32,6 @@ public abstract class Misc {
 		Runtime.getRuntime().addShutdownHook(shutdownHook);
 	}
 	
-	/**
-	 * Criar um timer que fica executando determinada(s) tarefa(s) em intervalos fixos.
-	 * @param timeUnit - O tipo de unidade de tempo que será usado ao especificar os valores de delay
-	 * @param startDelay - Delay até o início das tarefas
-	 * @param repeatDelay - Delay do intervalo entre a repetição das tarefas
-	 * @param runnable - Conjunto de tarefas á serem executadas
-	 * @return - Um tipo {@code ScheduledExecutorService} permitindo que você o armazene em uma variável, para poder parar o timer posteriormente, com o método .shutdown().
-	 */
-	public static ScheduledExecutorService createTimer(TimeUnit timeUnit, long startDelay, long repeatDelay, Runnable runnable) {
-		ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-		if (repeatDelay != 0)
-			executor.scheduleAtFixedRate(runnable, startDelay, repeatDelay, timeUnit);
-		else
-			executor.schedule(runnable, startDelay, timeUnit);
-		return executor;
-	}
-
-	public static ScheduledExecutorService createTimer(TimeUnit timeUnit, long repeatDelay, Runnable runnable)
-		{ return createTimer(timeUnit, 0, repeatDelay, runnable); }
-	
-	public static ScheduledExecutorService createTimer(long startDelay, long repeatDelay, Runnable runnable)
-		{ return createTimer(TimeUnit.MILLISECONDS, startDelay, repeatDelay, runnable); }
-	
-	public static ScheduledExecutorService createTimer(long repeatDelay, Runnable runnable)
-		{ return createTimer(TimeUnit.MILLISECONDS, 0, repeatDelay, runnable); }
-
-	public static ScheduledExecutorService createTimer(TimeUnit timeUnit, Runnable runnable)
-		{ return createTimer(timeUnit, 0, 0, runnable); }
-
 	/** Atalho para pausar a thread, sem precisar se preocupar com o try catch envolvido. */
 	public static void sleep(long millis) {
 		try
