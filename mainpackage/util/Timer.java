@@ -8,18 +8,18 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class Timer {
+public abstract class Timer {
 
-	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-	private final Map<String, ScheduledFuture<?>> timers = new ConcurrentHashMap<>();
+	private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+	private static final Map<String, ScheduledFuture<?>> timers = new ConcurrentHashMap<>();
 
-	public void createTimer(String timerName, long startingDelayInMs, Runnable runnable)
+	public static void createTimer(String timerName, long startingDelayInMs, Runnable runnable)
 		{ createTimer(timerName, startingDelayInMs, 1, 1, runnable); }
 	
-	public void createTimer(String timerName, long repeatingDelayInMs, int repeatingTimes, Runnable runnable)
+	public static void createTimer(String timerName, long repeatingDelayInMs, int repeatingTimes, Runnable runnable)
 		{ createTimer(timerName, 0, repeatingDelayInMs, repeatingTimes, runnable); }
 
-	public void createTimer(String timerName, long startingDelayInMs, long repeatingDelayInMs, int repeatingTimes, Runnable runnable) {
+	public static void createTimer(String timerName, long startingDelayInMs, long repeatingDelayInMs, int repeatingTimes, Runnable runnable) {
 		final int[] counter = {0};
 		ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {
 			runnable.run();
@@ -29,7 +29,7 @@ public class Timer {
 		timers.put(timerName, future);
 	}
 
-	public void stopTimer(String timerName) {
+	public static void stopTimer(String timerName) {
 		ScheduledFuture<?> future = timers.get(timerName);
 		if (future != null) {
 			future.cancel(false);
@@ -38,23 +38,18 @@ public class Timer {
 		}
 	}
 
-	public void stopAllTimers() {
+	public static void stopAllTimers() {
 		for (String timerName : timers.keySet())
 			stopTimer(timerName);
 		scheduler.shutdown();
 	}
 
-	public Set<String> getAllTimersNames()
+	public static Set<String> getAllTimersNames()
 		{ return timers.keySet(); }
 
-	private void checkAndShutdownScheduler() {
+	private static void checkAndShutdownScheduler() {
 		if (timers.isEmpty())
 			scheduler.shutdown();
 	}
-
-	public static void main(String[] args) {
-		Timer timer = new Timer();
-
-		timer.createTimer("timer1", 500, 0, () -> System.out.println("Timer 1"));
-	}
+	
 }

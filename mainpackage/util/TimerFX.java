@@ -6,17 +6,17 @@ import java.util.Set;
 
 import javafx.animation.AnimationTimer;
 
-public class TimerFX {
+public abstract class TimerFX {
 
-	private final Map<String, AnimationTimer> timers = new HashMap<>();
+	private static final Map<String, AnimationTimer> timers = new HashMap<>();
 
-	public void createTimer(String timerName, long startingDelayInMs, Runnable runnable)
+	public static void createTimer(String timerName, long startingDelayInMs, Runnable runnable)
 		{ createTimer(timerName, startingDelayInMs, 1, 1, runnable); }
 	
-	public void createTimer(String timerName, long repeatingDelayInMs, int repeatingTimes, Runnable runnable)
+	public static void createTimer(String timerName, long repeatingDelayInMs, int repeatingTimes, Runnable runnable)
 		{ createTimer(timerName, 0, repeatingDelayInMs, repeatingTimes, runnable); }
 
-	public void createTimer(String timerName, long startingDelayInMs, long repeatingDelayInMs, int repeatingTimes, Runnable runnable) {
+	public static void createTimer(String timerName, long startingDelayInMs, long repeatingDelayInMs, int repeatingTimes, Runnable runnable) {
 		final long[] lastTime = {0};
 		final long[] startTime = {0};
 		final int[] executionCount = {0};
@@ -57,7 +57,7 @@ public class TimerFX {
 		timer.start();
 	}
 
-	public void stopTimer(String timerName) {
+	public static void stopTimer(String timerName) {
 		AnimationTimer timer = timers.get(timerName);
 		if (timer != null) {
 			timer.stop();
@@ -66,15 +66,15 @@ public class TimerFX {
 		}
 	}
 
-	public void stopAllTimers() {
+	public static void stopAllTimers() {
 		for (String timerName : timers.keySet())
 			stopTimer(timerName);
 	}
 
-	public Set<String> getAllTimersNames()
+	public static Set<String> getAllTimersNames()
 		{ return timers.keySet(); }
 
-	private void checkAndExit() {
+	private static void checkAndExit() {
 		if (timers.isEmpty())
 			System.exit(0);
 	}
