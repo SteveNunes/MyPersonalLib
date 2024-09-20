@@ -12,7 +12,7 @@ import java.util.Random;
 public abstract class MyMath {
 	
 	private static Random random = new Random(new SecureRandom().nextInt(Integer.MAX_VALUE));
-	
+
 	public static Boolean isPrime(long n)
 		{ return (n == 2 || n == 3 || n == 5 || n == 7 || (n > 9 && n % 2 > 0 && n % 3 > 0 && n % 5 > 0 && n % 7 > 0)); }
 	
@@ -98,7 +98,7 @@ public abstract class MyMath {
 		return result;
 	}
 
-	public static double rand(double n1, double n2)
-		{ return random.nextDouble(n2 - n1 + 1) + n1; }
-
+	public static double getRandom(int min, int max)
+		{ return random.nextDouble(++max - min) + min; }
+	
 }

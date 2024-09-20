@@ -12,7 +12,9 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public abstract class Misc {
 	
@@ -43,22 +45,16 @@ public abstract class Misc {
 	public static void printCTime()
 		{ System.out.println(System.currentTimeMillis()); }
 	
-	/** Retorna o tempo de processamento do consumer, em milisegundos */
-	public static long bench(Runnable runnable) {
+	/** Retorna no console, o tempo de processamento do consumer, em milisegundos */
+	public static void benchAndShow(Runnable runnable) {
 		long start = System.currentTimeMillis();
 		runnable.run();
-		return System.currentTimeMillis() - start;
+		System.out.println("Bench result: " + (System.currentTimeMillis() - start) + "ms");
 	}
-	
-	public static void benchAndShow(Runnable runnable)
-		{ System.out.println("Bench result: " + bench(runnable) + "ms"); }
 	
 	public static Boolean alwaysTrue()
 		{ return true; }
 	
-	public static Boolean alwaysFalse()
-		{ return false; }
-
 	/**
 	 * Gera um ID unico sequencial (Negativo ou não) sempre que chamado.
 	 * @param c - objeto associado para obter a classe do mesmo. Assim, será possivel gerar IDs unicos para cada tipo de classe.
@@ -121,81 +117,6 @@ public abstract class Misc {
 		return null;
 	}
 	
-	/**
-	 * Move um item para cima ou para baixo em uma [@code List} (Se {@code inc} for um
-	 * valor negativo, move para cima, caso contrário, move para baixo. Ex: Se informar
-	 * o valor {@code 3} para {@code inc}, o item será movido 3 posições para baixo.
-	 * Se informar o valor {@code -4} para {@code inc}, o item será movido 4 posições
-	 * para cima.
-	 * 
-	 * @param List<T>		A lista a ter o item movido
-	 * @param index			Indice do item á ser movido
-	 * @param inc				Incremento do indice atual do item especificado
-	 * @return					Um valor indicando o total de indices que o item foi movida.
-	 * 									Ex: Se o item estiver no indice 2, e você mandar mover o item
-	 * 									10 indices para baixo, irá retornar -2 pois ao mover 2 indices
-	 * 									para cima, o item chega ao indice 0.
-	 */
-	public static <T> int moveItemIndex(List<T> list, int index, int inc) {
-		if (index >= list.size() || index < 0)
-			throw new IndexOutOfBoundsException();
-		int moved = 0;
-		while (inc != 0 && ((inc < 0 && index > 0) || (inc > 0 && index < (list.size() - 1)))) {
-			T obj = list.get(index);
-			list.remove(index);
-			list.add(index += inc < 0 ? -1 : 1, obj);
-			inc += inc < 0 ? 1 : -1;
-			moved += inc < 0 ? -1 : 1;
-		}
-		return moved;
-	}
-	
-	public static <T> void copyArray(T[] sourceArray, T[] targetArray) {
-		for (int i = 0; i < sourceArray.length; i++)
-			targetArray[i] = sourceArray[i];
-	}
-	
-	public static <T> void copyArray(T[][] sourceArray, T[][] targetArray) {
-		for (int y = 0; y < sourceArray.length; y++)
-			for (int x = 0; x < sourceArray[0].length; x++)
-			targetArray[y][x] = sourceArray[y][x];
-	}
-	
-	public static void copyArray(boolean[] sourceArray, boolean[] targetArray) {
-		for (int i = 0; i < sourceArray.length; i++)
-			targetArray[i] = sourceArray[i];
-	}
-	
-	public static void copyArray(byte[] sourceArray, byte[] targetArray) {
-		for (int i = 0; i < sourceArray.length; i++)
-			targetArray[i] = sourceArray[i];
-	}
-	
-	public static void copyArray(short[] sourceArray, short[] targetArray) {
-		for (int i = 0; i < sourceArray.length; i++)
-			targetArray[i] = sourceArray[i];
-	}
-	
-	public static void copyArray(int[] sourceArray, int[] targetArray) {
-		for (int i = 0; i < sourceArray.length; i++)
-			targetArray[i] = sourceArray[i];
-	}
-	
-	public static void copyArray(long[] sourceArray, long[] targetArray) {
-		for (int i = 0; i < sourceArray.length; i++)
-			targetArray[i] = sourceArray[i];
-	}
-	
-	public static void copyArray(float[] sourceArray, float[] targetArray) {
-		for (int i = 0; i < sourceArray.length; i++)
-			targetArray[i] = sourceArray[i];
-	}
-	
-	public static void copyArray(double[] sourceArray, double[] targetArray) {
-		for (int i = 0; i < sourceArray.length; i++)
-			targetArray[i] = sourceArray[i];
-	}
-	
 	public static String getMyIpOnline() {
 		try {
 			URL url = new URL("https://api64.ipify.org?format=json");
@@ -220,5 +141,42 @@ public abstract class Misc {
 			{ e.printStackTrace(); }
 		return null;
 	}
+
+	//* Se chamado constantemente (em um loop de jogo por exemplo), retorna alternadamente true e false no intervalo em ms especificado (Util para fazer algo piscar por exemplo) */
+	public static boolean blink(int speed)
+		{ return System.currentTimeMillis() / speed % 2 == 0; }
 	
+	/* Para realizar alguma tarefa massiva que num loop normal levaria muito tempo para ser concluida.
+		 Esse consumer receberá um valor inteiro (não sequencial pois cada chamada virá de uma
+		 thread diferente) que nunca repete, de 0 até totalCycles.
+		 
+		 Exemplo de uso:
+		 
+		 // Forma normal, que levaria mais tempo para ser processado.
+		 for (int n = 1; n < 1000000; n++)
+			 System.out.println("Raiz quadrada de " + n + ": " + Math.sqrt(n));
+			 
+		 // Forma mais rápida, utilizando o método abaixo
+		 doMassiveTest(1000000, n -> System.out.println("Raiz quadrada de " + n + ": " + Math.sqrt(n)));	
+	*/
+	
+	public static void doMassiveTest(int totalCycles, Consumer<Integer> consumer)
+		{ doMassiveTest(totalCycles, consumer, false); }
+
+	public static void doMassiveTest(int totalCycles, Consumer<Integer> consumer, boolean showProgressOnConsole) {
+		int[] count = {0, 0, 0};
+		IntStream.range(0, totalCycles).parallel().forEach(i -> {
+			if (showProgressOnConsole) {
+		    count[2] = (int) MyMath.getPorcentFrom(count[0]++, 100000);
+		    synchronized (count) {
+	        if (count[2] != count[1]) {
+	          System.out.println("doMassiveTest() progress: " + count[2] + "%...");
+	          count[1] = count[2];
+	        }
+		    }
+			}
+			consumer.accept(i);
+		});
+	}
+
 }

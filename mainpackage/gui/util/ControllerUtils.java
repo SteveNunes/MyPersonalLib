@@ -24,7 +24,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import javafx.util.Callback;
-import util.Misc;
+import util.CollectionUtils;
 
 public abstract class ControllerUtils {
 	
@@ -41,6 +41,9 @@ public abstract class ControllerUtils {
 	private static final String COLOR_FOR_REGULAR_EVEN = "#FFFFFF";
 	private static final String COLOR_FOR_REGULAR_ODD = "#EEEEEE";
 	
+	public static void setNodeFont(Node buttonPlay, String fontName, int fontSize)
+		{ buttonPlay.setStyle("-fx-font-family: '" + fontName + "'; -fx-font-size: " + fontSize + "px;"); }
+
 	public static void setListViewCellBackgroundColor(ListCell<?> cell, String evenColor, String oddColor, String hoveredEvenColor, String hoveredOddColor) {
 		if (cell.isEmpty() || cell.getItem() == null) {
 	 		cell.setBackground(Background.fill(Paint.valueOf("#FFFFFF")));
@@ -270,7 +273,7 @@ public abstract class ControllerUtils {
 	 */
 	public static <T> void changeItemPosFromListView(ListView<T> listView, List<T> list, int index, int val) {
 		listView.getSelectionModel().clearSelection();
-		val = Misc.moveItemIndex(list, index, val);
+		val = CollectionUtils.moveItemIndex(list, index, val);
 		ControllerUtils.setListToListView(listView, list, index + val);
 		int n = (int)(listView.getHeight() / listView.getFixedCellSize() / 2);
 		listView.scrollTo(n);
