@@ -1,6 +1,6 @@
 package pathfinder;
 
-public enum PathFindIgnoreInitialBackDirection {
+public enum PathFinderIgnoreInitialBackDirection {
 
 	NO_IGNORE,
 	IGNORE,

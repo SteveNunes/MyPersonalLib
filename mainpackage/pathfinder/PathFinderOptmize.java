@@ -1,6 +1,6 @@
 package pathfinder;
 
-public enum PathFindOptmize {
+public enum PathFinderOptmize {
 
 	NOT_OPTIMIZED,
 	OPTIMIZED;

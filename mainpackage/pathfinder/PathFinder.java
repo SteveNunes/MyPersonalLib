@@ -20,45 +20,48 @@ public class PathFinder {
 	private Map<PathFinderTileCoord, Boolean> path = new HashMap<>();
 	private Function<PathFinderTileCoord, Boolean> functionIsTileFree;
 	private Direction initialDirection;
-	private PathFindIgnoreInitialBackDirection ignoreInitialBackDirection;
+	private PathFinderIgnoreInitialBackDirection ignoreInitialBackDirection;
 	private PathFindDistance distance;
-	private PathFindOptmize optimize;
+	private PathFinderOptmize optimize;
 	private List<List<Pair<PathFinderTileCoord, Direction>>> foundPaths = new ArrayList<>();
 	
 	public PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, Function<PathFinderTileCoord, Boolean> functionIsTileFree)
 		{ this(initialCoord, targetCoord, initialDirection, null, null, null, functionIsTileFree); }
 
-	public PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, PathFindIgnoreInitialBackDirection ignoreInitialBackDirection, Function<PathFinderTileCoord, Boolean> functionIsTileFree)
+	public PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, PathFinderIgnoreInitialBackDirection ignoreInitialBackDirection, Function<PathFinderTileCoord, Boolean> functionIsTileFree)
 		{ this(initialCoord, targetCoord, initialDirection, ignoreInitialBackDirection, null, null, functionIsTileFree); }
 	
-	public PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, PathFindOptmize optimize, Function<PathFinderTileCoord, Boolean> functionIsTileFree)
+	public PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, PathFinderOptmize optimize, Function<PathFinderTileCoord, Boolean> functionIsTileFree)
 		{ this(initialCoord, targetCoord, initialDirection, null, null, optimize, functionIsTileFree); }
 	
 	public PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, PathFindDistance distance, Function<PathFinderTileCoord, Boolean> functionIsTileFree)
 		{ this(initialCoord, targetCoord, initialDirection, null, distance, null, functionIsTileFree); }
 
-	public PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, PathFindIgnoreInitialBackDirection ignoreInitialBackDirection, PathFindDistance distance, Function<PathFinderTileCoord, Boolean> functionIsTileFree)
+	public PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, PathFinderIgnoreInitialBackDirection ignoreInitialBackDirection, PathFindDistance distance, Function<PathFinderTileCoord, Boolean> functionIsTileFree)
 		{ this(initialCoord, targetCoord, initialDirection, ignoreInitialBackDirection, distance, null, functionIsTileFree); }
 	
-	public PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, PathFindIgnoreInitialBackDirection ignoreInitialBackDirection, PathFindOptmize optimize, Function<PathFinderTileCoord, Boolean> functionIsTileFree)
+	public PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, PathFinderIgnoreInitialBackDirection ignoreInitialBackDirection, PathFinderOptmize optimize, Function<PathFinderTileCoord, Boolean> functionIsTileFree)
 		{ this(initialCoord, targetCoord, initialDirection, ignoreInitialBackDirection, null, optimize, functionIsTileFree); }
 	
-	public PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, PathFindDistance distance, PathFindOptmize optimize, Function<PathFinderTileCoord, Boolean> functionIsTileFree)
+	public PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, PathFindDistance distance, PathFinderOptmize optimize, Function<PathFinderTileCoord, Boolean> functionIsTileFree)
 		{ this(initialCoord, targetCoord, initialDirection, null, distance, optimize, functionIsTileFree); }
 
-	public PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, PathFindIgnoreInitialBackDirection ignoreInitialBackDirection, PathFindDistance distance, PathFindOptmize optimize, Function<PathFinderTileCoord, Boolean> functionIsTileFree)
+	public PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, PathFinderIgnoreInitialBackDirection ignoreInitialBackDirection, PathFindDistance distance, PathFinderOptmize optimize, Function<PathFinderTileCoord, Boolean> functionIsTileFree)
 		{ this(initialCoord, targetCoord, initialDirection, ignoreInitialBackDirection, distance, optimize, functionIsTileFree, true); }
 	
-	private PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, PathFindIgnoreInitialBackDirection ignoreInitialBackDirection, PathFindDistance distance, PathFindOptmize optimize, Function<PathFinderTileCoord, Boolean> functionIsTileFree, boolean recalculatePath) {
+	private PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, PathFinderIgnoreInitialBackDirection ignoreInitialBackDirection, PathFindDistance distance, PathFinderOptmize optimize, Function<PathFinderTileCoord, Boolean> functionIsTileFree, boolean recalculatePath) {
 		this.initialDirection = initialDirection == null ? Direction.LEFT : initialDirection;
-		this.ignoreInitialBackDirection = ignoreInitialBackDirection == null ? PathFindIgnoreInitialBackDirection.NO_IGNORE : ignoreInitialBackDirection;
+		this.ignoreInitialBackDirection = ignoreInitialBackDirection == null ? PathFinderIgnoreInitialBackDirection.NO_IGNORE : ignoreInitialBackDirection;
 		this.distance = distance == null ? PathFindDistance.RANDOM : distance;
-		this.optimize = optimize == null ? PathFindOptmize.NOT_OPTIMIZED : optimize;
+		this.optimize = optimize == null ? PathFinderOptmize.NOT_OPTIMIZED : optimize;
 		this.functionIsTileFree = functionIsTileFree;
 		directions = new ArrayList<>();
 		if (recalculatePath)
 			recalculatePath(initialCoord, targetCoord, this.initialDirection);
 	}
+	
+	public boolean pathWasFound()
+		{ return !directions.isEmpty(); }
 	
 	public Direction getNextDirectionToGo() {
 		Direction dir = directions.isEmpty() ? null : directions.get(0).getValue();
@@ -99,8 +102,8 @@ public class PathFinder {
 					dir = null;
 			}
 			dir = dir != null ? dir : getRandomFreeDir(coord);
-			if (coord.equals(currentCoord) && (ignoreInitialBackDirection == PathFindIgnoreInitialBackDirection.IGNORE || 
-					(ignoreInitialBackDirection == PathFindIgnoreInitialBackDirection.ONLY_IF_THERES_NO_AVAILABLE_DIRECTION &&
+			if (coord.equals(currentCoord) && (ignoreInitialBackDirection == PathFinderIgnoreInitialBackDirection.IGNORE || 
+					(ignoreInitialBackDirection == PathFinderIgnoreInitialBackDirection.ONLY_IF_THERES_NO_AVAILABLE_DIRECTION &&
 					 (!foundPaths.isEmpty() || getFreeDirs(coord).size() > 1))))
 							dir = getRandomFreeDir(coord, initialDirection.getReverseDirection());
 			if (dir == null)
@@ -129,7 +132,7 @@ public class PathFinder {
 			}
 		}
 		if (!foundPaths.isEmpty()) {
-			for (int n = 0; optimize == PathFindOptmize.OPTIMIZED && n < foundPaths.size(); n++) {
+			for (int n = 0; optimize == PathFinderOptmize.OPTIMIZED && n < foundPaths.size(); n++) {
 				List<Pair<PathFinderTileCoord, Direction>> path = foundPaths.get(n);
 				optimizePath(path);
 				foundPaths.set(n, path);
