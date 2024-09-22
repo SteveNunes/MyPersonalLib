@@ -23,6 +23,12 @@ public enum Direction {
 	Direction(int val)
 		{ value = val; }
 	
+	public static Direction get8DirectionFromValue(int value)
+		{ return listOfAll.get(value); }
+	
+	public static Direction get4DirectionFromValue(int value)
+		{ return listOfAll.get(value * 2); }
+	
 	public int get4DirValue()
 		{ return value / 2; }
 	

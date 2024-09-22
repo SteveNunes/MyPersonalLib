@@ -1,6 +1,6 @@
 package pathfinder;
 
-public enum PathFindDistance {
+public enum PathFinderDistance {
 
 	SHORTEST,
 	LONGEST,

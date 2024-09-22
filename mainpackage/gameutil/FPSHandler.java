@@ -14,6 +14,8 @@ public class FPSHandler {
 	private long fpsTimer;
 	private int currentFPS;
 	private int currentCPS;
+	private int freeTaskTicks;
+	private int freeTaskTicksCount;
 	private Runnable callsWhileWaitingForFPS;
 	
 	public FPSHandler(int cyclesPerSecond, int frameSkip) {
@@ -27,6 +29,8 @@ public class FPSHandler {
 		fpsTimer = System.currentTimeMillis();
 		currentFPS = 0;
 		currentCPS = 0;
+		freeTaskTicks = 0;
+		freeTaskTicksCount = 0;
 		callsWhileWaitingForFPS = null;
 	}
 	
@@ -61,6 +65,7 @@ public class FPSHandler {
 					callsWhileWaitingForFPS.run();
 				if (System.currentTimeMillis() < nextCicleAt)
 					Misc.sleep(1);
+				freeTaskTicksCount++;
 			}
 			if (System.currentTimeMillis() >= fpsTimer) {
 				fpsTimer += 1000;
@@ -68,6 +73,8 @@ public class FPSHandler {
 				currentCPS = cps;
 				fps = 0;
 				cps = 0;
+				freeTaskTicks = freeTaskTicksCount;
+				freeTaskTicksCount = 0;
 			}
 			nextCicleAt += 1000d / gameCyclesPerSecond;
 		}
@@ -79,6 +86,15 @@ public class FPSHandler {
 			elapsedFrames++;
 		}
 	}
+	
+	/* Retorna quantos ticks ocorreram em 1 segundo, enquanto o método fpsCounter()
+	 * ficou em loop para manter a taxa de FPS estável.
+	 * Util para saber quão sobrecarregado está seu código, pois quanto menos
+	 * tempo o FPSHandler precisar aguardar até bater o timer para liberar o fluxo,
+	 * mais sobrecarregado está tudo o que foi processado antes da chamada do método
+	 * fpsCounter()  */
+	public int getFreeTaskTicks()
+		{ return freeTaskTicks; }
 	
 	/*
 	 * Only update your screen when this method returns {@code true}.
