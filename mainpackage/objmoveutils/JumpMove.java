@@ -50,17 +50,8 @@ public class JumpMove {
 	public JumpMove(double startX, double startY, double jumpStrenght, double strenghtMultipiler, int speedInFrames)
 		{ this(new Position(), new Position(startX, startY), jumpStrenght, strenghtMultipiler, speedInFrames); }
 
-	public JumpMove(JumpMove jumpMove) {
-		position = jumpMove.position;
-		inc = jumpMove.inc;
-		startPosition = jumpMove.startPosition;
-		jumpStrenght = jumpMove.jumpStrenght;
-		strenghtMultipiler = jumpMove.strenghtMultipiler;
-		minStrenghtMultipiler = jumpMove.minStrenghtMultipiler;
-		initialJumpStrenght = jumpMove.initialJumpStrenght;
-		currentFrame = jumpMove.currentFrame;
-		speedInFrames = jumpMove.speedInFrames;
-	}
+	public JumpMove(JumpMove jumpMove)
+		{ this(jumpMove.position, jumpMove.startPosition, jumpMove.initialJumpStrenght, jumpMove.strenghtMultipiler, jumpMove.speedInFrames); }
 	
 	public void move() {
 		if (++currentFrame < speedInFrames / 2) {
