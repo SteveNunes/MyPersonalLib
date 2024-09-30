@@ -98,5 +98,17 @@ public enum Direction {
 			return Direction.DOWN;
 		return null;
 	}
+	
+	public boolean isHorizontal()
+		{ return this == LEFT || this == RIGHT; }
+
+	public boolean isVertical()
+		{ return this == UP || this == DOWN; }
+	
+	public boolean isDiagonal()
+		{ return value % 2 != 0; }
+	
+	public boolean isOrthogonal()
+		{ return value % 2 == 0; }
 
 }

@@ -2,10 +2,10 @@ package pathfinder;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.function.Function;
 
 import enums.Direction;
@@ -14,16 +14,17 @@ import util.CollectionUtils;
 
 public class PathFinder {
 	
-	private Random random = new Random(new SecureRandom().nextInt(Integer.MAX_VALUE));
+	private Random random;
+	private List<List<Pair<PathFinderTileCoord, Direction>>> foundPaths;
 	private List<Pair<PathFinderTileCoord, Direction>> directions;
-	private Map<PathFinderTileCoord, Boolean> blocks = new HashMap<>();
-	private Map<PathFinderTileCoord, Boolean> path = new HashMap<>();
+	private Set<PathFinderTileCoord> tempBlocks;
+	private Set<PathFinderTileCoord> blocks;
+	private Set<PathFinderTileCoord> path;
 	private Function<PathFinderTileCoord, Boolean> functionIsTileFree;
 	private Direction initialDirection;
 	private PathFinderIgnoreInitialBackDirection ignoreInitialBackDirection;
 	private PathFinderDistance distance;
 	private PathFinderOptmize optimize;
-	private List<List<Pair<PathFinderTileCoord, Direction>>> foundPaths = new ArrayList<>();
 	
 	public PathFinder(PathFinderTileCoord initialCoord, PathFinderTileCoord targetCoord, Direction initialDirection, Function<PathFinderTileCoord, Boolean> functionIsTileFree)
 		{ this(initialCoord, targetCoord, initialDirection, null, null, null, functionIsTileFree); }
@@ -55,6 +56,11 @@ public class PathFinder {
 		this.distance = distance == null ? PathFinderDistance.RANDOM : distance;
 		this.optimize = optimize == null ? PathFinderOptmize.NOT_OPTIMIZED : optimize;
 		this.functionIsTileFree = functionIsTileFree;
+		random = new Random(new SecureRandom().nextInt(Integer.MAX_VALUE));
+		foundPaths = new ArrayList<>();
+		tempBlocks = new HashSet<>();
+		blocks = new HashSet<>();
+		path = new HashSet<>();
 		directions = new ArrayList<>();
 		if (recalculatePath)
 			recalculatePath(initialCoord, targetCoord, this.initialDirection);
@@ -63,8 +69,11 @@ public class PathFinder {
 	public boolean pathWasFound()
 		{ return !directions.isEmpty(); }
 	
-	public Direction getNextDirectionToGo() {
-		Direction dir = directions.isEmpty() ? null : directions.get(0).getValue();
+	public Direction getNextDirectionToGo()
+		{ return directions.isEmpty() ? null : directions.get(0).getValue(); }
+	
+	public Direction getNextDirectionToGoAndRemove() {
+		Direction dir = getNextDirectionToGo();
 		if (!directions.isEmpty())
 			directions.remove(0);
 		return dir;
@@ -73,12 +82,21 @@ public class PathFinder {
 	public List<Pair<PathFinderTileCoord, Direction>> getCurrentPath()
 		{ return directions.isEmpty() ? null : directions; }
 	
-	public void recalculatePath(PathFinderTileCoord currentCoord, PathFinderTileCoord targetCoord, Direction currentDirection)
-		{ recalculatePath(currentCoord, targetCoord, currentDirection, new HashMap<>()); }
+	public void addTempWall(PathFinderTileCoord tileCoord)
+		{ tempBlocks.add(tileCoord); }
+	
+	public void removeTempWall(PathFinderTileCoord tileCoord)
+		{ tempBlocks.remove(tileCoord); }
 
-	private void recalculatePath(PathFinderTileCoord currentCoord, PathFinderTileCoord targetCoord, Direction currentDirection, Map<PathFinderTileCoord, Boolean> tempBlocks) {
-		blocks = new HashMap<>(tempBlocks);
-		path = new HashMap<>();
+	public void clearTempWalls()
+		{ tempBlocks.clear(); }
+		
+	public void recalculatePath(PathFinderTileCoord currentCoord, PathFinderTileCoord targetCoord, Direction currentDirection)
+		{ recalculatePath(currentCoord, targetCoord, currentDirection, new HashSet<>()); }
+
+	private void recalculatePath(PathFinderTileCoord currentCoord, PathFinderTileCoord targetCoord, Direction currentDirection, Set<PathFinderTileCoord> tempBlocks) {
+		blocks = new HashSet<>(tempBlocks);
+		path = new HashSet<>();
 		if (currentCoord.equals(targetCoord) || !isTileFree(currentCoord) || !isTileFree(targetCoord) || isStucked(currentCoord) || isStucked(targetCoord)) {
 			directions.clear();
 			foundPaths.clear();
@@ -108,16 +126,16 @@ public class PathFinder {
 							dir = getRandomFreeDir(coord, initialDirection.getReverseDirection());
 			if (dir == null)
 				return;
-			path.put(coord.getNewInstance(), true);
+			path.add(coord.getNewInstance());
 			dirs.add(new Pair<>(coord.getNewInstance(), dir));
-			blocks.put(coord.getNewInstance(), true);
+			blocks.add(coord.getNewInstance());
 			coord.incByDirection(dir);
 			if (unMark != null) {
 				blocks.remove(unMark);
 				unMark = null;
 			}
 			if (coord.equals(targetCoord) || isStucked(coord)) {
-				blocks.put(coord.getNewInstance(), true);
+				blocks.add(coord.getNewInstance());
 				if (coord.equals(targetCoord)) {
 					foundPaths.add(new ArrayList<>(dirs));
 					unMark = coord.getNewInstance();
@@ -158,8 +176,8 @@ public class PathFinder {
 		PathFinderTileCoord current;
 		PathFinderTileCoord target = dirs.get(dirs.size() - 1).getKey().getNewInstance();
 		target.incByDirection(dirs.get(dirs.size() - 1).getValue());
-		Map<PathFinderTileCoord, Boolean> path = new HashMap<>();
-		dirs.forEach(t -> path.put(t.getKey().getNewInstance(), true));
+		Set<PathFinderTileCoord> path = new HashSet<>();
+		dirs.forEach(t -> path.add(t.getKey().getNewInstance()));
 		do {
 			restart = false;
 			out:
@@ -170,7 +188,7 @@ public class PathFinder {
 					dir = dir.getNext4WayClockwiseDirection();
 					PathFinderTileCoord c = current.getNewInstance();
 					c.incByDirection(dir);
-					if (path.containsKey(c) || !isTileFree(c, true))
+					if (path.contains(c) || !isTileFree(c, true))
 						continue;
 					int steps = 1;
 					while (isTileFree(c, true)) {
@@ -178,7 +196,7 @@ public class PathFinder {
 							c.incByDirection(dir);
 							steps++;
 						}
-						if (c.equals(target) || path.containsKey(c)) {
+						if (c.equals(target) || path.contains(c)) {
 							PathFinderTileCoord c2;
 							while (n + 1 < dirs.size() && !(c2 = dirs.get(n + 1).getKey().getNewInstance()).equals(c)) {
 								this.path.remove(c2);
@@ -190,9 +208,9 @@ public class PathFinder {
 							dirs.set(n, new Pair<>(c2.getNewInstance(), dir));
 							for (int x = n + 1; --steps > 0; x++) {
 								c2.incByDirection(dir);
-								path.put(c2.getNewInstance(), true);
-								this.path.put(c2.getNewInstance(), true);
-								blocks.put(c2.getNewInstance(), true);
+								path.add(c2.getNewInstance());
+								this.path.add(c2.getNewInstance());
+								blocks.add(c2.getNewInstance());
 								dirs.add(x, new Pair<>(c2.getNewInstance(), dir));
 							}
 							restart = true;
@@ -241,13 +259,13 @@ public class PathFinder {
 	
 	private boolean continueCurrentPathSupport(PathFinderTileCoord current, PathFinderTileCoord target, Direction dir) {
 		PathFinder pf = new PathFinder(current, target, dir, null, null, null, functionIsTileFree, false);
-		Map<PathFinderTileCoord, Boolean> blocks = new HashMap<>();
-		directions.forEach(p -> blocks.put(p.getKey().getNewInstance(), true));
+		Set<PathFinderTileCoord> blocks = new HashSet<>();
+		directions.forEach(p -> blocks.add(p.getKey().getNewInstance()));
 		pf.recalculatePath(current, target, dir, blocks);
 		if (pf.getCurrentPath() == null)
 			return false;
 		pf.getCurrentPath().forEach(p -> directions.add(p));
-		directions.forEach(d -> path.put(d.getKey(), true));
+		directions.forEach(d -> path.add(d.getKey()));
 		optimizePath(directions);
 		return true;
 	}
@@ -290,7 +308,7 @@ public class PathFinder {
 			coord = coord.getNewInstance();
 			coord.incByDirection(incCoordToDir);
 		}
-		return functionIsTileFree.apply(coord) && (ignoreBlocks || !blocks.containsKey(coord));
+		return functionIsTileFree.apply(coord) && !tempBlocks.contains(coord) && (ignoreBlocks || !blocks.contains(coord));
 	}
 	
 	private boolean isStucked(PathFinderTileCoord coord)
