@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class Timer {
 
-	private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+	private static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	private static final Map<String, ScheduledFuture<?>> timers = new ConcurrentHashMap<>();
 
 	public static void createTimer(String timerName, long startingDelayInMs, Runnable runnable)
@@ -20,7 +20,9 @@ public abstract class Timer {
 		{ createTimer(timerName, 0, repeatingDelayInMs, repeatingTimes, runnable); }
 
 	public static void createTimer(String timerName, long startingDelayInMs, long repeatingDelayInMs, int repeatingTimes, Runnable runnable) {
-		final int[] counter = {0};
+    if (scheduler.isShutdown())
+      scheduler = Executors.newScheduledThreadPool(1); // Recria o scheduler se estiver encerrado
+    final int[] counter = {0};
 		ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {
 			runnable.run();
 			if (repeatingTimes > 0 && ++counter[0] >= repeatingTimes)
