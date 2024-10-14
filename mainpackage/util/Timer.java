@@ -13,22 +13,46 @@ public abstract class Timer {
 	private static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	private static final Map<String, ScheduledFuture<?>> timers = new ConcurrentHashMap<>();
 
+	private static void ensureSchedulerActive() {
+		if (scheduler.isShutdown() || scheduler.isTerminated())
+			scheduler = Executors.newScheduledThreadPool(1);
+	}
+
 	public static void createTimer(String timerName, long startingDelayInMs, Runnable runnable)
 		{ createTimer(timerName, startingDelayInMs, 1, 1, runnable); }
-	
+
 	public static void createTimer(String timerName, long repeatingDelayInMs, int repeatingTimes, Runnable runnable)
 		{ createTimer(timerName, 0, repeatingDelayInMs, repeatingTimes, runnable); }
 
 	public static void createTimer(String timerName, long startingDelayInMs, long repeatingDelayInMs, int repeatingTimes, Runnable runnable) {
-    if (scheduler.isShutdown())
-      scheduler = Executors.newScheduledThreadPool(1); // Recria o scheduler se estiver encerrado
-    final int[] counter = {0};
-		ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {
-			runnable.run();
-			if (repeatingTimes > 0 && ++counter[0] >= repeatingTimes)
-				stopTimer(timerName);
-		}, startingDelayInMs, repeatingDelayInMs, TimeUnit.MILLISECONDS);
+		ensureSchedulerActive();
+		if (timers.containsKey(timerName))
+			resetTimer(timerName, startingDelayInMs, repeatingDelayInMs, repeatingTimes, runnable);
+		else
+			startNewTimer(timerName, startingDelayInMs, repeatingDelayInMs, repeatingTimes, runnable);
+	}
+
+	private static void startNewTimer(String timerName, long startingDelayInMs, long repeatingDelayInMs, int repeatingTimes, Runnable runnable) {
+		final int[] counter = { 0 };
+		ScheduledFuture<?> future;
+
+		if (repeatingTimes == 1)
+			future = scheduler.schedule(() -> runnable.run(), startingDelayInMs, TimeUnit.MILLISECONDS);
+		else {
+			future = scheduler.scheduleAtFixedRate(() -> {
+				runnable.run();
+				if (repeatingTimes > 0 && ++counter[0] >= repeatingTimes) {
+					stopTimer(timerName);
+				}
+			}, startingDelayInMs, repeatingDelayInMs, TimeUnit.MILLISECONDS);
+		}
+
 		timers.put(timerName, future);
+	}
+
+	public static void resetTimer(String timerName, long startingDelayInMs, long repeatingDelayInMs, int repeatingTimes, Runnable runnable) {
+		stopTimer(timerName);
+		startNewTimer(timerName, startingDelayInMs, repeatingDelayInMs, repeatingTimes, runnable);
 	}
 
 	public static void stopTimer(String timerName) {
@@ -36,22 +60,23 @@ public abstract class Timer {
 		if (future != null) {
 			future.cancel(false);
 			timers.remove(timerName);
-			checkAndShutdownScheduler();
 		}
 	}
 
 	public static void stopAllTimers() {
 		for (String timerName : timers.keySet())
 			stopTimer(timerName);
-		scheduler.shutdown();
 	}
+
+	public static void stopScheduler()
+		{ scheduler.shutdown(); }
 
 	public static Set<String> getAllTimersNames()
 		{ return timers.keySet(); }
 
-	private static void checkAndShutdownScheduler() {
-		if (timers.isEmpty())
-			scheduler.shutdown();
+	public static void close() {
+		stopAllTimers();
+		stopScheduler();
 	}
-	
+
 }
