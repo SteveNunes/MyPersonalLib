@@ -250,6 +250,18 @@ public abstract class ControllerUtils {
 		};
 		listView.setCellFactory(factory);
 	}
+	
+	public static void forceButtonSize(Button button, int width, int height) {
+		button.setMinSize(width, height);
+		button.setPrefSize(width, height);
+		button.setMaxSize(width, height);
+	}
+
+	public static <T> void forceComboBoxSize(ComboBox<T> comboBox, int width, int height) {
+		comboBox.setMinSize(width, height);
+		comboBox.setPrefSize(width, height);
+		comboBox.setMaxSize(width, height);
+	}
 
 	public static Stage getCurrentStage(ActionEvent event)
 		{ return (Stage) ((Node) event.getSource()).getScene().getWindow(); }

@@ -38,7 +38,7 @@ public abstract class Alerts {
 	 * @param type					Tipo de alerta (Consultar o {@code enum AlertType} para mais informações.
 	 * @return							um tipo {@code Optional} contendo informações sobre o botão clicado (Ok, Cancel, etc) 
 	 */
-	public static Optional<ButtonType> createAlert(String title, String header, String content, AlertType type) {
+	private static Optional<ButtonType> createAlert(String title, String header, String content, AlertType type) {
 		Alert alert = new Alert(type);
 		alert.setTitle(title);
 		if (header != null)
@@ -54,7 +54,7 @@ public abstract class Alerts {
 	 * @param content				Texto da janela.
 	 * @param type					Tipo de alerta (Consultar o {@code enum AlertType} para mais informações.
 	 */
-	public static Optional<ButtonType> createAlert(String title, String content, AlertType type)
+	private static Optional<ButtonType> createAlert(String title, String content, AlertType type)
 		{ return createAlert(title, null, content, type); }
 
 	/**
@@ -117,6 +117,9 @@ public abstract class Alerts {
 		alert.getDialogPane().setExpandableContent(expContent);
 		alert.showAndWait();
 	}
+	
+	public static void exception(String title, String content, Exception ex)
+		{ exception(title, null, content, ex); }
 	
 	/**
 	 * Cria uma janela de informação
@@ -189,7 +192,13 @@ public abstract class Alerts {
 		Optional<String> result = dialog.showAndWait();
 		return result.isPresent() ? result.get() : null;
 	}
+
+	public static String textPrompt(String title, String defaultText, String content)
+		{	return textPrompt(title, null, defaultText, content); }
 	
+	public static String textPrompt(String title, String content)
+		{	return textPrompt(title, null, null, content); }
+
 	public static int customConfirmation(String title, String header, String content) {
 		Alert alert = new Alert(AlertType.CONFIRMATION);
 		alert.setTitle(title);
@@ -230,6 +239,9 @@ public abstract class Alerts {
 		catch (NoSuchElementException e)
 			{ return null; }
 	}
+	
+	public static String choiceCombo(String title, String content, List<String> choices)
+		{ return choiceCombo(title, null, content, choices); }
 	
 	public void loginWindow(String title, String header) {
 	// Create the custom dialog.
