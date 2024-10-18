@@ -40,7 +40,6 @@ public class IniFile {
 	private IniFile(String fileName) {
 		this.fileName = fileName;
 		refresh();
-		loadIniFromDisk(fileName);
 		openedIniFiles.put(fileName, this);
 		changedTime = 0;
 	}
@@ -86,7 +85,7 @@ public class IniFile {
 
 	private static Boolean stringIsSection(String s) {
 		String[] split = s.split(" ");
-		return split.length == 0 ? false : s.split(" ")[0].matches(("\\Q" + "[*]*" + "\\E").replace("*", "\\E.*\\Q"));
+		return split[0].length() < 3 ? false : split[0].charAt(0) == '[' && split[0].charAt(split[0].length() - 1) == ']' ;
 	}
 
 	private static Boolean stringIsItem(String s) 
@@ -94,14 +93,14 @@ public class IniFile {
 
 	private static String getSectionFromString(String s)
 		{ return s.split("]")[0].split(" ")[0].substring(1); }
-
+	
 	public void loadIniFromDisk(String fileName) {
 		iniBody = new LinkedHashMap<String, LinkedHashMap<String, String>>();
 		if (!fileName.isEmpty()) {
 			if (Files.exists(file)) {
 				fileBuffer = MyFile.readAllLinesFromFile(fileName);
 				String section = "", item, val;
-				for (String s : fileBuffer)
+				for (String s : fileBuffer) {
 					if (stringIsSection(s)) {
 						section = getSectionFromString(s);
 					  iniBody.put(section, new LinkedHashMap<String, String>());
@@ -112,6 +111,7 @@ public class IniFile {
 						val = MyConverters.arrayToString(split, 1, "=");
 						write(section, item, val);
 					}
+				}
 			}
 			else
 				fileBuffer = new ArrayList<>();

@@ -115,13 +115,16 @@ public abstract class MyFile {
 		return oldFile.renameTo(newFile);
 	}
 
+	public static String removeInvisibleChars(String string) // Para remover caracteres especiais que podem vir ao ler strings de um arquivo de texto, que apesar de não ser visiveis, contam como caractere e podem bugar o codigo baseado em ler o caractere de um determinado index
+		{ return string.replaceAll("[\\p{C}\\p{Z}&&[^\u0020]]", ""); }
+	
 	public static List<String> readAllLinesFromFile(String filePath) {
 		if (!new File(filePath).exists()) return null;
 		List<String> result = new ArrayList<>();
 		Path path = Paths.get(filePath);
 		try (BufferedReader br = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-			String line = br.readLine();
-			while (line != null) {
+			String line = removeInvisibleChars(br.readLine());
+      while (line != null) {
 				result.add(line);
 				line = br.readLine();
 			}
