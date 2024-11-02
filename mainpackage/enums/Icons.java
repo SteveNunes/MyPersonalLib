@@ -7,9 +7,9 @@ import javafx.scene.paint.Color;
 public enum Icons {
 
 	BLANK("/icons/blank.png"),
-	BLOCKED_NUMBER("/icons/blocked_number.png"),
-	BLOCKED_NUMBER_2("/icons/blocked_number_2.png"),
-	BLOCKED_NUMBER_3("/icons/blocked_number_3.png"),
+	BRICKED_NUMBER("/icons/blocked_number.png"),
+	BRICKED_NUMBER_2("/icons/blocked_number_2.png"),
+	BRICKED_NUMBER_3("/icons/blocked_number_3.png"),
 	CALENDAR("/icons/calendar.png"),
 	CLIPBOARD("/icons/clipboard.png"),
 	CONFIG("/icons/config.png"),

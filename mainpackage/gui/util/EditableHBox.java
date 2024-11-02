@@ -120,7 +120,7 @@ public class EditableHBox {
 		    		ComboBox<T> comboBox = new ComboBox<T>();
 		    		ControllerUtils.setListToComboBox(comboBox, comboBoxItems);
 		    		if (comboBoxMask != null)
-		    			ControllerUtils.changeHowComboBoxDisplayItens(comboBox, comboBoxMask);
+		    			ControllerUtils.changeHowComboBoxDisplayItems(comboBox, comboBoxMask);
 		    		if (selectedIndex != null)
 		    			comboBox.getSelectionModel().select(selectedIndex);
 		    		else

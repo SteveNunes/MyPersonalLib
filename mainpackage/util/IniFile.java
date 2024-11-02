@@ -66,7 +66,7 @@ public class IniFile {
 	
 	public String getNextFreeNumericItem(String section) {
 		int n = 1;
-		for (; isItem(section, "" + n); n++);
+		for (; itemExists(section, "" + n); n++);
 		return "" + n;
 	}
 	
@@ -121,7 +121,7 @@ public class IniFile {
 	public void loadIniFromDisk() 
 		{ loadIniFromDisk(fileName); }
 	
-	private void insertMissingItens(String section, List<String> fileBuffer, Map<String, List<String>> items) {
+	private void insertMissingItems(String section, List<String> fileBuffer, Map<String, List<String>> items) {
 		if (!section.isEmpty()) {
 			if (!items.containsKey(section)) {
 				if (!fileBuffer.isEmpty() && !fileBuffer.get(fileBuffer.size() - 1).trim().isEmpty())
@@ -144,7 +144,7 @@ public class IniFile {
 		for (int l = 0, lmax = fileBuffer.size(); l < lmax; l++) {
 			line = fileBuffer.get(l);
 			if (line.isEmpty()) {
-				insertMissingItens(section, newFileBuffer, addeds);
+				insertMissingItems(section, newFileBuffer, addeds);
 				if (getItemList(section).isEmpty())
 					newFileBuffer.remove(newFileBuffer.size() - 1);
 			}
@@ -156,7 +156,7 @@ public class IniFile {
 						newFileBuffer.remove(newFileBuffer.size() - 1);
 				section = getSectionFromString(line);
 				if (!getItemList(section).isEmpty()) {
-					if (isSection(section)) {
+					if (sectionExists(section)) {
 						newFileBuffer.add(line);
 						addeds.put(section, new ArrayList<>());
 					}
@@ -171,7 +171,7 @@ public class IniFile {
 			else if (!section.isEmpty() && stringIsItem(line)) {
 				String[] split = line.split("=");
 				item = split[0];
-				if (isItem(section, item)) {
+				if (itemExists(section, item)) {
 					value = read(section, item);
 					newFileBuffer.add(item + "=" + value);
 					addeds.get(section).add(item);
@@ -180,10 +180,10 @@ public class IniFile {
 			else
 				newFileBuffer.add(line);
 		}
-		insertMissingItens(section, newFileBuffer, addeds);
+		insertMissingItems(section, newFileBuffer, addeds);
 		for (String sec : getSectionList())
 			if (!getItemList(sec).isEmpty())
-				insertMissingItens(sec, newFileBuffer, addeds);
+				insertMissingItems(sec, newFileBuffer, addeds);
 		fileBuffer = new ArrayList<>(newFileBuffer);
 	}
 	
@@ -228,7 +228,7 @@ public class IniFile {
 		{ return lastReadVal; }
 	
 	public String read(String iniSection, String iniItem) {
-		if (isItem(iniSection, iniItem)) 
+		if (itemExists(iniSection, iniItem)) 
 			return (lastReadVal = iniBody.get(iniSection).get(iniItem));
 		return (lastReadVal = null);
 	}
@@ -578,7 +578,7 @@ public class IniFile {
 		{ return readAsBigDecimalArray(section, item, " "); }
 
 	public String remove(String iniSection, String iniItem) {
-		if (isItem(iniSection, iniItem)) {
+		if (itemExists(iniSection, iniItem)) {
 			iniBody.get(iniSection).remove(iniItem);
 			return iniItem;
 		}
@@ -586,7 +586,7 @@ public class IniFile {
 	}
 
 	public String remove(String iniSection) {
-		if (isSection(iniSection)) {
+		if (sectionExists(iniSection)) {
 			iniBody.remove(iniSection);
 			changedTime = System.currentTimeMillis();
 			return iniSection;
@@ -601,7 +601,7 @@ public class IniFile {
 		{ return !iniBody.isEmpty() ? iniBody.size() : 0; }
 
 	public int getSectionPos(String iniSection) {
-		if (isSection(iniSection)) {
+		if (sectionExists(iniSection)) {
 			Iterator<String> it = iniBody.keySet().iterator();
 			for (int n = 0; it.hasNext(); n++)
 				if (it.next().equals(iniSection))
@@ -620,14 +620,14 @@ public class IniFile {
 		return null;
 	}
 
-	public Boolean isSection(String iniSection)
+	public Boolean sectionExists(String iniSection)
 		{ return !iniBody.isEmpty() ? iniBody.containsKey(iniSection) : false; }
 
 	public int getSectionSize(String iniSection)
-		{ return isSection(iniSection) ? iniBody.get(iniSection).size() : -1; }
+		{ return sectionExists(iniSection) ? iniBody.get(iniSection).size() : -1; }
 
 	public int getItemPos(String iniSection, String iniItem) {
-		if (isItem(iniSection, iniItem)) {
+		if (itemExists(iniSection, iniItem)) {
 			Iterator<String> it = iniBody.get(iniSection).keySet().iterator();
 			for (int n = 0; it.hasNext(); n++) 
 				if (it.next().equals(iniItem))
@@ -646,8 +646,8 @@ public class IniFile {
 		return null;
 	}
 
-	public Boolean isItem(String iniSection, String iniItem)
-		{ return isSection(iniSection) ? iniBody.get(iniSection).containsKey(iniItem) : false; }
+	public Boolean itemExists(String iniSection, String iniItem)
+		{ return sectionExists(iniSection) ? iniBody.get(iniSection).containsKey(iniItem) : false; }
 
 	public void clearSection(String iniSection) {
 		iniBody.get(iniSection).clear();
@@ -684,7 +684,7 @@ public class IniFile {
 
 	public List<String> getItemList(String iniSection) {
 		List<String> list = new ArrayList<String>();
-		if (isSection(iniSection) && !iniBody.get(iniSection).isEmpty()) {
+		if (sectionExists(iniSection) && !iniBody.get(iniSection).isEmpty()) {
 			Iterator<String> it = iniBody.get(iniSection).keySet().iterator();
 			String item;
 			while (it.hasNext())

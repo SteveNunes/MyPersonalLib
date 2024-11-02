@@ -2,6 +2,7 @@ package objmoveutils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import enums.DirectionOrientation;
 
@@ -10,9 +11,10 @@ public class MoveBetweenDots {
 	private List<Position> dots;
 	private DirectionOrientation orientation;
 	private Position coord, inc, position, startPosition;
-	private int dotIndex, speedInFrames, currentFrame;
+	private int dotIndex, durationFrames, currentFrame;
 	private Boolean resetAfterFullCycle, cycleWasCompleted;
-	
+	private Consumer<MoveBetweenDots> onCycleCompleteEvent;
+
 	/**
 	 * 
 	 * @param outputPosition - {@code Position} pertencente á um objeto externo, que terá seu
@@ -26,12 +28,12 @@ public class MoveBetweenDots {
 	 * 	ao {@code Position} do objeto externo, mesmo que ele se mova. Caso contrário, esse retorno
 	 * 	será absoluto referente as coordenadas da janela. 
 	 * . 
-	 * @param speedInFrames - Velocidade em frames que o objeto se deslocará de uma coordenada á outra
+	 * @param durationFrames - Velocidade em frames que o objeto se deslocará de uma coordenada á outra
 	 * @param resetAfterFullCycle - {@code true} se o objeto deve repetir o ciclo após chegar
 	 * 	na coordenada final.
 	 */
-	public MoveBetweenDots(Position outputPosition, DirectionOrientation orientation, Position startPosition, int speedInFrames, Boolean resetAfterFullCycle) {
-		if (speedInFrames < 1)
+	public MoveBetweenDots(Position outputPosition, DirectionOrientation orientation, Position startPosition, int durationFrames, Boolean resetAfterFullCycle) {
+		if (durationFrames < 1)
 			throw new RuntimeException("'speed' must be equal or higher than 1");
 		dots = new ArrayList<>();
 		coord = new Position();
@@ -39,54 +41,55 @@ public class MoveBetweenDots {
 		position = outputPosition;
 		this.startPosition = startPosition;
 		this.orientation = orientation;
-		this.speedInFrames = speedInFrames;
+		this.durationFrames = durationFrames;
 		this.resetAfterFullCycle = resetAfterFullCycle;
 		dotIndex = 0;
-		currentFrame = speedInFrames;
+		currentFrame = durationFrames;
 		cycleWasCompleted = false;
+		onCycleCompleteEvent = null;
 	}
 	
 	/**
 	 * Sobrecarga do construtor que não pede o parâmetro {@code outputPosition}. 
 	 */
-	public MoveBetweenDots(DirectionOrientation orientation, Position startPosition, int speedInFrames, Boolean resetAfterFullCycle)
-		{ this(new Position(), orientation, startPosition, speedInFrames, resetAfterFullCycle); }
+	public MoveBetweenDots(DirectionOrientation orientation, Position startPosition, int durationFrames, Boolean resetAfterFullCycle)
+		{ this(new Position(), orientation, startPosition, durationFrames, resetAfterFullCycle); }
 	
 	/**
 	 * Sobrecarga do construtor que não pede o parâmetro {@code resetAfterFullCycle}. 
 	 */
-	public MoveBetweenDots(Position outputPosition, DirectionOrientation orientation, Position startPosition, int speedInFrames)
-		{ this(outputPosition, orientation, startPosition, speedInFrames, true); }
+	public MoveBetweenDots(Position outputPosition, DirectionOrientation orientation, Position startPosition, int durationFrames)
+		{ this(outputPosition, orientation, startPosition, durationFrames, true); }
 	
 	/**
 	 * Sobrecarga do construtor que não pede os parâmetros {@code outputPosition} e {@code resetAfterFullCycle}. 
 	 */
-	public MoveBetweenDots(DirectionOrientation orientation, Position startPosition, int speedInFrames)
-		{ this(new Position(), orientation, startPosition, speedInFrames, true); }
+	public MoveBetweenDots(DirectionOrientation orientation, Position startPosition, int durationFrames)
+		{ this(new Position(), orientation, startPosition, durationFrames, true); }
 
 	/**
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
 	 */
-	public MoveBetweenDots(Position outputPosition, DirectionOrientation orientation, double startX, double startY, int speedInFrames, Boolean resetAfterFullCycle)
-		{ this(outputPosition, orientation, new Position(startX, startY), speedInFrames, resetAfterFullCycle); }
+	public MoveBetweenDots(Position outputPosition, DirectionOrientation orientation, double startX, double startY, int durationFrames, Boolean resetAfterFullCycle)
+		{ this(outputPosition, orientation, new Position(startX, startY), durationFrames, resetAfterFullCycle); }
 	
 	/**
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
 	 */
-	public MoveBetweenDots(DirectionOrientation orientation, double startX, double startY, int speedInFrames, Boolean resetAfterFullCycle)
-		{ this(new Position(), orientation, new Position(startX, startY), speedInFrames, resetAfterFullCycle); }
+	public MoveBetweenDots(DirectionOrientation orientation, double startX, double startY, int durationFrames, Boolean resetAfterFullCycle)
+		{ this(new Position(), orientation, new Position(startX, startY), durationFrames, resetAfterFullCycle); }
 	
 	/**
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
 	 */
-	public MoveBetweenDots(Position outputPosition, DirectionOrientation orientation, double startX, double startY, int speedInFrames)
-		{ this(outputPosition, orientation, new Position(startX, startY), speedInFrames, true); }
+	public MoveBetweenDots(Position outputPosition, DirectionOrientation orientation, double startX, double startY, int durationFrames)
+		{ this(outputPosition, orientation, new Position(startX, startY), durationFrames, true); }
 	
 	/**
 	 * Sobrecarga do construtor que recebe valores literais das coordenadas em vez de um tipo {@code Position} 
 	 */
-	public MoveBetweenDots(DirectionOrientation orientation, double startX, double startY, int speedInFrames)
-		{ this(new Position(), orientation, new Position(startX, startY), speedInFrames, true); }
+	public MoveBetweenDots(DirectionOrientation orientation, double startX, double startY, int durationFrames)
+		{ this(new Position(), orientation, new Position(startX, startY), durationFrames, true); }
 
 	public MoveBetweenDots(MoveBetweenDots moveBetweenDots) {
 		dots = moveBetweenDots.dots;
@@ -95,7 +98,7 @@ public class MoveBetweenDots {
 		position = moveBetweenDots.position;
 		startPosition = moveBetweenDots.startPosition;
 		orientation = moveBetweenDots.orientation;
-		speedInFrames = moveBetweenDots.speedInFrames;
+		durationFrames = moveBetweenDots.durationFrames;
 		resetAfterFullCycle = moveBetweenDots.resetAfterFullCycle;
 		dotIndex = moveBetweenDots.dotIndex;
 		currentFrame = moveBetweenDots.currentFrame;
@@ -106,14 +109,22 @@ public class MoveBetweenDots {
 		checkError();
 		if (!cycleWasCompleted) {
 	    coord.incPosition(inc);
-			if (++currentFrame >= speedInFrames) {
+			if (++currentFrame >= durationFrames) {
 				setCoordToNextDot();
 				currentFrame = 0;
 			}
 			position.setPosition(startPosition.getX() + coord.getX(), startPosition.getY() + coord.getY());
 		}
+		else if (onCycleCompleteEvent != null)
+			onCycleCompleteEvent.accept(this);
 	}
 	
+	public void setOnCycleCompleteEvent(Consumer<MoveBetweenDots> event)
+		{ onCycleCompleteEvent = event; }
+
+	public Position getIncrements()
+		{ return inc; }
+		
 	private Position getCurrentDot() {
 		checkError();
 		return dots.get(dotIndex);
@@ -153,7 +164,7 @@ public class MoveBetweenDots {
 		dotIndex = index;
 		coord.setPosition(getCurrentDot());
 		dotIndex = getNextDotCoordIndex();
-		inc = ShapeUtils.getIncrementValueForMoveBetweenPositions(coord, getCurrentDot(), speedInFrames);
+		inc = ShapeUtils.getIncrementValueForMoveBetweenPositions(coord, getCurrentDot(), durationFrames);
 		if (!resetAfterFullCycle && index != dotIndex &&
 				dotIndex == (orientation == DirectionOrientation.CLOCKWISE ? 0 : dots.size() - 1))
 					cycleWasCompleted = true;
@@ -169,7 +180,7 @@ public class MoveBetweenDots {
 
 	public void setOrientation(DirectionOrientation orientation) {
 		this.orientation = orientation;
-		speedInFrames = -speedInFrames;
+		durationFrames = -durationFrames;
 	}
 
 	/**
@@ -184,11 +195,11 @@ public class MoveBetweenDots {
 	public void setResetAfterFullCycle(Boolean resetAfterFullCycle)
 		{ this.resetAfterFullCycle = resetAfterFullCycle; }
 
-	public double getSpeedInFrames()
-		{ return speedInFrames; }
+	public double getDurationFrames()
+		{ return durationFrames; }
 
-	public void setSpeedInFrames(int speedInFrames)
-		{ this.speedInFrames = speedInFrames; }
+	public void setDurationFrames(int durationFrames)
+		{ this.durationFrames = durationFrames; }
 
 	public Position getPosition()
 		{ return position; }

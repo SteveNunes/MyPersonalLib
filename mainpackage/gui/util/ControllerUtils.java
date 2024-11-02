@@ -188,7 +188,7 @@ public abstract class ControllerUtils {
 	/**
 	 * Adiciona uma lista de itens a uma Combo Box. Cada item será exibido de
 	 * acordo com seu método {@code .toString()}. Para alterar a forma como os
-	 * itens de uma Combo Box serão exibidos, consulte o método {@code changeHowComboBoxDisplayItens()}
+	 * itens de uma Combo Box serão exibidos, consulte o método {@code changeHowComboBoxDisplayItems()}
 	 * @param <T>				Tipo dos itens da Combo Box
 	 * @param comboBox	Combo Box de destino
 	 * @param list			Lista á ter seus elementos adicionados á Combo Box
@@ -217,7 +217,7 @@ public abstract class ControllerUtils {
 	 * o valor do método {@code .getName()}, chame o método da seguinte forma:
 	 * {@code initializeComboBox(comboBox, p -> p.getName());}
 	 */
-	public static <T, S> void changeHowComboBoxDisplayItens(ComboBox<T> comboBox, Function<T, S> showMask) {
+	public static <T, S> void changeHowComboBoxDisplayItems(ComboBox<T> comboBox, Function<T, S> showMask) {
 		Callback<ListView<T>, ListCell<T>> factory = lv -> new ListCell<T>() {
 			@Override
 			protected void updateItem(T oper, boolean empty) {
@@ -240,7 +240,7 @@ public abstract class ControllerUtils {
 	 * o valor do método {@code .getName()}, chame o método da seguinte forma:
 	 * {@code initializeListView(listView, p -> p.getName());}
 	 */
-	public static <T, S> void changeHowListViewDisplayItens(ListView<T> listView, Function<T, S> showMask) {
+	public static <T, S> void changeHowListViewDisplayItems(ListView<T> listView, Function<T, S> showMask) {
 		Callback<ListView<T>, ListCell<T>> factory = lv -> new ListCell<T>() {
 			@Override
 			protected void updateItem(T oper, boolean empty) {

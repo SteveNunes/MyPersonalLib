@@ -101,7 +101,6 @@ public abstract class Alerts {
 		alert.setContentText(content);
 		StringWriter sw = new StringWriter();
 		ex.printStackTrace(new PrintWriter(sw));
-		ex.printStackTrace();
 		Label label = new Label("Exception stacktrace:");
 		TextArea textArea = new TextArea(sw.toString());
 		textArea.setEditable(false);

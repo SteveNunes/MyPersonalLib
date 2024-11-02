@@ -43,13 +43,13 @@ public class PathFinderTileCoord {
 	public void setCoord(PathFinderTileCoord tileCoord)
 		{ setCoord(tileCoord.getX(), tileCoord.getY()); }
 
-	public void incByDirection(Direction direction, int inc) {
+	public void incCoordsByDirection(Direction direction, int inc) {
 		x += direction == Direction.LEFT ? -inc : direction == Direction.RIGHT ? inc : 0;
 		y += direction == Direction.UP ? -inc : direction == Direction.DOWN ? inc : 0;
 	}
 	
-	public void incByDirection(Direction direction)
-		{ incByDirection(direction, 1); }
+	public void incCoordsByDirection(Direction direction)
+		{ incCoordsByDirection(direction, 1); }
 	
 	@Override
 	public int hashCode()

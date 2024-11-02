@@ -4,7 +4,7 @@ import enums.DirectionOrientation;
 
 public class EliticMove {
 	
-	private Position centerPosition, currentPosition;
+	private Position centerPosition, currentPosition, incPos;
 	private DirectionOrientation orientation;
 	private double radiusW, radiusH, speed, angle;
 
@@ -21,17 +21,21 @@ public class EliticMove {
 	 * @param radiusH - Raio vertical da área circular onde o objeto ficará circulando
 	 * @param speed - Velocidade de movimentação do objeto
 	 */
-	public EliticMove(Position outputPosition, Position centerPosition, DirectionOrientation orientation, double radiusW, double radiusH, double speed) {
+	public EliticMove(Position outputPosition, Position centerPosition, DirectionOrientation orientation, double radiusW, double radiusH, double initialAngle, double speed) {
 		this.centerPosition = centerPosition;
 		this.orientation = orientation;
 		currentPosition = outputPosition;
+		incPos = new Position();
 		this.radiusW = radiusW;
 		this.radiusH = radiusH;
 		this.speed = 0;
 		move();
 		this.speed = speed;
-		angle = 0;
+		angle = initialAngle;
 	}
+	
+	public EliticMove(Position outputPosition, Position centerPosition, DirectionOrientation orientation, double radiusW, double radiusH, double speed)
+		{ this(outputPosition, centerPosition, orientation, radiusW, radiusH, 0, speed); }
 	
 	public EliticMove(EliticMove eliticMove) {
 		centerPosition = eliticMove.centerPosition;
@@ -41,19 +45,26 @@ public class EliticMove {
 		radiusH = eliticMove.radiusH;
 		speed = eliticMove.speed;
 		angle = eliticMove.angle;
+		incPos = new Position(eliticMove.incPos);
 	}
+
+	public EliticMove(Position centerPosition, DirectionOrientation orientation, double radiusW, double radiusH, double initialAngle, double speed)
+		{ this(new Position(centerPosition.getX(), centerPosition.getY()), centerPosition, orientation, radiusW, radiusH, initialAngle, speed); }
+
+	public EliticMove(DirectionOrientation orientation, double radiusW, double radiusH, double initialAngle, double speed)
+		{ this(new Position(), new Position(), orientation, radiusW, radiusH, initialAngle, speed); }
 
 	/**
 	 * Sobrecarga do construtor que não pede o parâmetro {@code outputPosition}. 
 	 */
 	public EliticMove(Position centerPosition, DirectionOrientation orientation, double radiusW, double radiusH, double speed)
-		{ this(new Position(centerPosition.getX(), centerPosition.getY()), centerPosition, orientation, radiusW, radiusH, speed); }
+		{ this(new Position(centerPosition.getX(), centerPosition.getY()), centerPosition, orientation, radiusW, radiusH, 0, speed); }
 
 	/**
 	 * Sobrecarga do construtor que não pede os parâmetros {@code outputPosition} e  {@code centerPosition}. 
 	 */
 	public EliticMove(DirectionOrientation orientation, double radiusW, double radiusH, double speed)
-		{ this(new Position(), new Position(), orientation, radiusW, radiusH, speed); }
+		{ this(new Position(), new Position(), orientation, radiusW, radiusH, 0, speed); }
 
 	/**
 	 * Chame esse método continuamente para que as coordenadas do objeto que realizará o movimento circular sejam atualizadas com a nova posição.
@@ -72,7 +83,12 @@ public class EliticMove {
 	public void refreshPosition() {
 		currentPosition.setX(centerPosition.getX() + radiusW * Math.cos(Math.toRadians(angle)));
 		currentPosition.setY(centerPosition.getY() + radiusH * Math.sin(Math.toRadians(angle)));
+		incPos.setX(radiusW * Math.cos(Math.toRadians(angle)));
+		incPos.setY(radiusH * Math.sin(Math.toRadians(angle)));
 	}
+
+	public Position getIncrements()
+		{ return incPos; }
 
 	public Position getPosition()
 		{ return currentPosition; }
