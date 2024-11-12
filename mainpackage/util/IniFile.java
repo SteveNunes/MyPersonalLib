@@ -6,7 +6,9 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -30,7 +32,7 @@ public class IniFile {
 	}
 	
 	void saveToDisk() {
-		if (openedIniFiles.containsKey(fileName)) {
+		if (openedIniFiles.containsKey(fileName) && changedTime != 0) {
 			changedTime = 0;
 			updateFileBuffer();
 			MyFile.writeAllLinesOnFile(fileBuffer, fileName);
@@ -115,6 +117,7 @@ public class IniFile {
 			}
 			else
 				fileBuffer = new ArrayList<>();
+			changedTime = 0;
 		}
 	}
 
@@ -146,7 +149,7 @@ public class IniFile {
 			if (line.isEmpty()) {
 				insertMissingItems(section, newFileBuffer, addeds);
 				if (getItemList(section).isEmpty())
-					newFileBuffer.remove(newFileBuffer.size() - 1);
+					newFileBuffer.remove(newFileBuffer.size() - (newFileBuffer.isEmpty() ? 0 : 1));
 			}
 			if (stringIsSection(line)) {
 				if (newFileBuffer.size() == 1 && newFileBuffer.get(0).isEmpty())
@@ -665,9 +668,12 @@ public class IniFile {
 	}
 	
 	public static void closeAllOpenedIniFiles() {
-		for (IniFile ini : openedIniFiles.values())
-			ini.clearFile();
-		openedIniFiles.clear();
+		saveAllFilesToDisk();
+		if (!openedIniFiles.isEmpty()) {
+			for (IniFile ini : openedIniFiles.values())
+				ini.clearFile();
+			openedIniFiles.clear();
+		}
 	}
 
 	public List<String> getSectionList() {

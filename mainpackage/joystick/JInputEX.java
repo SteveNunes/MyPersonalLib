@@ -13,11 +13,10 @@ import net.java.games.input.Component.Identifier.Button;
 import net.java.games.input.Component.POV;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
-import util.Sounds;
 
 public class JInputEX {
 	
-	private static List<JInputEX> joysticks = new ArrayList<>();
+	private static List<JInputEX> joysticks = null;
 	private static String povDirNames[] = {"POV (UL)", "POV (U)", "POV (UR)", "POV (R)", "POV (DR)", "POV (D)", "POV (DL)", "POV (L)"};
 	private static float povValues[] = {POV.CENTER, POV.UP_LEFT, POV.UP, POV.UP_RIGHT, POV.RIGHT, POV.DOWN_RIGHT, POV.DOWN, POV.DOWN_LEFT, POV.LEFT};
 	private static Consumer<JInputEX> onJoystickConnected;
@@ -42,7 +41,8 @@ public class JInputEX {
 	private BiConsumer<JInputEX, JInputEXComponent> onAxisChanges;
 	private BiConsumer<JInputEX, JInputEXComponent> onTriggerChanges;
 	
-	static {
+	public static void init() {
+		joysticks = new ArrayList<>();
 		Controller[] controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
 		for (Controller controller : controllers) {
 			if (controller.getType() == Controller.Type.GAMEPAD) {
@@ -151,14 +151,22 @@ public class JInputEX {
 		for (JInputEXComponent trigger : triggers)
 			trigger.setIds(-1, -1, -1, -1, ++triggerId);
 	}
+	
+	public static void pollAllJoysticks() {
+		if (joysticks == null)
+			init();
+		for (JInputEX joy : joysticks)
+			if (joy.isConnected())
+				joy.poll();
+	}
 
 	public void poll() {
 		boolean poll = false;
 		try
 			{ poll = joystick.poll(); }
 		catch (Exception e) {
-			Sounds.playWav("D:\\mIRC\\mIRC\\sounds\\beep4.wav");
-			System.err.println("POLL FAILED!\n" + e.getMessage());
+			e.printStackTrace();
+			return;
 		}
 		if (!poll)
 			throw new RuntimeException("The joystick is disconnected");
@@ -206,22 +214,32 @@ public class JInputEX {
 		{ return pauseThread; }
 	
 	/** Return the total of initialized joysticks */
-	public static int getTotalJoysticks()
-		{ return joysticks.size(); }
+	public static int getTotalJoysticks() {
+		if (joysticks == null)
+			init();
+		return joysticks.size();
+	}
 	
 	/** Return a desired Joystick from the initialized Joystick list */
 	public static JInputEX getJoystick(int joystickID) {
+		if (joysticks == null)
+			init();
 		if (joystickID < 0 || joystickID >= joysticks.size())
 			throw new RuntimeException(joystickID + " - Invalid Joystick ID");
 		return joysticks.get(joystickID);
 	}
 	
 	/** Return a unmidifiable list of all initialized joysticks */
-	public static List<JInputEX> getJoysticks()
-		{ return Collections.unmodifiableList(joysticks); }
+	public static List<JInputEX> getJoysticks() {
+		if (joysticks == null)
+			init();
+		return Collections.unmodifiableList(joysticks);
+	}
 	
 	/** Close all initialized joysticks */
 	public static void closeAllJoysticks() {
+		if (joysticks == null)
+			init();
 		for (JInputEX joy : joysticks) {
 			joy.close();
 			if (onJoystickDisconnected != null)
@@ -231,12 +249,16 @@ public class JInputEX {
 	
 	/** Set if all joysticks thread is paused ({@code true}) or not ({@code false)} */
 	public static void setPauseAllJoysticks(boolean value) {
+		if (joysticks == null)
+			init();
 		for (JInputEX joy : joysticks)
 			joy.setPauseThread(value);		
 	}
 	
 	/** Set all joysticks deadzone value */
 	public void setAllAnalogicComponentsDeadZoneValue(float value) {
+		if (joysticks == null)
+			init();
 		for (JInputEXComponent axis : axes)
 			axis.setDeadZone(value);		
 		for (JInputEXComponent trigger : triggers)

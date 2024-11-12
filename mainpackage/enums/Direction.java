@@ -1,8 +1,5 @@
 package enums;
 
-import java.util.Arrays;
-import java.util.List;
-
 import objmoveutils.Position;
 
 public enum Direction {
@@ -17,17 +14,24 @@ public enum Direction {
 	
 	final int value;
 	
-	final static List<Direction> listOfAll = 
-		Arrays.asList(UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT);
+	final static Direction[] listOf4Dirs = { UP, RIGHT, DOWN, LEFT };
 	
 	Direction(int val)
 		{ value = val; }
 	
 	public static Direction get8DirectionFromValue(int value)
-		{ return listOfAll.get(value); }
+		{ return values()[value]; }
 	
 	public static Direction get4DirectionFromValue(int value)
-		{ return listOfAll.get(value * 2); }
+		{ return listOf4Dirs[value]; }
+	
+	public static Direction[] values4Directions() {
+		return listOf4Dirs;
+	}
+	
+	public static Direction[] values8Directions() {
+		return values();
+	}
 	
 	public int get4DirValue()
 		{ return value / 2; }
@@ -35,9 +39,6 @@ public enum Direction {
 	public int get8DirValue()
 		{ return value; }
 
-	public List<Direction> getListOfAll()
-		{ return listOfAll; }
-	
 	public static Direction getReverseDirection(Direction direction)
 		{ return getClockwiseDirection(direction, 4); }
 	
@@ -50,7 +51,7 @@ public enum Direction {
 			p -= 8;
 		while (p < 0)
 			p += 8;
-		return listOfAll.get(p);
+		return values()[p];
 	}
 	
 	public Direction getNext4WayClockwiseDirection()

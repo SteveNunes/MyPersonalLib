@@ -28,7 +28,7 @@ public class MoveBetweenDots {
 	 * 	ao {@code Position} do objeto externo, mesmo que ele se mova. Caso contrário, esse retorno
 	 * 	será absoluto referente as coordenadas da janela. 
 	 * . 
-	 * @param durationFrames - Velocidade em frames que o objeto se deslocará de uma coordenada á outra
+	 * @param durationFrames - Velocidade em frames que o objeto se offsetará de uma coordenada á outra
 	 * @param resetAfterFullCycle - {@code true} se o objeto deve repetir o ciclo após chegar
 	 * 	na coordenada final.
 	 */

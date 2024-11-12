@@ -35,7 +35,8 @@ public class TextFile {
 						List<TextFile> list = new ArrayList<>(openedTextFiles.values());
 						for (TextFile textFile : list)
 							if (textFile.changedTime > 0 && (System.currentTimeMillis() - textFile.changedTime)  > 1000)
-								MyFile.writeAllLinesOnFile(textFile.fileBuffer, textFile.fileName);				}
+								MyFile.writeAllLinesOnFile(textFile.fileBuffer, textFile.fileName);
+					}
 					Misc.sleep(100);
 				}
 			});

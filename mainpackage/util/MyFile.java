@@ -15,7 +15,67 @@ import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileSystemView;
 
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Stage;
+
 public abstract class MyFile {
+	
+	private static List<File> selectFilesJavaFX(Stage stage, String initialFolder, List<ExtensionFilter> extensionFilters, String dialogTitle, Boolean multiSel) {
+	  FileChooser fileChooser = new FileChooser();
+	  fileChooser.setTitle(dialogTitle);
+	  if (initialFolder != null)
+	  	fileChooser.setInitialDirectory(new File(initialFolder));
+	  if (extensionFilters != null)
+	  	for (ExtensionFilter ef : extensionFilters)
+	  		fileChooser.getExtensionFilters().add(ef);
+	  if (multiSel) {
+			List<File> files = fileChooser.showOpenMultipleDialog(stage);
+			return files != null ? files : null;
+	  }
+	  File file = fileChooser.showOpenDialog(stage);
+		return file != null ? Arrays.asList(file) : null;
+	}
+
+	public static File selectDirectoryJavaFX(Stage stage, String initialFolder, String dialogTitle) {
+	  DirectoryChooser dirChooser = new DirectoryChooser();
+	  dirChooser.setTitle(dialogTitle);
+	  if (initialFolder != null)
+	  	dirChooser.setInitialDirectory(new File(initialFolder));
+	  File file = dirChooser.showDialog(stage);
+		return file;
+	}
+
+	public static List<File> selectFilesJavaFX(Stage stage, String initialFolder, List<ExtensionFilter> extensionFilters, String dialogTitle) {
+		return selectFilesJavaFX(stage, initialFolder, extensionFilters, dialogTitle, true);
+	}
+	
+	public static File selectFileJavaFX(Stage stage, String initialFolder, ExtensionFilter extensionFilter, String dialogTitle) {
+		List<File> files = selectFilesJavaFX(stage, initialFolder, Arrays.asList(extensionFilter), dialogTitle, false);
+		return files != null ? files.get(0) : null;
+	}
+	
+	public static File selectFileJavaFX(Stage stage, String initialFolder, String dialogTitle) {
+		return selectFileJavaFX(stage, initialFolder, new FileChooser.ExtensionFilter("Todos os arquivos", "*.*"), dialogTitle);
+	}
+
+	public static List<File> selectFilesJavaFX(Stage stage, List<ExtensionFilter> extensionFilters, String dialogTitle) {
+		return selectFilesJavaFX(stage, null, extensionFilters, dialogTitle, true);
+	}
+	
+	public static File selectFileJavaFX(Stage stage, ExtensionFilter extensionFilter, String dialogTitle) {
+		List<File> files = selectFilesJavaFX(stage, null, Arrays.asList(extensionFilter), dialogTitle, false);
+		return files != null ? files.get(0) : null;
+	}
+	
+	public static File selectFileJavaFX(Stage stage, String dialogTitle) {
+		return selectFileJavaFX(stage, new FileChooser.ExtensionFilter("Todos os arquivos", "*.*"), dialogTitle);
+	}
+	
+	public static File selectDirectoryJavaFX(Stage stage, String dialogTitle) {
+		return selectDirectoryJavaFX(stage, null, dialogTitle);
+	}	
 	
 	private static List<File> selectFilesAndDirs(String initialFolder, String dialogTitle, Boolean listFiles, Boolean listDirs, Boolean multiSel) {
 		File initPath = initialFolder == null ? FileSystemView.getFileSystemView().getHomeDirectory() : new File(initialFolder);
@@ -116,7 +176,7 @@ public abstract class MyFile {
 	}
 
 	public static String removeInvisibleChars(String string) // Para remover caracteres especiais que podem vir ao ler strings de um arquivo de texto, que apesar de não ser visiveis, contam como caractere e podem bugar o codigo baseado em ler o caractere de um determinado index
-		{ return string.replaceAll("[\\p{C}\\p{Z}&&[^\u0020]]", ""); }
+		{ return string == null ? null : string.isBlank() ? "" : string.replaceAll("[\\p{C}\\p{Z}&&[^\u0020]]", ""); }
 	
 	public static List<String> readAllLinesFromFile(String filePath) {
 		if (!new File(filePath).exists()) return null;

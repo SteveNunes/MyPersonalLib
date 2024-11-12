@@ -1,5 +1,6 @@
 package util;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -79,7 +80,7 @@ public abstract class TimerFX {
 	}
 
 	public static void stopAllTimers() {
-		for (String timerName : timers.keySet())
+		for (String timerName : new ArrayList<>(timers.keySet()))
 			stopTimer(timerName);
 	}
 

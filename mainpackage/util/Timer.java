@@ -1,5 +1,6 @@
 package util;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -64,7 +65,7 @@ public abstract class Timer {
 	}
 
 	public static void stopAllTimers() {
-		for (String timerName : timers.keySet())
+		for (String timerName : new ArrayList<>(timers.keySet()))
 			stopTimer(timerName);
 	}
 
