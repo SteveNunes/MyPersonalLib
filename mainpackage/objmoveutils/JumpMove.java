@@ -62,12 +62,12 @@ public class JumpMove {
 	public void move() {
 		if (++currentFrame < durationFrames / 2) {
 			inc.decY(jumpStrenght);
-			if (jumpStrenght > minStrenghtMultipiler)
+			if (strenghtMultipiler != 0 && jumpStrenght > minStrenghtMultipiler)
 				jumpStrenght /= strenghtMultipiler;
 		}
 		else {
 			inc.incY(jumpStrenght);
-			if (jumpStrenght < initialJumpStrenght * 3)
+			if (strenghtMultipiler != 0 && jumpStrenght < initialJumpStrenght * 3)
 				jumpStrenght *= strenghtMultipiler;
 		}
 		position.setPosition(startPosition.getX() + inc.getX(), startPosition.getY() + inc.getY());
@@ -107,11 +107,22 @@ public class JumpMove {
 	}
 	
 	/**
-	 * Reverte o incremento do pulo de 'subindo' para 'descendo'
+	 * Reverte o incremento do pulo de 'subindo' para 'descendo' (Usar por exemplo quando a ação de LARGAR o botao deve interromper a assenção do pulo
 	 */
-	public void cutToFall() {
+	public void reverseToFall() {
 		if (currentFrame < durationFrames / 2)
 			currentFrame = durationFrames - currentFrame;
+	}
+	
+	/**
+	 * Pula direto para o incremento de queda (Usar com objetos que ja devem começar caindo)
+	 */
+	public void skipToFall() {
+		while (++currentFrame < durationFrames / 2) {
+			inc.decY(jumpStrenght);
+			if (strenghtMultipiler != 0 && jumpStrenght > minStrenghtMultipiler)
+				jumpStrenght /= strenghtMultipiler;
+		}
 	}
 	
 	public Position getStartPosition()

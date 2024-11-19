@@ -26,6 +26,7 @@ public class PathFinder {
 	private PathFinderIgnoreInitialBackDirection ignoreInitialBackDirection;
 	private PathFinderDistance distance;
 	private PathFinderOptmize optimize;
+	private TileCoord targetCoord;
 	
 	public PathFinder(TileCoord initialCoord, TileCoord targetCoord, Direction initialDirection, Function<TileCoord, Boolean> functionIsTileFree)
 		{ this(initialCoord, targetCoord, initialDirection, null, null, null, functionIsTileFree); }
@@ -63,8 +64,9 @@ public class PathFinder {
 		blocks = new HashSet<>();
 		path = new HashSet<>();
 		directions = new ArrayList<>();
+		this.targetCoord = targetCoord.getNewInstance();
 		if (recalculatePath)
-			recalculatePath(initialCoord, targetCoord, this.initialDirection);
+			recalculatePath(initialCoord.getNewInstance(), targetCoord, this.initialDirection);
 	}
 	
 	public boolean pathWasFound()
@@ -91,11 +93,22 @@ public class PathFinder {
 
 	public void clearTempWalls()
 		{ tempBlocks.clear(); }
+	
+	public void removeLastCoordFromPath() {
+		if (directions != null && !directions.isEmpty()) {
+			directions.remove(directions.size() - 1);
+			if (directions.isEmpty())
+				targetCoord.setCoords(0, 0);
+			else
+				targetCoord.setCoords(directions.get(directions.size() - 1).getKey());
+		}
+	}
 		
 	public void recalculatePath(TileCoord currentCoord, TileCoord targetCoord, Direction currentDirection)
 		{ recalculatePath(currentCoord, targetCoord, currentDirection, new HashSet<>()); }
 
 	private void recalculatePath(TileCoord currentCoord, TileCoord targetCoord, Direction currentDirection, Set<TileCoord> tempBlocks) {
+		this.targetCoord.setCoords(targetCoord);
 		blocks = new HashSet<>(tempBlocks);
 		path = new HashSet<>();
 		if (currentCoord.equals(targetCoord) || !isTileFree(currentCoord) || !isTileFree(targetCoord) || isStucked(currentCoord) || isStucked(targetCoord)) {
@@ -171,7 +184,7 @@ public class PathFinder {
 				directions = new ArrayList<>(foundPaths.get(0));
 		}
 	}
-
+	
 	private void optimizePath(List<Pair<TileCoord, Direction>> dirs) {
 		boolean restart;
 		TileCoord current;
@@ -269,6 +282,10 @@ public class PathFinder {
 		directions.forEach(d -> path.add(d.getKey()));
 		optimizePath(directions);
 		return true;
+	}
+
+	public TileCoord getTargetCoord() {
+		return targetCoord;
 	}
 
 	private List<Direction> getFreeDirs(TileCoord coord)

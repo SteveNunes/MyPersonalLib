@@ -9,6 +9,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import javafx.util.Duration;
+
 public abstract class Timer {
 
 	private static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -19,41 +21,41 @@ public abstract class Timer {
 			scheduler = Executors.newScheduledThreadPool(1);
 	}
 
-	public static void createTimer(String timerName, long startingDelayInMs, Runnable runnable)
-		{ createTimer(timerName, startingDelayInMs, 1, 1, runnable); }
+	public static void createTimer(String timerName, Duration startingDelay, Runnable runnable)
+		{ createTimer(timerName, startingDelay, null, 1, runnable); }
 
-	public static void createTimer(String timerName, long repeatingDelayInMs, int repeatingTimes, Runnable runnable)
-		{ createTimer(timerName, 0, repeatingDelayInMs, repeatingTimes, runnable); }
+	public static void createTimer(String timerName, Duration repeatingDelay, int repeatingTimes, Runnable runnable)
+		{ createTimer(timerName, null, repeatingDelay, repeatingTimes, runnable); }
 
-	public static void createTimer(String timerName, long startingDelayInMs, long repeatingDelayInMs, int repeatingTimes, Runnable runnable) {
+	public static void createTimer(String timerName, Duration startingDelay, Duration repeatingDelay, int repeatingTimes, Runnable runnable) {
 		ensureSchedulerActive();
 		if (timers.containsKey(timerName))
-			resetTimer(timerName, startingDelayInMs, repeatingDelayInMs, repeatingTimes, runnable);
+			resetTimer(timerName, startingDelay, repeatingDelay, repeatingTimes, runnable);
 		else
-			startNewTimer(timerName, startingDelayInMs, repeatingDelayInMs, repeatingTimes, runnable);
+			startNewTimer(timerName, startingDelay, repeatingDelay, repeatingTimes, runnable);
 	}
 
-	private static void startNewTimer(String timerName, long startingDelayInMs, long repeatingDelayInMs, int repeatingTimes, Runnable runnable) {
+	private static void startNewTimer(String timerName, Duration startingDelay, Duration repeatingDelay, int repeatingTimes, Runnable runnable) {
 		final int[] counter = { 0 };
 		ScheduledFuture<?> future;
 
 		if (repeatingTimes == 1)
-			future = scheduler.schedule(() -> runnable.run(), startingDelayInMs, TimeUnit.MILLISECONDS);
+			future = scheduler.schedule(() -> runnable.run(), (long)startingDelay.toMillis(), TimeUnit.MILLISECONDS);
 		else {
 			future = scheduler.scheduleAtFixedRate(() -> {
 				runnable.run();
 				if (repeatingTimes > 0 && ++counter[0] >= repeatingTimes) {
 					stopTimer(timerName);
 				}
-			}, startingDelayInMs, repeatingDelayInMs, TimeUnit.MILLISECONDS);
+			}, (long)startingDelay.toMillis(), (long)repeatingDelay.toMillis(), TimeUnit.MILLISECONDS);
 		}
 
 		timers.put(timerName, future);
 	}
 
-	public static void resetTimer(String timerName, long startingDelayInMs, long repeatingDelayInMs, int repeatingTimes, Runnable runnable) {
+	public static void resetTimer(String timerName, Duration startingDelay, Duration repeatingDelay, int repeatingTimes, Runnable runnable) {
 		stopTimer(timerName);
-		startNewTimer(timerName, startingDelayInMs, repeatingDelayInMs, repeatingTimes, runnable);
+		startNewTimer(timerName, startingDelay, repeatingDelay, repeatingTimes, runnable);
 	}
 
 	public static void stopTimer(String timerName) {
