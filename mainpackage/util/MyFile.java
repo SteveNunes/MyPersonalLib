@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -161,8 +162,26 @@ public abstract class MyFile {
 	public static void mkdirs(String absoluteFilePath)
 		{ (new File(new File(absoluteFilePath).getParent() + "\\")).mkdirs(); }
 	
-	public static void copy(String fromPath, String toPath) throws IOException
-		{ java.nio.file.Files.copy((new File(fromPath)).toPath(), (new File(toPath)).toPath()); }
+	public static void copy(String sourcePath, String destinationPath) {
+		copy(sourcePath, destinationPath, false);
+	}
+
+	public static void copy(String sourcePath, String destinationPath, boolean replaceOldFile) {
+		Path source = Path.of(sourcePath);
+		Path destination = Path.of(destinationPath);
+		try {
+			if (replaceOldFile || !Files.exists(destination)) {
+				if (!Files.exists(destination.getParent())) {
+			    Files.createDirectories(destination.getParent());
+			}				Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+			}
+			else
+				throw new RuntimeException("O arquivo de destino já existe");
+		}
+		catch (IOException e) {
+			throw new RuntimeException("Erro ao copiar o arquivo: " + e.getMessage());
+		}
+	}
 	
 	public static Boolean renameFile(String oldFileName, String newFileName) {
 		File oldFile = new File(oldFileName);

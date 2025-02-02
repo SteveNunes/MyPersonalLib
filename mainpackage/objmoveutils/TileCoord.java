@@ -153,11 +153,13 @@ public class TileCoord {
 		{ return tileCoord.equals(this); }
 	
 	public Direction get4wayDirectionToReach(TileCoord tileCoordToReach) {
-		if (getX() > tileCoordToReach.getX())
-			return Direction.LEFT;
-		if (getY() > tileCoordToReach.getY())
-			return Direction.UP;
-		if (getX() < tileCoordToReach.getX())
+		if (Math.abs(getX() - tileCoordToReach.getX()) > Math.abs(getY() - tileCoordToReach.getY())) {
+			if (getX() > tileCoordToReach.getX())
+				return Direction.LEFT;
+			if (getY() > tileCoordToReach.getY())
+				return Direction.UP;
+		}
+		else if (getX() < tileCoordToReach.getX())
 			return Direction.RIGHT;
 		if (getY() < tileCoordToReach.getY())
 			return Direction.DOWN;

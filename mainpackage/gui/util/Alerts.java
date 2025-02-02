@@ -227,7 +227,11 @@ public abstract class Alerts {
 	}
 	
 	public static String choiceCombo(String title, String header, String content, List<String> choices) {
-		ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(0), choices);
+		return choiceCombo(title, header, content, choices, null);
+	}
+	
+	public static String choiceCombo(String title, String header, String content, List<String> choices, String startSelectedValue) {
+		ChoiceDialog<String> dialog = new ChoiceDialog<>(startSelectedValue != null ? startSelectedValue : choices.get(0), choices);
 		dialog.setTitle(title);
 		if (header != null)
 			dialog.setHeaderText(header);
@@ -239,9 +243,12 @@ public abstract class Alerts {
 			{ return null; }
 	}
 	
+	public static String choiceCombo(String title, String content, List<String> choices, String startSelectedValue)
+		{ return choiceCombo(title, null, content, choices, startSelectedValue); }
+	
 	public static String choiceCombo(String title, String content, List<String> choices)
 		{ return choiceCombo(title, null, content, choices); }
-	
+
 	public void loginWindow(String title, String header) {
 	// Create the custom dialog.
 		Dialog<Pair<String, String>> dialog = new Dialog<>();

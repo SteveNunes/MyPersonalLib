@@ -6,9 +6,8 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -19,21 +18,37 @@ import java.util.regex.Pattern;
 
 public class IniFile {
 	
-	long changedTime;
 	private Path file;
 	private String fileName, lastReadVal = null;
 	private List<String> fileBuffer;
 	private LinkedHashMap<String, LinkedHashMap<String, String>> iniBody;
+	private boolean wasModified;
 	static LinkedHashMap<String, IniFile> openedIniFiles = new LinkedHashMap<>();
 	
+	public static void close() {
+		saveAllFilesToDisk();
+		Timer.close();
+	}
+	
+	private void runSaveTimer() {
+		wasModified = true;
+		Timer.createTimer("IniFileSaveToDisk@" + hashCode(), Duration.ofSeconds(1), () -> saveToDisk());
+	}
+	
+	private void stopSaveTimer() {
+		wasModified = false;
+		Timer.stopTimer("IniFileSaveToDisk@" + hashCode());
+	}
+
 	static void saveAllFilesToDisk() {
 		for (IniFile iniFile : openedIniFiles.values())
-			iniFile.saveToDisk();
+			if (iniFile.wasModified)
+				iniFile.saveToDisk();
 	}
 	
 	void saveToDisk() {
-		if (openedIniFiles.containsKey(fileName) && changedTime != 0) {
-			changedTime = 0;
+		if (wasModified && openedIniFiles.containsKey(fileName)) {
+			wasModified = false;
 			updateFileBuffer();
 			MyFile.writeAllLinesOnFile(fileBuffer, fileName);
 		}
@@ -41,25 +56,23 @@ public class IniFile {
 
 	private IniFile(String fileName) {
 		this.fileName = fileName;
-		refresh();
+		wasModified = false;
+		file = Paths.get(fileName);
+		loadIniFromDisk(fileName);
 		openedIniFiles.put(fileName, this);
-		changedTime = 0;
+		stopSaveTimer();
 	}
 	
-	static { TextFile.enableAutoSave(); }
+	static {
+		Misc.addShutdownEvent(() -> IniFile.closeAllOpenedIniFiles());
+	}
 	
 	public static IniFile getNewIniFileInstance(String fileName) {
 		if (!openedIniFiles.containsKey(fileName)) 
 			return new IniFile(fileName);
-		openedIniFiles.get(fileName).refresh();
 		return openedIniFiles.get(fileName);
 	}
 	
-	private void refresh() {
-		file = Paths.get(fileName);
-		loadIniFromDisk(fileName);
-	}
-
 	public static List<IniFile> getOpenedIniFilesList()
 		{ return (List<IniFile>)openedIniFiles.values(); }
 
@@ -82,111 +95,124 @@ public class IniFile {
 			remove(section, getItemList(section).get(0));
 		for (String s : newSection.keySet())
 			write(section, s, newSection.get(s));
-		changedTime = System.currentTimeMillis();
+		runSaveTimer();
 	}
-
+	
 	private static Boolean stringIsSection(String s) {
-		String[] split = s.split(" ");
-		return split[0].length() < 3 ? false : split[0].charAt(0) == '[' && split[0].charAt(split[0].length() - 1) == ']' ;
+		int i = s != null ? s.indexOf("]") : -1;
+		return s != null && !s.isBlank() && s.charAt(0) == '[' && i > 1;
 	}
 
 	private static Boolean stringIsItem(String s) 
 		{ return !s.isEmpty() && s.charAt(0) != '=' && s.contains("="); }
 
 	private static String getSectionFromString(String s)
-		{ return s.split("]")[0].split(" ")[0].substring(1); }
+		{ return s.split("]")[0].substring(1); }
 	
 	public void loadIniFromDisk(String fileName) {
 		iniBody = new LinkedHashMap<String, LinkedHashMap<String, String>>();
-		if (!fileName.isEmpty()) {
+		if (!fileName.isBlank()) {
 			if (Files.exists(file)) {
 				fileBuffer = MyFile.readAllLinesFromFile(fileName);
-				String section = "", item, val;
+				String section = "";
 				for (String s : fileBuffer) {
 					if (stringIsSection(s)) {
 						section = getSectionFromString(s);
 					  iniBody.put(section, new LinkedHashMap<String, String>());
 					}
-					else if (!section.isEmpty() && stringIsItem(s)) {
+					else if (!section.isBlank() && stringIsItem(s)) {
 						String[] split = s.split("=");
-						item = split[0];
-						val = MyConverters.arrayToString(split, 1, "=");
+						String item = split[0];
+						String val = MyConverters.arrayToString(split, 1, "=");
 						write(section, item, val);
 					}
 				}
 			}
 			else
 				fileBuffer = new ArrayList<>();
-			changedTime = 0;
+			stopSaveTimer();
 		}
 	}
 
 	public void loadIniFromDisk() 
 		{ loadIniFromDisk(fileName); }
 	
-	private void insertMissingItems(String section, List<String> fileBuffer, Map<String, List<String>> items) {
-		if (!section.isEmpty()) {
-			if (!items.containsKey(section)) {
-				if (!fileBuffer.isEmpty() && !fileBuffer.get(fileBuffer.size() - 1).trim().isEmpty())
+	private void insertMissingItems(String section, List<String> fileBuffer, Map<String, List<String>> addeds) {
+		if (!section.isBlank()) {
+			if (!addeds.containsKey(section)) {
+				if (!fileBuffer.isEmpty() && !fileBuffer.get(fileBuffer.size() - 1).isBlank())
 					fileBuffer.add("");
 				fileBuffer.add("[" + section + "]");
-				items.put(section, new ArrayList<>());
+				addeds.put(section, new ArrayList<>());
 			}
-			for (String i : getItemList(section))
-				if (!items.get(section).contains(i)) {
-					fileBuffer.add(i + "=" + read(section, i));
-					items.get(section).add(i);
+			for (String item : getItemList(section))
+				if (!addeds.get(section).contains(item)) {
+					fileBuffer.add(item + "=" + read(section, item));
+					addeds.get(section).add(item);
 				}
 		}
+		fileBuffer.add("");
+	}
+	
+	public static void main(String[] args) {
+		IniFile iniFile = IniFile.getNewIniFileInstance("D:\\teste.ini");
+		for (int n = 0; n < 10; n++)
+			iniFile.remove("" + n);
+		for (int n = 0; n < 10; n++)
+			for (int n2 = 0; n2 < 100; n2++)
+				iniFile.write("" + n, "" + n2, "" + MyMath.getRandom(1000, 9999));
+		for (int n = 0; n < 10; n++)
+			for (int n2 = 50; n2 < 100; n2++)
+				iniFile.remove("" + n, "" + n2);
+		for (int n = 0; n < 10; n++)
+			for (int n2 = 200; n2 < 250; n2++)
+				iniFile.write("" + n, "" + n2, "" + MyMath.getRandom(10000, 99999));
 	}
 	
 	private void updateFileBuffer() {
 		Map<String, List<String>> addeds = new HashMap<>();
 		List<String> newFileBuffer = new ArrayList<>();
-		String section = "", item, value, line;
-		for (int l = 0, lmax = fileBuffer.size(); l < lmax; l++) {
-			line = fileBuffer.get(l);
-			if (line.isEmpty()) {
+		String section = "";
+		for (int l = 0; l < fileBuffer.size(); l++) {
+			String line = fileBuffer.get(l);
+			if (!section.isBlank() && stringIsSection(line) && !section.equals(getSectionFromString(line))) {
+				// Se estava com um SECTION aberto, e encontrou um novo SECTION, adiciona itens novos ao final do SECTION atual
+				while (!newFileBuffer.isEmpty() && newFileBuffer.get(newFileBuffer.size() - 1).isBlank())
+					newFileBuffer.remove(newFileBuffer.size() - 1);
 				insertMissingItems(section, newFileBuffer, addeds);
-				if (getItemList(section).isEmpty())
-					newFileBuffer.remove(newFileBuffer.size() - (newFileBuffer.isEmpty() ? 0 : 1));
 			}
 			if (stringIsSection(line)) {
-				if (newFileBuffer.size() == 1 && newFileBuffer.get(0).isEmpty())
-					newFileBuffer.remove(0);
-				else if (newFileBuffer.size() > 1 && getItemList(section).isEmpty())
-					for (int n = 0; n < 2; n++)
-						newFileBuffer.remove(newFileBuffer.size() - 1);
 				section = getSectionFromString(line);
-				if (!getItemList(section).isEmpty()) {
-					if (sectionExists(section)) {
-						newFileBuffer.add(line);
-						addeds.put(section, new ArrayList<>());
-					}
-					else {
-						section = line = "";
-						while (++l < lmax && !stringIsSection(line = fileBuffer.get(l)));
-						if (stringIsSection(line))
-							l--;
+				if (sectionExists(section)) {
+					newFileBuffer.add(line);
+					addeds.put(section, new ArrayList<>());
+				}
+				else
+					section = "";
+			}
+			else if (stringIsItem(line)) {
+				if (!section.isBlank()) {
+					String[] split = line.split("=");
+					String item = split[0];
+					if (itemExists(section, item)) {
+						String value = read(section, item);
+						newFileBuffer.add(item + "=" + value);
+						addeds.get(section).add(item);
 					}
 				}
 			}
-			else if (!section.isEmpty() && stringIsItem(line)) {
-				String[] split = line.split("=");
-				item = split[0];
-				if (itemExists(section, item)) {
-					value = read(section, item);
-					newFileBuffer.add(item + "=" + value);
-					addeds.get(section).add(item);
-				}
-			}
-			else
+			else if (!line.isBlank() || !section.isBlank() || addeds.isEmpty())
 				newFileBuffer.add(line);
 		}
 		insertMissingItems(section, newFileBuffer, addeds);
 		for (String sec : getSectionList())
-			if (!getItemList(sec).isEmpty())
+			if (!getItemList(sec).isEmpty() && !addeds.containsKey(sec))
 				insertMissingItems(sec, newFileBuffer, addeds);
+		// Remover linhas em branco no inicio e final do arquivo, caso existam
+		while (!newFileBuffer.isEmpty() && newFileBuffer.get(0).isBlank())
+			newFileBuffer.remove(0);
+		while (!newFileBuffer.isEmpty() && newFileBuffer.get(newFileBuffer.size() - 1).isBlank())
+			newFileBuffer.remove(newFileBuffer.size() - 1);
 		fileBuffer = new ArrayList<>(newFileBuffer);
 	}
 	
@@ -194,7 +220,7 @@ public class IniFile {
 		if (!iniBody.containsKey(iniSection))
 		  iniBody.put(iniSection, new LinkedHashMap<String, String>());
 		iniBody.get(iniSection).put(iniItem, value);
-		changedTime = System.currentTimeMillis();
+		runSaveTimer();
 	}
 
 	public <T> void write(String section, String item, List<T> numberList, String separator) {
@@ -583,6 +609,7 @@ public class IniFile {
 	public String remove(String iniSection, String iniItem) {
 		if (itemExists(iniSection, iniItem)) {
 			iniBody.get(iniSection).remove(iniItem);
+			runSaveTimer();
 			return iniItem;
 		}
 		return null;
@@ -591,7 +618,7 @@ public class IniFile {
 	public String remove(String iniSection) {
 		if (sectionExists(iniSection)) {
 			iniBody.remove(iniSection);
-			changedTime = System.currentTimeMillis();
+			runSaveTimer();
 			return iniSection;
 		}
 		return null;
@@ -654,17 +681,17 @@ public class IniFile {
 
 	public void clearSection(String iniSection) {
 		iniBody.get(iniSection).clear();
-		changedTime = System.currentTimeMillis();
+		runSaveTimer();
 	}
 
 	public void clearFile() {
 		iniBody.clear();
-		changedTime = System.currentTimeMillis();
+		runSaveTimer();
 	}
 
 	public void closeFile() {
+		saveToDisk();
 		openedIniFiles.remove(fileName);
-		clearFile();
 	}
 	
 	public static void closeAllOpenedIniFiles() {

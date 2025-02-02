@@ -1,6 +1,7 @@
 package util;
 
 import java.io.File;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,82 +20,50 @@ import enums.TextMatchType;
 public class TextFile {
 
 	static Map<String, TextFile> openedTextFiles = new HashMap<>();
-	static Thread autoSaveThread = null;
 
-	static void enableAutoSave() {
-		if (autoSaveThread == null) {
-			autoSaveThread = new Thread(() -> {
-				while (true) {
-					synchronized (IniFile.openedIniFiles) {
-						List<IniFile> list = new ArrayList<>(IniFile.openedIniFiles.values());
-						for (IniFile iniFile : list)
-							if (iniFile.changedTime > 0 && (System.currentTimeMillis() - iniFile.changedTime)  > 1000)
-								iniFile.saveToDisk();
-					}
-					synchronized (openedTextFiles) {
-						List<TextFile> list = new ArrayList<>(openedTextFiles.values());
-						for (TextFile textFile : list)
-							if (textFile.changedTime > 0 && (System.currentTimeMillis() - textFile.changedTime)  > 1000)
-								MyFile.writeAllLinesOnFile(textFile.fileBuffer, textFile.fileName);
-					}
-					Misc.sleep(100);
-				}
-			});
-			autoSaveThread.setDaemon(true);
-			autoSaveThread.start();
-			Misc.setShutdownEvent(() -> {
-				IniFile.saveAllFilesToDisk();
-				saveAllFilesToDisk();
-			});
-		}
+	static {
+		Misc.addShutdownEvent(() -> saveAllFilesToDisk());
 	}
-	
-	static { enableAutoSave(); }
-	
+
 	private int lastFoundLine;
 	private List<String> fileBuffer;
 	private String fileName;
-	private long changedTime;
+	private boolean wasModified;
 
 	/**
-	 * Métodos e seus equivalentes em mIRC Scripting:
-	 * 	lines() - $lines()
-	 *  readLine() - $read()
-	 *  replaceLine() - /write -olN
-	 *  insertLine() - /write -ilN
-	 *  addLine() - /write
-	 *  removeLine() - /write -dlN
-	 *  find() - $read(filename.txt, w, wildCard, startLine)
-	 *  lastFoundLine() - $readn
+	 * Métodos e seus equivalentes em mIRC Scripting: lines() - $lines() readLine()
+	 * - $read() replaceLine() - /write -olN insertLine() - /write -ilN addLine() -
+	 * /write removeLine() - /write -dlN find() - $read(filename.txt, w, wildCard,
+	 * startLine) lastFoundLine() - $readn
 	 * 
-	 * Extras:
-	 * 	fileName()					- Retorna o nome do arquivo que foi carregado.
-	 * 	loadFileFromDisk()	- Recarrega as informa��es do disco para a memória.
-	 * 	findAll() 					- Retorna uma List de Strings com as linhas
-	 * 												encontradas usando um wildCard.
+	 * Extras: fileName() - Retorna o nome do arquivo que foi carregado.
+	 * loadFileFromDisk() - Recarrega as informa��es do disco para a memória.
+	 * findAll() - Retorna uma List de Strings com as linhas encontradas usando um
+	 * wildCard.
 	 */
 
 	private TextFile(String fileName) {
 		lastFoundLine = 0;
-		changedTime = 0;
 		loadFileFromDisk(fileName);
 		openedTextFiles.put(fileName, this);
 	}
 
 	public static TextFile getNewTextFileInstance(String fileName) {
-		if (!openedTextFiles.containsKey(fileName)) 
+		if (!openedTextFiles.containsKey(fileName))
 			return new TextFile(fileName);
+		openedTextFiles.get(fileName).wasModified = false;
 		return openedTextFiles.get(fileName);
 	}
-	
+
 	private static void saveAllFilesToDisk() {
 		for (TextFile textFile : openedTextFiles.values())
-			MyFile.writeAllLinesOnFile(textFile.fileBuffer, textFile.fileName);
+			if (textFile.wasModified)
+				MyFile.writeAllLinesOnFile(textFile.fileBuffer, textFile.fileName);
 	}
-	
+
 	/**
-	 * IMPLEMENTAR o getInstance igual no IniFile para evitar abrir mais de 1 vez
-	 * o mesmo arquivo em instancias diferentes
+	 * IMPLEMENTAR o getInstance igual no IniFile para evitar abrir mais de 1 vez o
+	 * mesmo arquivo em instancias diferentes
 	 */
 
 	/**
@@ -113,6 +82,7 @@ public class TextFile {
 			fileBuffer = MyFile.readAllLinesFromFile(fileName);
 		else
 			fileBuffer = new ArrayList<>();
+		wasModified = false;
 	}
 
 	/**
@@ -121,19 +91,24 @@ public class TextFile {
 	 * nome do arquivo fica gravado em uma String que é passada como parâmetro por
 	 * essa sobrecarga.
 	 */
-	public void loadFileFromDisk()
-		{ loadFileFromDisk(fileName); }
+	public void loadFileFromDisk() {
+		loadFileFromDisk(fileName);
+	}
 
 	/**
 	 * @return - O nome do arquivo especificado por �ltimo ao instancear o objeto ou
 	 *         ao salvar em disco com outro nome.
 	 */
-	public String fileName() { return fileName; }
+	public String fileName() {
+		return fileName;
+	}
 
 	/**
 	 * @return - O total de linhas do arquivo.
 	 */
-	public int lines() { return fileBuffer.size(); }
+	public int lines() {
+		return fileBuffer.size();
+	}
 
 	/**
 	 * L� a linha especificada do arquivo.
@@ -143,7 +118,8 @@ public class TextFile {
 	 * @return - A linha especificada do arquivo.
 	 */
 	public String readLine(int lineNumber) {
-		if (fileBuffer.isEmpty() || lineNumber < 0 || lineNumber > lines()) return "";
+		if (fileBuffer.isEmpty() || lineNumber < 0 || lineNumber > lines())
+			return "";
 		return fileBuffer.get(lineNumber - 1);
 	}
 
@@ -159,8 +135,23 @@ public class TextFile {
 	public void replaceLine(String text, int lineNumber) {
 		if (lines() > 0 && lineNumber <= lines()) {
 			fileBuffer.set(lineNumber - 1, text);
-			changedTime = System.currentTimeMillis();
+			runSaveTimer();
 		}
+	}
+
+	private void runSaveTimer() {
+		wasModified = true;
+		Timer.createTimer("TextFileSaveToDisk", Duration.ofSeconds(1), () -> {
+			wasModified = false;
+			MyFile.writeAllLinesOnFile(fileBuffer, fileName);
+		});
+	}
+	
+	public static void close() {
+		for (TextFile textFile : openedTextFiles.values())
+			if (textFile.wasModified)
+				MyFile.writeAllLinesOnFile(textFile.fileBuffer, textFile.fileName);
+		Timer.close();
 	}
 
 	/**
@@ -175,7 +166,7 @@ public class TextFile {
 	public void insertLine(String text, int lineNumber) {
 		if (lines() > 0 && lineNumber <= lines()) {
 			fileBuffer.add(lineNumber - 1, text);
-			changedTime = System.currentTimeMillis();
+			runSaveTimer();
 		}
 	}
 
@@ -188,7 +179,7 @@ public class TextFile {
 	 */
 	public void addLine(String text) {
 		fileBuffer.add(text);
-		changedTime = System.currentTimeMillis();
+		runSaveTimer();
 	}
 
 	/**
@@ -200,13 +191,16 @@ public class TextFile {
 	 *                   altera��o.
 	 */
 	public void removeLine(int startLine, int endLine) {
-		if (startLine == 0) startLine = 1;
-		else if (startLine < 0) startLine = -startLine;
-		if (endLine < 1 || endLine > lines()) endLine = lines();
+		if (startLine == 0)
+			startLine = 1;
+		else if (startLine < 0)
+			startLine = -startLine;
+		if (endLine < 1 || endLine > lines())
+			endLine = lines();
 		if (!fileBuffer.isEmpty() && startLine > 0 && endLine <= lines())
-		  for (int n = endLine - startLine; n >= 0; n--)
-		  	fileBuffer.remove(startLine - 1);
-		changedTime = System.currentTimeMillis();
+			for (int n = endLine - startLine; n >= 0; n--)
+				fileBuffer.remove(startLine - 1);
+		runSaveTimer();
 	}
 
 	/**
@@ -214,12 +208,15 @@ public class TextFile {
 	 * saveOnDisk)' pnde não é preciso informar o parâmetro 'endLine' (é passado o
 	 * valor de 'startLine' por padr�o)
 	 */
-	public void removeLine(int lineNumber)
-		{ removeLine(lineNumber, lineNumber); }
+	public void removeLine(int lineNumber) {
+		removeLine(lineNumber, lineNumber);
+	}
 
 	public String find(String wildCard, int startLine) {
-		if (startLine < 1) startLine = 1;
-		else if (startLine > lines()) return "";
+		if (startLine < 1)
+			startLine = 1;
+		else if (startLine > lines())
+			return "";
 		for (int n = startLine - 1; n < lines(); n++)
 			if (n + 1 >= startLine && MyString.textMatch(fileBuffer.get(n), wildCard, TextMatchType.WILDCARD)) {
 				lastFoundLine = n + 1;
@@ -228,7 +225,9 @@ public class TextFile {
 		return "";
 	}
 
-	public String find(String wildCard) { return find(wildCard, 1); }
+	public String find(String wildCard) {
+		return find(wildCard, 1);
+	}
 
 	/**
 	 * Após chamar o método find(), retorna o n�mero da linha onde a �ltima
@@ -237,7 +236,9 @@ public class TextFile {
 	 * @return - O n�mero da linha onde a �ltima ocorr�ncia foi encontrada ap�s
 	 *         chamar o método find()
 	 */
-	public int lastFoundLine() { return lastFoundLine; }
+	public int lastFoundLine() {
+		return lastFoundLine;
+	}
 
 	/**
 	 * Retorna uma List de Strings das linhas onde a ocorr�ncia especificada no
@@ -250,8 +251,10 @@ public class TextFile {
 	 */
 	public List<String> findAll(String wildCard, int startLine) {
 		List<String> result = new ArrayList<String>();
-		if (startLine < 1) startLine = 1;
-		else if (startLine > lines()) return result;
+		if (startLine < 1)
+			startLine = 1;
+		else if (startLine > lines())
+			return result;
 		while (!find(wildCard, startLine).isEmpty()) {
 			startLine = lastFoundLine();
 			result.add(readLine(startLine++));
@@ -259,26 +262,30 @@ public class TextFile {
 		lastFoundLine = 0;
 		return result;
 	}
-	
-	public List<String> getAllLines()
-		{ return fileBuffer; }
+
+	public List<String> getAllLines() {
+		return fileBuffer;
+	}
 
 	/**
 	 * Sobrecarga do método 'findAll(String wildCard)' pnde não é preciso informar o
 	 * parâmetro 'startLine' (é passado o valor '1' por padr�o)
 	 */
-	public List<String> findAll(String wildCard)
-		{ return findAll(wildCard, 1); }
-	
-	public void clearFile()
-		{ fileBuffer.clear(); }
-	
+	public List<String> findAll(String wildCard) {
+		return findAll(wildCard, 1);
+	}
+
+	public void clearFile() {
+		fileBuffer.clear();
+	}
+
 	public void closeFile() {
+		MyFile.writeAllLinesOnFile(fileBuffer, fileName);
 		openedTextFiles.remove(fileName);
 		fileBuffer.clear();
 		fileBuffer = null;
 	}
-	
+
 	public void renameFileTo(String newFileName) {
 		File file = new File(fileName);
 		if (file.exists() && !file.delete())

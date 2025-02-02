@@ -118,14 +118,14 @@ public class DrawImageEffects {
 	public DrawImageGlow getGlow()
 		{ return drawImageGlow; }
 	
-	public void setGlow(Integer level, BlendMode blendMode) {
+	public void setGlow(Double level, BlendMode blendMode) {
 		if (drawImageGlow == null)
 			drawImageGlow = new DrawImageGlow(level, blendMode);
 		else
 			drawImageGlow.setValues(level, blendMode);
 	}
 	
-	public void setGlow(Integer level)
+	public void setGlow(Double level)
 		{ setGlow(level, null); }
 	
 	public void removeGlow()

@@ -156,8 +156,15 @@ public class JInputEX {
 		if (joysticks == null)
 			init();
 		for (JInputEX joy : joysticks)
-			if (joy.isConnected())
-				joy.poll();
+			if (joy.isConnected()) {
+				try {
+					joy.poll();
+				}
+				catch (Exception e) {
+					onJoystickDisconnected.accept(joy);
+					joy.close();
+				}
+			}
 	}
 
 	public void poll() {

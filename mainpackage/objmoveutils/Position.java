@@ -164,12 +164,14 @@ public class Position {
 	}
 	
 	public Direction get4wayDirectionToReach(Position positionToReach) {
-		if (getX() > positionToReach.getX())
-			return Direction.LEFT;
-		if (getY() > positionToReach.getY())
+		if (Math.abs(getX() - positionToReach.getX()) > Math.abs(getY() - positionToReach.getY())) {
+			if (getX() > positionToReach.getX())
+				return Direction.LEFT;
+			if (getX() < positionToReach.getX())
+				return Direction.RIGHT;
+		}
+		else if (getY() > positionToReach.getY())
 			return Direction.UP;
-		if (getX() < positionToReach.getX())
-			return Direction.RIGHT;
 		if (getY() < positionToReach.getY())
 			return Direction.DOWN;
 		return null;

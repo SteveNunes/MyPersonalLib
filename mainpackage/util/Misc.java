@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import java.util.stream.IntStream;
 public abstract class Misc {
 	
 	private static Map<String, Map<Long, ?>> uniqueId = new HashMap<>();
+	private static List<Runnable> shutdownEvents = new ArrayList<>();
 
 	/** Retorna alternadamente entre os valores {@code v1} e {@code v2} baseadp no valor atual de {@code var} (Versão para tipos numéricos) */
 	public static <T extends Number & Comparable<? super T>> T toogleValues(T var, T v1, T v2)
@@ -28,10 +30,15 @@ public abstract class Misc {
 	public static <T> T toogleValues(T var, T v1, T v2)
 		{ return var.equals(v1) ? v2 : v1; }
 	
-	/** Define um evento que será disparado quando o programa for encerrado */
-	public static void setShutdownEvent(Runnable runnable) {
-		Thread shutdownHook = new Thread(runnable);
-		Runtime.getRuntime().addShutdownHook(shutdownHook);
+	/** Adiciona um evento que será disparado quando o programa for encerrado */
+	public static void addShutdownEvent(Runnable runnable) {
+		shutdownEvents.add(runnable);
+	}
+	
+	/** Roda os eventos adicionados acima */
+	public static void runShutdownEvents() {
+		for (Runnable runnable : shutdownEvents)
+			runnable.run();
 	}
 	
 	/** Atalho para pausar a thread, sem precisar se preocupar com o try catch envolvido. */
@@ -45,11 +52,17 @@ public abstract class Misc {
 	public static void printCTime()
 		{ System.out.println(System.currentTimeMillis()); }
 	
-	/** Retorna no console, o tempo de processamento do consumer, em milisegundos */
-	public static void benchAndShow(Runnable runnable) {
+	/** Retorna o tempo em ms que o runnable levou para ser executado */
+	public static int bench(Runnable runnable) {
 		long start = System.currentTimeMillis();
 		runnable.run();
-		System.out.println("Bench result: " + (System.currentTimeMillis() - start) + "ms");
+		return (int)(System.currentTimeMillis() - start);
+	}
+	
+	/** Retorna no console, o tempo de processamento do consumer, em milisegundos */
+	public static void benchAndShow(Runnable runnable) {
+		int ms = bench(runnable);
+		System.out.println("Bench result: " + ms + "ms");
 	}
 	
 	public static Boolean alwaysTrue()

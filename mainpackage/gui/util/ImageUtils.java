@@ -1281,8 +1281,8 @@ public abstract class ImageUtils {
 	    	colorInput.setPaint(new Color(effects.getColorTint().getRed(), effects.getColorTint().getGreen(), effects.getColorTint().getBlue(), effects.getColorTint().getAlpha()));
 	    	colorInput.setX(0);
 	    	colorInput.setY(0);
-	    	colorInput.setWidth(sourceWidth);
-	    	colorInput.setHeight(sourceHeight);
+	    	colorInput.setWidth(targetWidth);
+	    	colorInput.setHeight(targetHeight);
 		    blend2.setTopInput(colorInput);
 		    blend = blend2;
 		    hasEffect = true;

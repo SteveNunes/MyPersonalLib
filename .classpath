@@ -15,8 +15,8 @@
 	<classpathentry kind="lib" path="D:/Java/java-libs/jnativehook-2.2.2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JXInput"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Beads"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JNA"/>
 	<classpathentry kind="lib" path="D:/Java/java-libs/jinput-2.0.10.jar"/>
 	<classpathentry kind="lib" path="D:/Java/java-libs/GifDecoder.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JNA"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

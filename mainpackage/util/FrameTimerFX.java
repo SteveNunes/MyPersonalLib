@@ -9,6 +9,10 @@ import javafx.animation.AnimationTimer;
 
 public abstract class FrameTimerFX {
 
+	static {
+		Misc.addShutdownEvent(() -> close());
+	}
+
 	private static final Map<String, AnimationTimer> timers = new HashMap<>();
 	private static boolean fxApplicationIsClosed = false;
 
@@ -21,10 +25,18 @@ public abstract class FrameTimerFX {
 	}
 
 	public static void createTimer(String timerName, long startingDelayInFrames, long repeatingDelayInFrames, int repeatingTimes, Runnable runnable) {
+		if (timerName == null || runnable == null) {
+			System.out.println("Tentativa de criar um timer com nome ou ação nula.");
+			return;
+		}
 		if (timers.containsKey(timerName))
 			resetTimer(timerName, startingDelayInFrames, repeatingDelayInFrames, repeatingTimes, runnable);
 		else
 			startNewTimer(timerName, startingDelayInFrames, repeatingDelayInFrames, repeatingTimes, runnable);
+	}
+
+	public static boolean timerExists(String timerName) {
+		return timers.containsKey(timerName);
 	}
 
 	private static void startNewTimer(String timerName, long startingDelayInFrames, long repeatingDelayInFrames, int repeatingTimes, Runnable runnable) {
@@ -32,30 +44,29 @@ public abstract class FrameTimerFX {
 			return;
 		final long[] frameCount = { 0 };
 		final int[] executionCount = { 0 };
-		final boolean[] started = { false };
+		final boolean[] isFirstExecution = { true };
 		AnimationTimer timer = new AnimationTimer() {
 			@Override
 			public void handle(long now) {
-				if (fxApplicationIsClosed) {
+				if (fxApplicationIsClosed || !timers.containsKey(timerName) || timers.get(timerName) == null) {
 					timers.remove(timerName);
 					stop();
 					return;
 				}
-				if (!started[0]) {
-					frameCount[0] = 0;
-					started[0] = true;
-				}
 				frameCount[0]++;
-				if (executionCount[0] == 0 && frameCount[0] >= startingDelayInFrames) {
-					runnable.run();
-					executionCount[0]++;
-					frameCount[0] = 0;
-					if (repeatingTimes == 1) {
-						stopTimer(timerName);
-						return;
+				if (isFirstExecution[0]) {
+					if (frameCount[0] >= startingDelayInFrames) {
+						runnable.run();
+						executionCount[0]++;
+						frameCount[0] = 0;
+						isFirstExecution[0] = false;
+						if (repeatingTimes == 1) {
+							stopTimer(timerName);
+							return;
+						}
 					}
 				}
-				else if (executionCount[0] > 0 && repeatingDelayInFrames > 0 && frameCount[0] >= repeatingDelayInFrames) {
+				else if (repeatingDelayInFrames > 0 && frameCount[0] >= repeatingDelayInFrames) {
 					runnable.run();
 					executionCount[0]++;
 					frameCount[0] = 0;
@@ -74,16 +85,22 @@ public abstract class FrameTimerFX {
 	}
 
 	public static void stopTimer(String timerName) {
-		AnimationTimer timer = timers.get(timerName);
-		if (timer != null) {
-			timer.stop();
-			timers.remove(timerName);
+		if (timers.containsKey(timerName)) {
+			AnimationTimer timer = timers.get(timerName);
+			if (timer != null) {
+				timer.stop();
+				timers.remove(timerName);
+			}
 		}
 	}
 
 	public static void stopAllTimers() {
-		for (String timerName : new ArrayList<>(timers.keySet()))
-			stopTimer(timerName);
+		for (String timerName : new ArrayList<>(timers.keySet())) {
+			AnimationTimer timer = timers.get(timerName);
+			if (timer != null)
+				timer.stop();
+			timers.remove(timerName);
+		}
 	}
 
 	public static Set<String> getAllTimersNames() {
