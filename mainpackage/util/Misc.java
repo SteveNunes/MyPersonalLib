@@ -9,18 +9,25 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public abstract class Misc {
 	
+	public static final ExecutorService executorService = Executors.newCachedThreadPool();
+	
 	private static Map<String, Map<Long, ?>> uniqueId = new HashMap<>();
-	private static List<Runnable> shutdownEvents = new ArrayList<>();
+	private static List<Runnable> shutdownEvents = null;
+	private static boolean loggingErrors = false;
 
 	/** Retorna alternadamente entre os valores {@code v1} e {@code v2} baseadp no valor atual de {@code var} (Versão para tipos numéricos) */
 	public static <T extends Number & Comparable<? super T>> T toogleValues(T var, T v1, T v2)
@@ -32,13 +39,21 @@ public abstract class Misc {
 	
 	/** Adiciona um evento que será disparado quando o programa for encerrado */
 	public static void addShutdownEvent(Runnable runnable) {
+		if (shutdownEvents == null) {
+			shutdownEvents = new ArrayList<>();
+			shutdownEvents.add(() -> executorService.shutdownNow());
+			System.out.println("Para garantir o encerratento correto da sua aplicação,\nexecute o método 'Misc.runShutdownEvents()' ao encerrar sua aplicação.");
+		}
 		shutdownEvents.add(runnable);
 	}
 	
 	/** Roda os eventos adicionados acima */
 	public static void runShutdownEvents() {
-		for (Runnable runnable : shutdownEvents)
-			runnable.run();
+		if (shutdownEvents != null) {
+			for (Runnable runnable : shutdownEvents)
+				runnable.run();
+			shutdownEvents = null;
+		}
 	}
 	
 	/** Atalho para pausar a thread, sem precisar se preocupar com o try catch envolvido. */
@@ -190,6 +205,44 @@ public abstract class Misc {
 			}
 			consumer.accept(i);
 		});
+	}
+
+	public static void setLogErrors(boolean state) {
+		loggingErrors = state;
+	}
+
+	public static void addErrorOnLog(Exception exception, String errorLogFilename) {
+		addErrorOnLog(exception, errorLogFilename, null, new String[0]);
+	}
+	
+	public static void addErrorOnLog(Exception exception, String errorLogFilename, String ... extraLogLinesToBeAdded) {
+		addErrorOnLog(exception, errorLogFilename, null, extraLogLinesToBeAdded);
+	}
+	
+	public static void addErrorOnLog(Exception exception, String errorLogFilename, Runnable extraActionsOnError) {
+		addErrorOnLog(exception, errorLogFilename, extraActionsOnError, new String[0]);
+	}
+	
+	public static void addErrorOnLog(Exception exception, String errorLogFilename, Runnable extraActionsOnError, String ... extraLogLinesToBeAdded) {
+		if (loggingErrors ) {
+			List<String> list = MyFile.readAllLinesFromFile(errorLogFilename);
+			List<String> list2 = new ArrayList<>();
+			list2.add(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date()));
+			if (extraLogLinesToBeAdded.length > 0)
+				for (String s : extraLogLinesToBeAdded)
+					list2.add(s);
+			list2.add(exception.getMessage());
+			for (StackTraceElement s : exception.getStackTrace())
+				list2.add("\t at " + s.toString());
+			if (list != null) {
+				list2.add("");
+				for (String s : list)
+					list2.add(s);
+			}
+			MyFile.writeAllLinesOnFile(list2, errorLogFilename);
+			if (extraActionsOnError != null)
+				extraActionsOnError.run();
+		}
 	}
 
 }

@@ -99,6 +99,11 @@ public abstract class MyString {
 		}
 		return sb.toString();
 	}
+	
+	public static Matcher testRegex(String string, String regexPattern) {
+		Matcher matcher = Pattern.compile(regexPattern).matcher(string);
+		return matcher.matches() ? matcher : null;
+	}
 
 	public static Boolean textMatch(String text, String pattern, TextMatchType matchType, Boolean caseSensitive) {
 		if (text == null || text.isEmpty() || pattern == null || pattern.isEmpty())
@@ -153,8 +158,67 @@ public abstract class MyString {
 	  return result.toString();
 	}
 	
+	public static String removeTextFormaterCodes(String text) {
+		if (text == null || text.isEmpty())
+			return text;
+		boolean found = false;
+		do {
+			found = false;
+			Matcher[] matchers = {
+				Pattern.compile(".*(\\{[ibou]\\}).*").matcher(text),
+				Pattern.compile(".*(\\{l(\\d+)\\}).*").matcher(text),
+				Pattern.compile(".*(\\{k(\\d+)(\\,(\\d+))*\\}).*").matcher(text),
+				Pattern.compile(".*(\\{(#[0-9a-fA-F]{6,8})(\\,(#[0-9a-fA-F]{6,8}))*\\}).*").matcher(text),
+				Pattern.compile(".*(\\{([a-zA-Z]+)(\\,[a-zA-Z]+)*\\}).*").matcher(text)
+			};
+			for (Matcher matcher : matchers)
+				if (matcher.matches()) {
+					text = text.replace(matcher.group(1), "");
+					found = true;
+				}
+		}
+		while (found);
+		return text;
+	}
+	
+	/** Remove acentos */
+	public static String removeAccents(String text) {
+		if (text == null || text.isEmpty())
+			return text;
+    String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
+    return normalized.replaceAll("\\p{M}", "");	}
+	
+	/** Remove pontuações */
+	public static String removePuncts(String text) {
+		if (text == null || text.isEmpty())
+			return text;
+    return text.replaceAll("\\p{Punct}", "");
+	}
+	
+	/** Remove números */
+	public static String removeNumbers(String text) {
+    if (text == null || text.isEmpty())
+      return text;
+		return text.replaceAll("[0-9]", "");
+	}
+	
+	/** Remove caracteres não alfa-numéricos */
+	public static String removeNonAlphanumeric(String text) {
+		if (text == null || text.isEmpty())
+			return text;
+		text = text.replaceAll("[^\\p{L}\\p{N}\\p{P}\\s]", "");
+		return text;
+	}
+
+	/** Remover abreviações de país tipo 🇧🇷 */
+	public static String removeFlags(String text) {
+		return text.replaceAll("[\\uD83C\\uDDE6-\\uD83C\\uDDFF]{2}", "");
+	}
+	
 	/** remove letras repetidas da frase, se for encontradas mais de 2 ocorrências da mesma letra em sequência */
-	public static String removeRepeatedChar(String text) {
+	public static String removeRepeatedChars(String text) {
+		if (text == null || text.isEmpty())
+			return text;
 		StringBuilder result = new StringBuilder();
 		int consecutive = 1;
 		char lastChar = 0;
@@ -162,19 +226,23 @@ public abstract class MyString {
 			char ch = text.charAt(i);
 			if (ch == lastChar)
 				consecutive++;
-			else
+			else if (ch != ' ')
 				consecutive = 1;
 			if (consecutive < 3)
 					result.append(ch);
-			lastChar = ch;
+			if (ch != ' ')
+				lastChar = ch;
 		}
 		return result.toString();
 	}
 	
-	public static String removeEmojis(String input) {
+	/** Remove emojis */
+	public static String removeEmojis(String text) {
+		if (text == null || text.isEmpty())
+			return text;
     String emojiRegex = "[\\x{1F600}-\\x{1F64F}\\x{1F300}-\\x{1F5FF}\\x{1F680}-\\x{1F6FF}\\x{1F700}-\\x{1F77F}\\x{1F780}-\\x{1F7FF}\\x{1F800}-\\x{1F8FF}\\x{1F900}-\\x{1F9FF}\\x{1FA00}-\\x{1FA6F}\\x{1FA70}-\\x{1FAFF}\\x{2600}-\\x{26FF}\\x{2700}-\\x{27BF}]";
     Pattern emojiPattern = Pattern.compile(emojiRegex, Pattern.UNICODE_CASE | Pattern.CASE_INSENSITIVE);
-    Matcher emojiMatcher = emojiPattern.matcher(input);
+    Matcher emojiMatcher = emojiPattern.matcher(text);
     String stringWithoutEmojis = emojiMatcher.replaceAll("");
     return stringWithoutEmojis;
 	}

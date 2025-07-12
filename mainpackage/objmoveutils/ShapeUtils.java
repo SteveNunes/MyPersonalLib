@@ -3,15 +3,15 @@ package objmoveutils;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Ellipse2D;
-import java.security.SecureRandom;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import enums.Direction;
 import javafx.scene.shape.Line;
 
 public abstract class ShapeUtils {
 	
-	private static Random random = new Random(new SecureRandom().nextInt(Integer.MAX_VALUE));
+	private static Random random = ThreadLocalRandom.current();
 
 	public static Point getExtendLinePoint(Line line, double extensionDistance)
 		{ return getRealocatedPoint(new Point((int)line.getStartX(), (int)line.getStartY()), extensionDistance, getAngleFromLineInRadius(line)); }
@@ -65,6 +65,39 @@ public abstract class ShapeUtils {
 	  return new Point((int)(co * vRadius), (int)(si * hRadius));
 	}
 
+  /**
+   * Calcula a coordenada de um ponto na borda de uma elipse, dado o centro, raios horizontal e vertical,
+   * e a porcentagem do ângulo total.
+   *
+   * @param centerX    O valor da coordenada X do centro da elipse.
+   * @param centerY    O valor da coordenada Y do centro da elipse.
+   * @param radiusW    O raio da elipse na direção horizontal (largura).
+   * @param radiusH    O raio da elipse na direção vertical (altura).
+   * @param percentage A porcentagem do ângulo total (0.0 a 100.0) para encontrar a coordenada na borda.
+   * @return Um objeto Point contendo as coordenadas (x, y) do ponto na borda da elipse.
+   */
+	public static Point getEllipseDotByPercentage(int centerX, int centerY, double radiusW, double radiusH, double percentage) {
+		if (percentage < 0 || percentage > 100)
+			throw new IllegalArgumentException("A porcentagem deve estar entre 0.0 e 100.0.");
+		double grau = (percentage / 100.0) * 360.0;
+		double radiano = Math.toRadians(grau);
+		int x = (int) (centerX + radiusW * Math.cos(radiano));
+		int y = (int) (centerY - radiusH * Math.sin(radiano)); // Subtrai porque o eixo Y cresce para baixo em Java Graphics
+		return new Point(x, y);
+	}
+
+	public static Point getCircleDotByPercentage(int centerX, int centerY, double radius, double percentage) {
+		return getEllipseDotByPercentage(centerX, centerY, radius, radius, percentage);
+	}
+
+	public static Point getEllipseDotByDegree(int centerX, int centerY, int radiusW, int radiusH, int degree) {
+		return getEllipseDotByPercentage(centerX, centerY, radiusW, radiusW, (double)degree / 100d);
+	}
+	
+	public static Point getCircleDotByDegree(int centerX, int centerY, int radius, int degree) {
+		return getCircleDotByPercentage(centerX, centerY, radius, (double)degree / 100d);
+	}
+	
   /*
    * Retorna um {@code Position} com valores {@code X, Y} referentes
    * ao incremento para que um objeto na coordenada {@code position1}

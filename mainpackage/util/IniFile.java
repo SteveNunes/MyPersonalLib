@@ -8,11 +8,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,9 +27,8 @@ public class IniFile {
 	private boolean wasModified;
 	static LinkedHashMap<String, IniFile> openedIniFiles = new LinkedHashMap<>();
 	
-	public static void close() {
-		saveAllFilesToDisk();
-		Timer.close();
+	static {
+		Misc.addShutdownEvent(IniFile::saveAllFilesToDisk);
 	}
 	
 	private void runSaveTimer() {
@@ -40,7 +41,7 @@ public class IniFile {
 		Timer.stopTimer("IniFileSaveToDisk@" + hashCode());
 	}
 
-	static void saveAllFilesToDisk() {
+	private static void saveAllFilesToDisk() {
 		for (IniFile iniFile : openedIniFiles.values())
 			if (iniFile.wasModified)
 				iniFile.saveToDisk();
@@ -73,8 +74,8 @@ public class IniFile {
 		return openedIniFiles.get(fileName);
 	}
 	
-	public static List<IniFile> getOpenedIniFilesList()
-		{ return (List<IniFile>)openedIniFiles.values(); }
+	public static Collection<IniFile> getOpenedIniFilesList()
+		{ return openedIniFiles.values(); }
 
 	public Path getFilePath()
 		{ return file; }
@@ -223,6 +224,14 @@ public class IniFile {
 		runSaveTimer();
 	}
 
+	public void write(String iniSection, String iniItem, boolean value) {
+		write(iniSection, iniItem, "" + value);
+	}
+	
+	public <T extends Number> void write(String iniSection, String iniItem, T number) {
+		write(iniSection, iniItem, "" + number);
+	}
+	
 	public <T> void write(String section, String item, List<T> numberList, String separator) {
 		StringBuilder sb = new StringBuilder();
 		for (T v : numberList)
@@ -276,6 +285,8 @@ public class IniFile {
   	{ return readAsEnum(section, item, enumClass, null); }
   
 	public Boolean readAsBoolean(String section, String item, Boolean defaultReturnValue) {
+		if (read(section, item) == null)
+			return defaultReturnValue;
 		try
 			{ return Boolean.parseBoolean(read(section, item)); }
 		catch (Exception e)
@@ -667,7 +678,7 @@ public class IniFile {
 	}
 
 	public String getItemAtPos(String iniSection, int coord) {
-		if (!iniBody.get(iniSection).isEmpty()) {
+		if (sectionExists(iniSection) && !iniBody.get(iniSection).isEmpty()) {
 			List<String> list = getItemList(iniSection);
 			if (coord < 0 || coord >= list.size())
 				return null;
@@ -680,8 +691,10 @@ public class IniFile {
 		{ return sectionExists(iniSection) ? iniBody.get(iniSection).containsKey(iniItem) : false; }
 
 	public void clearSection(String iniSection) {
-		iniBody.get(iniSection).clear();
-		runSaveTimer();
+		if (iniBody.containsKey(iniSection)) {
+			iniBody.get(iniSection).clear();
+			runSaveTimer();
+		}
 	}
 
 	public void clearFile() {
@@ -690,8 +703,24 @@ public class IniFile {
 	}
 
 	public void closeFile() {
+		Timer.stopTimer("IniFileSaveToDisk@" + hashCode());
 		saveToDisk();
 		openedIniFiles.remove(fileName);
+	}
+	
+	public void deleteFile() {
+		try {
+			new File(fileName).delete();
+			Timer.stopTimer("IniFileSaveToDisk@" + hashCode());
+			openedIniFiles.remove(fileName);
+		}
+		catch (Exception e) {
+			throw new RuntimeException("Unable to delete file \"" + fileName + "\"");
+		}
+	}
+	
+	public boolean isSameFile(IniFile otherIniFile) {
+		return fileName().equals(otherIniFile.fileName());
 	}
 	
 	public static void closeAllOpenedIniFiles() {
@@ -798,4 +827,20 @@ public class IniFile {
 	public static String linkedHashMapToSubItemString(LinkedHashMap<String, String> map)
 		{ return linkedHashMapToSubItemString(map, "{}"); }
 
+	@Override
+	public int hashCode() {
+		return Objects.hash(fileName);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		return fileName.equals(((IniFile) obj).fileName);
+	}
+	
 }

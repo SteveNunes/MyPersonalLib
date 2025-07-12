@@ -1,9 +1,10 @@
 package util;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -12,10 +13,13 @@ import javafx.util.Duration;
 public abstract class DurationTimerFX {
 
 	static {
-		Misc.addShutdownEvent(() -> close());
+		Misc.addShutdownEvent(DurationTimerFX::close);
 	}
 
-	private static final Map<String, Timeline> timers = new HashMap<>();
+	private static final Map<String, Timeline> timers = new ConcurrentHashMap<>();
+	private static final Map<String, Long> timersStartTime = new ConcurrentHashMap<>();
+	private static final Map<String, Long> timersCurrentLoopTime = new ConcurrentHashMap<>();
+	private static final Map<String, Long> timersTotalCycles = new ConcurrentHashMap<>();
 	private static boolean fxApplicationIsClosed = false;
 
 	public static void createTimer(String timerName, Duration startingDelay, Runnable runnable) {
@@ -40,6 +44,8 @@ public abstract class DurationTimerFX {
 	private static void startNewTimer(String timerName, Duration startingDelay, Duration repeatingDelay, int repeatingTimes, Runnable runnable) {
     if (fxApplicationIsClosed)
 			return;
+		timersStartTime.put(timerName, System.currentTimeMillis());
+		timersTotalCycles.put(timerName, 0L);
 		final int repeatingTimes2 = repeatingTimes - 1;
 		final Duration repeatingDelay2 = repeatingDelay;
 		if (startingDelay != null) {
@@ -48,11 +54,15 @@ public abstract class DurationTimerFX {
 			Timeline initialTimeline = new Timeline();
 			timers.put(timerName, initialTimeline);
 			initialTimeline.getKeyFrames().add(new KeyFrame(startingDelay, event -> {
+				updateTimerCurrentLoopTime(timerName);
 				runnable.run();
 				if (repeatingDelay2 != Duration.ZERO) {
 					Timeline repeatTimeline = new Timeline();
 					repeatTimeline.setOnFinished(e -> timers.remove(timerName));
-					repeatTimeline.getKeyFrames().add(new KeyFrame(repeatingDelay2, e -> runnable.run()));
+					repeatTimeline.getKeyFrames().add(new KeyFrame(repeatingDelay2, e -> {
+						updateTimerCurrentLoopTime(timerName);
+						runnable.run();
+					}));
 					repeatTimeline.setCycleCount(repeatingTimes2 > 0 ? repeatingTimes2 : Timeline.INDEFINITE);
 					repeatTimeline.play();
 					timers.put(timerName, repeatTimeline);
@@ -66,17 +76,41 @@ public abstract class DurationTimerFX {
 		else if (repeatingDelay != null) {
 			if (repeatingDelay == Duration.ZERO)
 				repeatingDelay = Duration.millis(1);
-			if (startingDelay == null || startingDelay == Duration.ZERO)
+			if (startingDelay == null || startingDelay == Duration.ZERO) {
+				updateTimerCurrentLoopTime(timerName);
 				runnable.run();
+			}
 			Timeline repeatTimeline = new Timeline();
 			timers.put(timerName, repeatTimeline);
 			repeatTimeline.setOnFinished(e -> timers.remove(timerName));
-			repeatTimeline.getKeyFrames().add(new KeyFrame(repeatingDelay, e -> runnable.run()));
+			repeatTimeline.getKeyFrames().add(new KeyFrame(repeatingDelay, e -> {
+				updateTimerCurrentLoopTime(timerName);
+				runnable.run();
+			}));
 			repeatTimeline.setCycleCount(repeatingTimes2 > 0 ? repeatingTimes2 : Timeline.INDEFINITE);
 			repeatTimeline.play();
 		}
 		else
 			throw new RuntimeException("Unable to start a timer without at least a startingDelay or a repeatingDelay");
+	}
+	
+	private static void updateTimerCurrentLoopTime(String timerName) {
+		timersCurrentLoopTime.put(timerName, System.currentTimeMillis());
+		timersTotalCycles.put(timerName, timersTotalCycles.get(timerName) + 1);
+	}
+
+	public static long getTimerTotalCycles(String timerName) {
+		return !timersTotalCycles.containsKey(timerName) ? -1 : timersTotalCycles.get(timerName);
+	}
+
+	public static Duration getTimerTotalDuration(String timerName) {
+		int v = !timersStartTime.containsKey(timerName) ? -1 : (int)(System.currentTimeMillis() - timersStartTime.get(timerName));
+		return Duration.millis(v);
+	}
+
+	public static Duration getTimerCurrentLoopDuration(String timerName) {
+		int v = !timersCurrentLoopTime.containsKey(timerName) ? -1 : (int)(System.currentTimeMillis() - timersCurrentLoopTime.get(timerName));
+		return Duration.millis(v);
 	}
 
 	public static void resetTimer(String timerName, Duration startingDelay, Duration repeatingDelay, int repeatingTimes, Runnable runnable) {
@@ -90,12 +124,15 @@ public abstract class DurationTimerFX {
 			if (timeline != null) {
 				timeline.stop();
 				timers.remove(timerName);
+				timersStartTime.remove(timerName);
+				timersCurrentLoopTime.remove(timerName);
 			}
 		}
 	}
 
 	public static void stopAllTimers() {
-		for (String timerName : new ArrayList<>(timers.keySet()))
+		List<String> list = new ArrayList<>(timers.keySet());
+		for (String timerName : list)
 			stopTimer(timerName);
 	}
 
@@ -103,7 +140,7 @@ public abstract class DurationTimerFX {
 		return timers.keySet();
 	}
 
-	public static void close() {
+	private static void close() {
 		fxApplicationIsClosed = true;
 		stopAllTimers();
 	}

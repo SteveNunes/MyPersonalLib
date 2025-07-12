@@ -208,18 +208,21 @@ public abstract class MyFile {
 				line = br.readLine();
 			}
 		}
-		catch (IOException e) 
-			{ throw new RuntimeException("Error trying to read file: " + filePath); }
+		catch (IOException e) {
+			e.printStackTrace();
+			throw new RuntimeException("Error trying to read file: " + filePath);
+		}
 		return result;
 	}
 
 	public static void writeAllLinesOnFile(List<String> list, String filePath) {
 		Path path = Paths.get(filePath);
 		try (BufferedWriter bw = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
-			for (String s : list) {
-				bw.write(s);
-				bw.newLine();
-			}
+			for (String s : list)
+				if (s != null) {
+					bw.write(s);
+					bw.newLine();
+				}
 		}
 		catch (IOException e) 
 			{ throw new RuntimeException("Error trying to write file: " + filePath); }

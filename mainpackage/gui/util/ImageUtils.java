@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 
@@ -20,6 +22,7 @@ import drawimage_stuffs.DrawImageEffects;
 import enums.ImageFlip;
 import enums.ImageScanOrientation;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
@@ -40,6 +43,11 @@ import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import util.DesktopUtils;
 
 public abstract class ImageUtils {
@@ -1373,5 +1381,261 @@ public abstract class ImageUtils {
     gc.restore();
   }
   
+	public static Image getRoundedBorderImage(Image image, int size) {
+		Canvas canvas = new Canvas(size, size);
+		GraphicsContext gc = canvas.getGraphicsContext2D();
+		gc.setFill(Color.TRANSPARENT);
+		gc.clearRect(0, 0, size, size);
+		gc.beginPath();
+		gc.arc(size / 2, size / 2, size / 2, size / 2, 0, 360);
+		gc.clip();
+		gc.drawImage(image, 0, 0, size, size);
+		WritableImage roundImage = new WritableImage((int) size, (int) size);
+		SnapshotParameters params = new SnapshotParameters();
+		params.setFill(Color.TRANSPARENT);
+		return canvas.snapshot(params, roundImage);
+	}
+	
+	public static Color getMircColor(int color) {
+		double[] d = mircColors[color];
+		return Color.color(d[0], d[1], d[2], d[3]);
+	}
+	
+	public static double[][] mircColors = {
+			{1, 1, 1, 1}, {0, 0, 0, 1}, {0, 0, 0.498, 1}, {0, 0.576, 0, 1}, {1, 0, 0, 1},
+			{0.498, 0, 0, 1}, {0.611, 0, 0.611, 1}, {0.988, 0.498, 0, 1}, {1, 1, 0, 1},
+			{0, 0.988, 0, 1}, {0, 0.576, 0.576, 1}, {0, 1, 1, 1}, {0, 0, 0.988, 1}, {1, 0, 1, 1},
+			{0.498, 0.498, 0.498, 1}, {0.823, 0.823, 0.823, 1}, {0.278, 0, 0, 1}, {0.278, 0.129, 0, 1},
+			{0.278, 0.278, 0, 1}, {0.196, 0.278, 0, 1}, {0, 0.278, 0, 1}, {0, 0.278, 0.172, 1},
+			{0, 0.278, 0.278, 1}, {0, 0.152, 0.278, 1}, {0, 0, 0.278, 1}, {0.180, 0, 0.278, 1},
+			{0.278, 0, 0.278, 1}, {0.278, 0, 0.164, 1}, {0.454, 0, 0, 1}, {0.454, 0.227, 0, 1},
+			{0.454, 0.454, 0, 1}, {0.317, 0.454, 0, 1}, {0, 0.454, 0, 1}, {0, 0.454, 0.286, 1},
+			{0, 0.454, 0.454, 1}, {0, 0.250, 0.454, 1}, {0, 0, 0.454, 1}, {0.294, 0, 0.454, 1},
+			{0.454, 0, 0.454, 1}, {0.454, 0, 0.270, 1}, {0.709, 0, 0, 1}, {0.709, 0.388, 0, 1},
+			{0.709, 0.709, 0, 1}, {0.490, 0.709, 0, 1}, {0, 0.709, 0, 1}, {0, 0.709, 0.443, 1},
+			{0, 0.709, 0.709, 1}, {0, 0.388, 0.709, 1}, {0, 0, 0.709, 1}, {0.458, 0, 0.709, 1},
+			{0.709, 0, 0.709, 1}, {0.709, 0, 0.419, 1}, {1, 0, 0, 1}, {1, 0.549, 0, 1}, {1, 1, 0, 1},
+			{0.698, 1, 0, 1}, {0, 1, 0, 1}, {0, 1, 0.627, 1}, {0, 1, 1, 1}, {0, 0.549, 1, 1},
+			{0, 0, 1, 1}, {0.647, 0, 1, 1}, {1, 0, 1, 1}, {1, 0, 0.596, 1}, {1, 0.349, 0.349, 1},
+			{1, 0.705, 0.349, 1}, {1, 1, 0.443, 1}, {0.811, 1, 0.376, 1}, {0.435, 1, 0.435, 1},
+			{0.396, 1, 0.788, 1}, {0.427, 1, 1, 1}, {0.349, 0.705, 1, 1}, {0.349, 0.349, 1, 1},
+			{0.768, 0.349, 1, 1}, {1, 0.4, 1, 1}, {1, 0.349, 0.737, 1}, {1, 0.611, 0.611, 1},
+			{1, 0.827, 0.611, 1}, {1, 1, 0.611, 1}, {0.886, 1, 0.611, 1}, {0.611, 1, 0.611, 1},
+			{0.611, 1, 0.858, 1}, {0.611, 1, 1, 1}, {0.611, 0.827, 1, 1}, {0.611, 0.611, 1, 1},
+			{0.862, 0.611, 1, 1}, {1, 0.611, 1, 1}, {1, 0.580, 0.827, 1}, {0, 0, 0, 1},
+			{0.074, 0.074, 0.074, 1}, {0.156, 0.156, 0.156, 1}, {0.211, 0.211, 0.211, 1},
+			{0.301, 0.301, 0.301, 1}, {0.396, 0.396, 0.396, 1}, {0.505, 0.505, 0.505, 1}, 
+			{0.623, 0.623, 0.623, 1}, {0.737, 0.737, 0.737, 1}, {0.886, 0.886, 0.886, 1}, {1, 1, 1, 1}
+	};
+
+	public static int drawTextWithFormaters(GraphicsContext gc, String text, Font font, int x, int y) {
+		if (text == null || text.isBlank())
+			return -1;
+		String[] split = text.split("\\{");
+		gc.setLineWidth(1);
+		gc.setStroke(Color.WHITE);
+		gc.setFill(Color.WHITE);
+		gc.setFont(font);
+		Font[] font2 = {font};
+		Text tempText = new Text();
+		int fontHeight[] = {0};
+		boolean[] isBold = {false}, isItalic = {false}, isSublined = {false};
+		Runnable updateFont = () -> {
+			font2[0] = Font.font(font2[0].getName(),
+												isBold[0] ? FontWeight.BOLD : FontWeight.NORMAL,
+												isItalic[0] ? FontPosture.ITALIC : FontPosture.REGULAR, font2[0].getSize());
+			tempText.setFont(font2[0]);
+	    fontHeight[0] = (int)tempText.getBoundsInLocal().getHeight();
+		};
+		updateFont.run();
+		gc.setTextAlign(TextAlignment.LEFT);
+		int xx = 0;
+		for (int z = 0; z < split.length; z++) {
+			String word = (z > 0 ? "{" : "") + split[z];
+
+			Matcher matcher1 = Pattern.compile("^(\\{[ibou]\\}).*").matcher(word);
+			Matcher matcher2 = Pattern.compile("^(\\{l(\\d+)\\}).*").matcher(word);
+			Matcher matcher3 = Pattern.compile("^(\\{k(\\d+)(\\,(\\d+))*\\}).*").matcher(word);
+			Matcher matcher4 = Pattern.compile("^(\\{(#[0-9a-fA-F]{6,8})(\\,(#[0-9a-fA-F]{6,8}))*\\}).*").matcher(word);
+			Matcher matcher5 = Pattern.compile("^(\\{([a-zA-Z]+)(\\,([a-zA-Z]+))*\\}).*").matcher(word);
+			if (matcher1.matches()) {
+				word = word.replace(matcher1.group(1), "");
+				char c = matcher1.group(1).toLowerCase().charAt(1);
+				if (c == 'b') { // Negrito
+					isBold[0] = !isBold[0];
+					updateFont.run();
+				}
+				else if (c == 'i') { // Italico
+					isItalic[0] = !isItalic[0];
+					updateFont.run();
+				}
+				else if (c == 'u')// Sublinhado
+					isSublined[0] = !isSublined[0];
+				else if (c == 'o') { // Cancela tudo
+					isBold[0] = false;
+					isItalic[0] = false;
+					isSublined[0] = false;
+				}
+			}
+			else {
+				try {
+					if (matcher2.matches()) {
+						word = word.replace(matcher2.group(1), "");
+						gc.setLineWidth(Integer.parseInt(matcher2.group(2)));
+					}
+					else if (matcher3.matches()) {
+						word = word.replace(matcher3.group(1), "");
+						Color color = getMircColor(Integer.parseInt(matcher3.group(2)));
+						gc.setFill(color);
+						if (matcher3.group(3) != null)
+							gc.setStroke(getMircColor(Integer.parseInt(matcher3.group(3).substring(1))));
+						else
+							gc.setStroke(color);
+					}
+					else if (matcher4.matches()) {
+						word = word.replace(matcher4.group(1), "");
+						Color color = Color.valueOf(matcher4.group(2));
+						gc.setFill(color);
+						if (matcher4.group(3) != null)
+							gc.setStroke(Color.valueOf(matcher4.group(3).substring(1)));
+						else
+							gc.setStroke(color);
+					}
+					else if (matcher5.matches()) {
+						word = word.replace(matcher5.group(1), "");
+						Color color = Color.valueOf(matcher5.group(2));
+						gc.setFill(color);
+						if (matcher5.group(3) != null)
+							gc.setStroke(Color.valueOf(matcher5.group(3).substring(1)));
+						else
+							gc.setStroke(color);
+					}
+				}
+				catch (Exception e) {}
+			}
+			gc.fillText(word, x + xx, y);
+			gc.strokeText(word, x + xx, y);
+			gc.setFont(font2[0]);
+			tempText.setText(word);
+			int xxx = xx;
+			xx += (int)tempText.getBoundsInLocal().getWidth();
+			if (isSublined[0])
+				gc.strokeLine(x + xxx, y + fontHeight[0] * 0.05, x + xx, y + fontHeight[0] * 0.05);
+		}
+		return xx;
+	}
+	
+	public static WritableImage getCanvasSnapshot(Canvas canvas, WritableImage outputImage) {
+		return getCanvasSnapshot(canvas, 0, 0, (int) canvas.getWidth(), (int) canvas.getHeight(), outputImage);
+	}
+
+	public static WritableImage getCanvasSnapshot(Canvas canvas, int w, int h, WritableImage outputImage) {
+		return getCanvasSnapshot(canvas, 0, 0, w, h, outputImage);
+	}
+
+	public static WritableImage getCanvasSnapshot(Canvas canvas) {
+		return getCanvasSnapshot(canvas, 0, 0, (int) canvas.getWidth(), (int) canvas.getHeight());
+	}
+
+	public static WritableImage getCanvasSnapshot(Canvas canvas, int w, int h) {
+		return getCanvasSnapshot(canvas, 0, 0, w, h);
+	}
+
+	public static WritableImage getCanvasSnapshot(Canvas canvas, int x, int y, int w, int h) {
+		return getCanvasSnapshot(canvas, x, y, w, h, null);
+	}
+
+	public static WritableImage getCanvasSnapshot(Canvas canvas, int x, int y, int w, int h, WritableImage outputImage) {
+		SnapshotParameters params = new SnapshotParameters();
+		params.setFill(Color.TRANSPARENT);
+		params.setViewport(new Rectangle2D(x, y, w, h));
+		return canvas.snapshot(params, outputImage);
+	}
+	
+	public static WritableImage applyPerspectiveTransform(Image input, Point2D topLeft, Point2D topRight, Point2D bottomLeft, Point2D bottomRight) {
+		int width = (int) input.getWidth();
+		int height = (int) input.getHeight();
+		WritableImage output = new WritableImage(width, height);
+		PixelReader reader = input.getPixelReader();
+		double[] srcX = { 0, width, 0, width };
+		double[] srcY = { 0, 0, height, height };
+		double[] dstX = { topLeft.getX(), topRight.getX(), bottomLeft.getX(), bottomRight.getX() };
+		double[] dstY = { topLeft.getY(), topRight.getY(), bottomLeft.getY(), bottomRight.getY() };
+		double[][] matrix = computePerspectiveTransform(srcX, srcY, dstX, dstY);
+		for (int y = 0; y < height; y++)
+			for (int x = 0; x < width; x++) {
+				double[] mapped = applyMatrix(matrix, x, y);
+				int mappedX = (int) Math.round(mapped[0]);
+				int mappedY = (int) Math.round(mapped[1]);
+				Color c = reader.getColor(x, y);
+				for (int yy = mappedY - 1; yy <= mappedY + 1; yy++)
+					for (int xx = mappedX - 1; xx <= mappedX + 1; xx++)
+						if (xx >= 0 && xx < width && yy >= 0 && yy < height)
+							output.getPixelWriter().setColor(xx, yy, c);
+			}
+		return output;
+	}
+
+	private static double[][] computePerspectiveTransform(double[] srcX, double[] srcY, double[] dstX, double[] dstY) {
+		double[][] matrix = new double[3][3];
+		double[][] A = { { srcX[0], srcY[0], 1, 0, 0, 0, -dstX[0] * srcX[0], -dstX[0] * srcY[0] }, { srcX[1], srcY[1], 1, 0, 0, 0, -dstX[1] * srcX[1], -dstX[1] * srcY[1] }, { srcX[2], srcY[2], 1, 0, 0, 0, -dstX[2] * srcX[2], -dstX[2] * srcY[2] }, { srcX[3], srcY[3], 1, 0, 0, 0, -dstX[3] * srcX[3], -dstX[3] * srcY[3] }, { 0, 0, 0, srcX[0], srcY[0], 1, -dstY[0] * srcX[0], -dstY[0] * srcY[0] }, { 0, 0, 0, srcX[1], srcY[1], 1, -dstY[1] * srcX[1], -dstY[1] * srcY[1] }, { 0, 0, 0, srcX[2], srcY[2], 1, -dstY[2] * srcX[2], -dstY[2] * srcY[2] }, { 0, 0, 0, srcX[3], srcY[3], 1, -dstY[3] * srcX[3], -dstY[3] * srcY[3] } };
+		double[] B = { dstX[0], dstX[1], dstX[2], dstX[3], dstY[0], dstY[1], dstY[2], dstY[3] };
+		double[] H = solveLinearSystem(A, B);
+		matrix[0][0] = H[0];
+		matrix[0][1] = H[1];
+		matrix[0][2] = H[2];
+		matrix[1][0] = H[3];
+		matrix[1][1] = H[4];
+		matrix[1][2] = H[5];
+		matrix[2][0] = H[6];
+		matrix[2][1] = H[7];
+		matrix[2][2] = 1;
+		return matrix;
+	}
+
+	private static double[] applyMatrix(double[][] matrix, double x, double y) {
+		double[] result = new double[2];
+		double w = matrix[2][0] * x + matrix[2][1] * y + matrix[2][2];
+		result[0] = (matrix[0][0] * x + matrix[0][1] * y + matrix[0][2]) / w;
+		result[1] = (matrix[1][0] * x + matrix[1][1] * y + matrix[1][2]) / w;
+		return result;
+	}
+
+	private static double[] solveLinearSystem(double[][] A, double[] B) {
+		int n = B.length;
+		double[] x = new double[n];
+
+		for (int i = 0; i < n; i++) {
+			int maxRow = i;
+			for (int k = i + 1; k < n; k++)
+				if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i]))
+					maxRow = k;
+
+			double[] temp = A[i];
+			A[i] = A[maxRow];
+			A[maxRow] = temp;
+
+			double t = B[i];
+			B[i] = B[maxRow];
+			B[maxRow] = t;
+
+			for (int k = i + 1; k < n; k++) {
+				double factor = A[k][i] / A[i][i];
+				B[k] -= factor * B[i];
+				for (int j = i; j < n; j++)
+					A[k][j] -= factor * A[i][j];
+			}
+		}
+
+		for (int i = n - 1; i >= 0; i--) {
+			double sum = 0.0;
+			for (int j = i + 1; j < n; j++)
+				sum += A[i][j] * x[j];
+			x[i] = (B[i] - sum) / A[i][i];
+		}
+
+		return x;
+	}
+	
 }
 

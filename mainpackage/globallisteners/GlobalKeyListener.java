@@ -9,6 +9,8 @@ import com.github.kwhat.jnativehook.NativeHookException;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 
+import util.Misc;
+
 public class GlobalKeyListener implements NativeKeyListener {
 
 	private static Consumer<NativeKeyEvent> onKeyTypedEvent = null;
@@ -17,9 +19,9 @@ public class GlobalKeyListener implements NativeKeyListener {
 	private static Consumer<NativeKeyEvent> onKeyPressedEvent = null;
 	private static Consumer<NativeKeyEvent> onKeyReleasedEvent = null;
 	private static List<Integer> pressedKeys = null;
-	private static NativeKeyListener nativeKeyListener = new GlobalKeyListener();
-	static boolean started = false;
-	
+	private static NativeKeyListener nativeKeyListener = null;
+	public static boolean nativeHookStarted = false;
+
 	private GlobalKeyListener()
 		{ super(); }
 	
@@ -54,34 +56,61 @@ public class GlobalKeyListener implements NativeKeyListener {
 		{ return pressedKeys.contains(rawCode); }
 
 	public static void startListener() {
-		if (started)
+		if (nativeKeyListener != null)
 			throw new RuntimeException("Global Key Listener is already active");
 		try {
-			started = true;
-			if (!GlobalMouseListener.started)
+			nativeKeyListener = new GlobalKeyListener();
+			if (!nativeHookStarted) {
 				GlobalScreen.registerNativeHook();
+				nativeHookStarted = true;
+			}
 			GlobalScreen.addNativeKeyListener(nativeKeyListener);
 			pressedKeys = new ArrayList<>();
+			Misc.addShutdownEvent(GlobalKeyListener::stopListener);
 		}
 		catch (Exception e)
 			{ throw new RuntimeException("Unable to start the Global Key Listener\n\t" + e.getMessage()); }
 	}
 	
-	public static void stopListener() {
-		try {
-			GlobalScreen.removeNativeKeyListener(nativeKeyListener);
-			if (!GlobalMouseListener.started)
-				GlobalScreen.unregisterNativeHook();
-			started = false;
+	private static void stopListener() {
+		if (nativeKeyListener != null) {
+			try {
+				GlobalScreen.removeNativeKeyListener(nativeKeyListener);
+				if (nativeHookStarted) {
+					GlobalScreen.unregisterNativeHook();
+					nativeHookStarted = false;
+				}
+				nativeKeyListener = null;
+			}
+			catch (NativeHookException e) {}
 		}
-		catch (NativeHookException e) {}
 	}
 	
 	private static void checkIfListenerIsRunning() {
-		if (!started)
+		if (nativeKeyListener == null)
 			throw new RuntimeException("Global Key Listener is not active. Call 'startListener()' first.");
 	}
 	
+	public static Consumer<NativeKeyEvent> getOnKeyTypedEvent() {
+		return onKeyTypedEvent;
+	}
+
+	public static Consumer<NativeKeyEvent> getOnKeyRepeatedEvent() {
+		return onKeyRepeatedEvent;
+	}
+
+	public static Consumer<NativeKeyEvent> getOnKeyTypedRepeatedEvent() {
+		return onKeyTypedRepeatedEvent;
+	}
+
+	public static Consumer<NativeKeyEvent> getOnKeyPressedEvent() {
+		return onKeyPressedEvent;
+	}
+
+	public static Consumer<NativeKeyEvent> getOnKeyReleasedEvent() {
+		return onKeyReleasedEvent;
+	}
+
 	public static void setOnKeyTypedEvent(Consumer<NativeKeyEvent> consumer) {
 		checkIfListenerIsRunning();
 		onKeyTypedEvent = consumer;

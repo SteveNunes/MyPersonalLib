@@ -1,11 +1,10 @@
 package pathfinder;
 
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
 import enums.Direction;
@@ -15,7 +14,7 @@ import util.CollectionUtils;
 
 public class PathFinder {
 	
-	private Random random;
+	private ThreadLocalRandom random;
 	private List<List<Pair<TileCoord, Direction>>> foundPaths;
 	private List<Pair<TileCoord, Direction>> directions;
 	private Set<TileCoord> tempBlocks;
@@ -58,7 +57,7 @@ public class PathFinder {
 		this.distance = distance == null ? PathFinderDistance.RANDOM : distance;
 		this.optimize = optimize == null ? PathFinderOptmize.NOT_OPTIMIZED : optimize;
 		this.functionIsTileFree = functionIsTileFree;
-		random = new Random(new SecureRandom().nextInt(Integer.MAX_VALUE));
+		random = ThreadLocalRandom.current();
 		foundPaths = new ArrayList<>();
 		tempBlocks = new HashSet<>();
 		blocks = new HashSet<>();

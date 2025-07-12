@@ -13,8 +13,8 @@ import enums.TextMatchType;
  * 
  * @author Steve Nunes da Silva
  * 
- *         R�plica das aliases e identifiers do mIRC Scripting (mSL)
- *         relacionadas é manipula��o de arquivos de texto simples.
+ *         Réplica das aliases e identifiers do mIRC Scripting (mSL)
+ *         relacionadas é manipulação de arquivos de texto simples.
  */
 
 public class TextFile {
@@ -22,7 +22,7 @@ public class TextFile {
 	static Map<String, TextFile> openedTextFiles = new HashMap<>();
 
 	static {
-		Misc.addShutdownEvent(() -> saveAllFilesToDisk());
+		Misc.addShutdownEvent(TextFile::saveAllFilesToDisk);
 	}
 
 	private int lastFoundLine;
@@ -151,7 +151,6 @@ public class TextFile {
 		for (TextFile textFile : openedTextFiles.values())
 			if (textFile.wasModified)
 				MyFile.writeAllLinesOnFile(textFile.fileBuffer, textFile.fileName);
-		Timer.close();
 	}
 
 	/**

@@ -2,40 +2,41 @@ package util;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.security.SecureRandom;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 public abstract class MyMath {
-	
-	private static Random random = new Random(new SecureRandom().nextInt(Integer.MAX_VALUE));
 
-	public static Boolean isPrime(long n)
-		{ return (n == 2 || n == 3 || n == 5 || n == 7 || (n > 9 && n % 2 > 0 && n % 3 > 0 && n % 5 > 0 && n % 7 > 0)); }
-	
+	public static Boolean isPrime(long n) {
+		return (n == 2 || n == 3 || n == 5 || n == 7 || (n > 9 && n % 2 > 0 && n % 3 > 0 && n % 5 > 0 && n % 7 > 0));
+	}
+
 	/**
 	 * Retorna a porcentagem de num
 	 */
-	public static double porcent(double num, double porcent)
-		{ return ((num / 100) * porcent); }
-	
+	public static double porcent(double num, double porcent) {
+		return ((num / 100) * porcent);
+	}
+
 	/**
 	 * Retorna a porcentagem de um valor baseado na parte desse valor
 	 */
-	public static double getPorcentFrom(double sliceValue, double wholeValue)
-		{ return sliceValue / wholeValue * 100; }
+	public static double getPorcentFrom(double sliceValue, double wholeValue) {
+		return sliceValue / wholeValue * 100;
+	}
 
-	//Clone da função map() do código do arduino
-	public static long mapValue(long value, long inMin, long inMax, long outMin, long outMax)
-  	{ return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin; };
+	// Clone da função map() do código do arduino
+	public static long mapValue(long value, long inMin, long inMax, long outMin, long outMax) {
+		return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+	};
 
 	public static String shortNumber(BigInteger num, int afterComma, String[] abreviations) {
 		if (num.signum() == 0)
 			return "0";
-		Boolean isNegative = num.signum() == -1; 
+		Boolean isNegative = num.signum() == -1;
 		if (isNegative)
 			num = new BigInteger(num.toString().substring(1));
 		int c = 0;
@@ -48,7 +49,7 @@ public abstract class MyMath {
 		}
 		if (div2.equals(new BigInteger("0")))
 			return (isNegative ? "-" : "") + num.toString();
-		List<Character> lets = new ArrayList<>(Arrays.asList('a', (char)('a' - 1)));
+		List<Character> lets = new ArrayList<>(Arrays.asList('a', (char) ('a' - 1)));
 		String let;
 		if (c < abreviations.length)
 			let = abreviations[c];
@@ -57,14 +58,14 @@ public abstract class MyMath {
 			int n = abreviations.length;
 			while (n++ <= c) {
 				int p = lets.size() - 1;
-				lets.set(p, (char)(lets.get(p) + 1));
+				lets.set(p, (char) (lets.get(p) + 1));
 				while (p >= 0 && lets.get(p) > 'z') {
 					lets.set(p, 'a');
 					if (p == 0)
 						lets.add(0, 'a');
 					else {
 						p--;
-						lets.set(p, (char)(lets.get(p) + 1));
+						lets.set(p, (char) (lets.get(p) + 1));
 					}
 				}
 			}
@@ -77,15 +78,18 @@ public abstract class MyMath {
 		DecimalFormat df = new DecimalFormat(f);
 		return (isNegative ? "-" : "") + df.format(new BigDecimal(num).divide(new BigDecimal(div2))) + let;
 	}
-	
-	public static String shortNumber(BigInteger num, int afterComma)
-		{ return shortNumber(num, afterComma, new String[] {" ", "K", "M", "B", "T", "Q", "QQ", "S", "SS", "O", "N", "D"}); }
 
-	public static String shortNumber(BigInteger num, String[] abreviations)
-		{ return shortNumber(num, 0, abreviations); }
+	public static String shortNumber(BigInteger num, int afterComma) {
+		return shortNumber(num, afterComma, new String[] { " ", "K", "M", "B", "T", "Q", "QQ", "S", "SS", "O", "N", "D" });
+	}
 
-	public static String shortNumber(BigInteger num)
-		{ return shortNumber(num, 0); }
+	public static String shortNumber(BigInteger num, String[] abreviations) {
+		return shortNumber(num, 0, abreviations);
+	}
+
+	public static String shortNumber(BigInteger num) {
+		return shortNumber(num, 0);
+	}
 
 	public static BigDecimal binaryStringToBigDecimal(String binary) {
 		BigDecimal result = new BigDecimal(0);
@@ -98,7 +102,16 @@ public abstract class MyMath {
 		return result;
 	}
 
-	public static double getRandom(int min, int max)
-		{ return random.nextDouble(++max - min) + min; }
-	
+	public static double getDoubleRandom(double min, double max) {
+		if (min > max)
+			throw new IllegalArgumentException("O valor mínimo não pode ser maior que o valor máximo.");
+		return ThreadLocalRandom.current().nextDouble(min, max + Double.MIN_VALUE);
+	}
+
+	public static long getRandom(long min, long max) {
+		if (min > max)
+			throw new IllegalArgumentException("O valor mínimo não pode ser maior que o valor máximo.");
+		return ThreadLocalRandom.current().nextLong(min, max + 1);
+	}
+
 }

@@ -4,9 +4,32 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import javafx.util.Duration;
+
 public abstract class MyConverters {
+	
+	/**
+	 *  Converte String de duração no formato ISO 8601 para javafx.util.Duration
+	 */
+	public static Duration parseISODuration(String isoDuration) {
+		Pattern pattern = Pattern.compile("PT(?:(\\d+)D)?(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)S)?");
+		Matcher matcher = pattern.matcher(isoDuration);
+		if (matcher.matches()) {
+			int days = matcher.group(1) != null ? Integer.parseInt(matcher.group(1)) : 0;
+			int hours = matcher.group(2) != null ? Integer.parseInt(matcher.group(2)) : 0;
+			int minutes = matcher.group(3) != null ? Integer.parseInt(matcher.group(3)) : 0;
+			int seconds = matcher.group(4) != null ? Integer.parseInt(matcher.group(4)) : 0;
+			return Duration.hours(24 * days)
+								.add(Duration.hours(hours))
+								.add(Duration.minutes(minutes))
+								.add(Duration.seconds(seconds));
+		}
+		throw new IllegalArgumentException("Formato inválido: " + isoDuration);
+	}
 	
 	/**
 	 *  Converte long decimal em IP

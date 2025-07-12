@@ -11,19 +11,19 @@ public class OnlineIPGetter {
 	
 	public static String getOnlineIP() {
 		ip = null;
-		SocketEvents sockEvents = new SocketEvents();
-		sockEvents.setOnSocketReadEvent((sock, data) -> {
+		SocketClient socket = new SocketClient();
+		socket.setOnConnectErrorEvent(e -> ip = "Unable to retrieve");
+		socket.setOnDataReceiveEvent(data -> {
 	    Pattern p = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+)");
 	    Matcher m = p.matcher(data);
 	    if (m.find())
 	    ip = m.group(1);
 		});
-		sockEvents.setOnSocketDisconnectEvent((sock, ex) -> { 
+		socket.setOnDisconnectEvent(client -> { 
 			if (ip == null)
 				ip = "Unable to retrieve";
 		});
-		sockEvents.setOnSocketOpenErrorEvent((sock, ex) -> ip = "Unable to retrieve");
-		SockClient socket = new SockClient("checkip.dyndns.org", 80, sockEvents);
+		socket.connect("checkip.dyndns.org", 80);
 		socket.sendData(
 			"GET http://checkip.dyndns.org HTTP/1.0\r\n"
 			+ "Host: checkip.dyndns.org\r\n"

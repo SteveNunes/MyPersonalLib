@@ -20,6 +20,54 @@ import javafx.scene.paint.Color;
 
 public abstract class CanvasUtils {
 
+	private static WritableImage copyCanvas;
+	private static SnapshotParameters copyCanvasParam;
+	
+	public static void copyAndRotateAndStretchToFillCanvas(Canvas sourceCanvas, Canvas targetCanvas, double rotationDegrees) {
+
+		if (sourceCanvas == null || targetCanvas == null)
+			throw new RuntimeException("Erro: Canvas de origem ou destino é nulo.");
+
+		copyCanvas = new WritableImage((int) sourceCanvas.getWidth(), (int) sourceCanvas.getHeight());
+
+		if (copyCanvas == null || (int)copyCanvas.getWidth() != (int)sourceCanvas.getWidth() ||
+				(int)copyCanvas.getHeight() != (int)sourceCanvas.getHeight()) {
+					copyCanvasParam = new SnapshotParameters();
+					copyCanvasParam.setFill(Color.TRANSPARENT);
+					copyCanvasParam.setViewport(new Rectangle2D(0, 0, sourceCanvas.getWidth(), sourceCanvas.getHeight()));
+		}
+		sourceCanvas.snapshot(copyCanvasParam, copyCanvas);
+
+		GraphicsContext gcTarget = targetCanvas.getGraphicsContext2D();
+		gcTarget.clearRect(0, 0, targetCanvas.getWidth(), targetCanvas.getHeight());
+
+		double targetWidth = targetCanvas.getWidth();
+		double targetHeight = targetCanvas.getHeight();
+
+		gcTarget.save();
+		gcTarget.translate(targetWidth / 2, targetHeight / 2);
+		gcTarget.rotate(rotationDegrees);
+
+		double newImageWidth;
+		double newImageHeight;
+
+		double normalizedDegrees = rotationDegrees % 360;
+		if (normalizedDegrees < 0)
+			normalizedDegrees += 360;
+
+		if (normalizedDegrees == 90 || normalizedDegrees == 270) {
+			newImageWidth = targetHeight;
+			newImageHeight = targetWidth;
+		}
+		else {
+			newImageWidth = targetWidth;
+			newImageHeight = targetHeight;
+		}
+
+		gcTarget.drawImage(copyCanvas, -newImageWidth / 2, -newImageHeight / 2, newImageWidth, newImageHeight);
+		gcTarget.restore();
+	}
+	
 	public static void copyCanvas(Canvas sourceCanvas, Rectangle2D sourceArea, Canvas targetCanvas, Rectangle2D targetArea) {
     GraphicsContext gc = targetCanvas.getGraphicsContext2D();
     SnapshotParameters params = new SnapshotParameters();

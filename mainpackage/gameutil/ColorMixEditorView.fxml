@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ColorPicker?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+
+<VBox alignment="CENTER" spacing="10.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gameutil.ColorMixEditor">
+   <padding>
+      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+   </padding>
+   <children>
+      <HBox spacing="30.0">
+         <children>
+            <HBox alignment="CENTER_LEFT" spacing="5.0">
+               <children>
+                  <Button fx:id="buttonLoadImageFromDisk" maxWidth="25.0" minWidth="25.0" mnemonicParsing="false" prefWidth="25.0" />
+                  <HBox fx:id="hBoxButtons" alignment="CENTER_LEFT" spacing="5.0">
+                     <children>
+                        <Button fx:id="buttonSaveImageToDisk" maxWidth="25.0" minWidth="25.0" mnemonicParsing="false" prefWidth="25.0" />
+                     </children>
+                  </HBox>
+               </children>
+            </HBox>
+            <HBox fx:id="hBoxPalleteControls" alignment="CENTER_LEFT" spacing="5.0">
+               <children>
+                  <Label text="Pallete" />
+                  <ComboBox fx:id="comboBoxPalleteIndex" prefWidth="150.0" />
+                  <Button fx:id="buttonAddPallete" maxWidth="25.0" minWidth="25.0" mnemonicParsing="false" prefWidth="25.0" />
+                  <Button fx:id="buttonRemovePallete" maxWidth="25.0" minWidth="25.0" mnemonicParsing="false" prefWidth="25.0" />
+               </children>
+            </HBox>
+            <HBox fx:id="hBoxZoomControls" alignment="CENTER_LEFT" spacing="5.0">
+               <children>
+                  <Label text="Zoom" />
+                  <Button fx:id="buttonZoom1" maxWidth="25.0" minWidth="25.0" mnemonicParsing="false" prefWidth="25.0" />
+                  <Button fx:id="buttonZoom2" maxWidth="25.0" minWidth="25.0" mnemonicParsing="false" prefWidth="25.0" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+               <children>
+                  <Label text="Color de transparência padrão da imagem" />
+                  <ColorPicker fx:id="colorPickerTransparentColor" />
+               </children>
+            </HBox>
+         </children>
+      </HBox>
+      <Separator />
+      <HBox alignment="CENTER">
+         <children>
+            <Canvas fx:id="canvasMain" height="200.0" width="350.0" />
+         </children>
+      </HBox>
+      <Separator />
+      <Text fx:id="textInfos" strokeType="OUTSIDE" strokeWidth="0.0" />
+      <HBox fx:id="hBoxControls" spacing="20.0" VBox.vgrow="ALWAYS">
+         <children>
+            <VBox HBox.hgrow="ALWAYS">
+               <children>
+                  <HBox alignment="CENTER_LEFT" spacing="10.0">
+                     <children>
+                        <HBox spacing="5.0">
+                           <children>
+                              <VBox alignment="TOP_CENTER" maxWidth="30.0" minWidth="30.0" prefWidth="30.0">
+                                 <children>
+                                    <Label fx:id="labelColorPorcent1" />
+                                    <Slider fx:id="sliderColorPorcent1" blockIncrement="0.01" max="1.0" minorTickCount="1" orientation="VERTICAL" value="1.0" />
+                                 </children>
+                              </VBox>
+                              <VBox alignment="CENTER_LEFT" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" spacing="2.0">
+                                 <children>
+                                    <RadioButton fx:id="radioRed1" mnemonicParsing="false" selected="true" text="Red">
+                                       <toggleGroup>
+                                          <ToggleGroup fx:id="groupColors1" />
+                                       </toggleGroup>
+                                    </RadioButton>
+                                    <RadioButton fx:id="radioGreen1" mnemonicParsing="false" text="Green" toggleGroup="$groupColors1" />
+                                    <RadioButton fx:id="radioBlue1" mnemonicParsing="false" text="Blue" toggleGroup="$groupColors1" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                        <HBox spacing="5.0">
+                           <children>
+                              <VBox alignment="TOP_CENTER" maxWidth="30.0" minWidth="30.0" prefWidth="30.0">
+                                 <children>
+                                    <Label fx:id="labelColorPorcent2" />
+                                    <Slider fx:id="sliderColorPorcent2" blockIncrement="0.01" max="1.0" minorTickCount="1" orientation="VERTICAL" value="1.0" />
+                                 </children>
+                              </VBox>
+                              <VBox alignment="CENTER_LEFT" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" spacing="2.0">
+                                 <children>
+                                    <RadioButton fx:id="radioRed2" mnemonicParsing="false" text="Red">
+                                       <toggleGroup>
+                                          <ToggleGroup fx:id="groupColors2" />
+                                       </toggleGroup>
+                                    </RadioButton>
+                                    <RadioButton fx:id="radioGreen2" mnemonicParsing="false" selected="true" text="Green" toggleGroup="$groupColors2" />
+                                    <RadioButton fx:id="radioBlue2" mnemonicParsing="false" text="Blue" toggleGroup="$groupColors2" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                        <HBox spacing="5.0">
+                           <children>
+                              <VBox alignment="TOP_CENTER" maxWidth="30.0" minWidth="30.0" prefWidth="30.0">
+                                 <children>
+                                    <Label fx:id="labelColorPorcent3" />
+                                    <Slider fx:id="sliderColorPorcent3" blockIncrement="0.01" max="1.0" minorTickCount="1" orientation="VERTICAL" value="1.0" />
+                                 </children>
+                              </VBox>
+                              <VBox alignment="CENTER_LEFT" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" spacing="2.0">
+                                 <children>
+                                    <RadioButton fx:id="radioRed3" mnemonicParsing="false" text="Red">
+                                       <toggleGroup>
+                                          <ToggleGroup fx:id="groupColors3" />
+                                       </toggleGroup>
+                                    </RadioButton>
+                                    <RadioButton fx:id="radioGreen3" mnemonicParsing="false" text="Green" toggleGroup="$groupColors3" />
+                                    <RadioButton fx:id="radioBlue3" mnemonicParsing="false" selected="true" text="Blue" toggleGroup="$groupColors3" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" spacing="5.0">
+                     <children>
+                        <Label text="Opacity:" />
+                        <Slider fx:id="sliderColorOpacity" blockIncrement="0.01" max="1.0" minorTickCount="1" value="1.0" />
+                        <Label fx:id="labelOpacity" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+            <Separator orientation="VERTICAL" />
+            <VBox alignment="CENTER_LEFT" spacing="10.0" HBox.hgrow="ALWAYS">
+               <children>
+                  <VBox alignment="TOP_CENTER">
+                     <children>
+                        <CheckBox fx:id="checkBoxColorAdjust" mnemonicParsing="false" text="Color Adjust" />
+                        <VBox fx:id="vBoxColorAdjustControls">
+                           <children>
+                              <HBox alignment="CENTER_LEFT" spacing="20.0">
+                                 <children>
+                                    <Label maxWidth="60.0" minWidth="60.0" prefWidth="60.0" text="Hue" />
+                                    <Slider fx:id="sliderColorAdjustHue" blockIncrement="0.01" max="1.0" min="-1.0" minorTickCount="1" />
+                                    <Label fx:id="labelColorAdjustHue" maxWidth="40.0" minWidth="40.0" prefWidth="40.0" HBox.hgrow="ALWAYS" />
+                                 </children>
+                              </HBox>
+                              <HBox alignment="CENTER_LEFT" spacing="20.0">
+                                 <children>
+                                    <Label maxWidth="60.0" minWidth="60.0" prefWidth="60.0" text="Saturation" />
+                                    <Slider fx:id="sliderColorAdjustSaturation" blockIncrement="0.01" max="1.0" min="-1.0" minorTickCount="1" />
+                                    <Label fx:id="labelColorAdjustSaturation" maxWidth="40.0" minWidth="40.0" prefWidth="40.0" HBox.hgrow="ALWAYS" />
+                                 </children>
+                              </HBox>
+                              <HBox alignment="CENTER_LEFT" spacing="20.0">
+                                 <children>
+                                    <Label maxWidth="60.0" minWidth="60.0" prefWidth="60.0" text="Brightness" />
+                                    <Slider fx:id="sliderColorAdjustBrightness" blockIncrement="0.01" max="1.0" min="-1.0" minorTickCount="1" />
+                                    <Label fx:id="labelColorAdjustBrightness" maxWidth="40.0" minWidth="40.0" prefWidth="40.0" HBox.hgrow="ALWAYS" />
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                     </children>
+                  </VBox>
+                  <Separator prefWidth="200.0" />
+                  <VBox alignment="TOP_CENTER">
+                     <children>
+                        <Label text="Color Tint" />
+                        <HBox alignment="CENTER_LEFT" spacing="20.0">
+                           <children>
+                              <Label maxWidth="60.0" minWidth="60.0" prefWidth="60.0" text="Red" />
+                              <Slider fx:id="sliderColorTintRed" blockIncrement="0.01" max="1.0" minorTickCount="1" value="1.0" />
+                              <Label fx:id="labelColorTintRed" maxWidth="30.0" minWidth="30.0" prefWidth="30.0" HBox.hgrow="ALWAYS" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="20.0">
+                           <children>
+                              <Label maxWidth="60.0" minWidth="60.0" prefWidth="60.0" text="Green" />
+                              <Slider fx:id="sliderColorTintGreen" blockIncrement="0.01" max="1.0" minorTickCount="1" value="1.0" />
+                              <Label fx:id="labelColorTintGreen" maxWidth="30.0" minWidth="30.0" prefWidth="30.0" HBox.hgrow="ALWAYS" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="20.0">
+                           <children>
+                              <Label maxWidth="60.0" minWidth="60.0" prefWidth="60.0" text="Blue" />
+                              <Slider fx:id="sliderColorTintBlue" blockIncrement="0.01" max="1.0" minorTickCount="1" value="1.0" />
+                              <Label fx:id="labelColorTintBlue" maxWidth="30.0" minWidth="30.0" prefWidth="30.0" HBox.hgrow="ALWAYS" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="20.0">
+                           <children>
+                              <Label maxWidth="60.0" minWidth="60.0" prefWidth="60.0" text="Opacity" />
+                              <Slider fx:id="sliderColorTintOpacity" blockIncrement="0.01" max="1.0" minorTickCount="1" value="1.0" />
+                              <Label fx:id="labelColorTintOpacity" maxWidth="30.0" minWidth="30.0" prefWidth="30.0" HBox.hgrow="ALWAYS" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+            <Separator orientation="VERTICAL" />
+            <VBox alignment="CENTER_LEFT" spacing="10.0" HBox.hgrow="ALWAYS">
+               <children>
+                  <VBox spacing="5.0">
+                     <children>
+                        <CheckBox fx:id="checkBoxSepiaTone" mnemonicParsing="false" text="Sepia Tone" />
+                        <HBox fx:id="hBoxSepiaToneControls" alignment="CENTER_LEFT" spacing="20.0">
+                           <children>
+                              <Label maxWidth="60.0" minWidth="60.0" prefWidth="60.0" text="Level" />
+                              <Slider fx:id="sliderSepiaToneLevel" blockIncrement="0.01" max="1.0" minorTickCount="1" value="1.0" />
+                              <Label fx:id="labelSepiaToneLevel" maxWidth="30.0" minWidth="30.0" prefWidth="30.0" HBox.hgrow="ALWAYS" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  <Separator prefWidth="200.0" />
+                  <VBox spacing="5.0">
+                     <children>
+                        <CheckBox fx:id="checkBoxBloom" mnemonicParsing="false" text="Bloom" />
+                        <HBox fx:id="hBoxBloomControls" alignment="CENTER_LEFT" spacing="20.0">
+                           <children>
+                              <Label maxWidth="60.0" minWidth="60.0" prefWidth="60.0" text="Threshold" />
+                              <Slider fx:id="sliderBloomThreshold" blockIncrement="0.01" max="1.0" minorTickCount="1" value="1.0" />
+                              <Label fx:id="labelBloomThreshold" maxWidth="30.0" minWidth="30.0" prefWidth="30.0" HBox.hgrow="ALWAYS" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  <Separator prefWidth="200.0" />
+                  <VBox spacing="5.0">
+                     <children>
+                        <CheckBox fx:id="checkBoxGlow" mnemonicParsing="false" text="Glow" />
+                        <HBox fx:id="hBoxGlowControls" alignment="CENTER_LEFT" spacing="20.0">
+                           <children>
+                              <Label maxWidth="60.0" minWidth="60.0" prefWidth="60.0" text="Level" />
+                              <Slider fx:id="sliderGlowLevel" blockIncrement="0.01" max="1.0" minorTickCount="1" value="1.0" />
+                              <Label fx:id="labelGlowLevel" maxWidth="30.0" minWidth="30.0" prefWidth="30.0" HBox.hgrow="ALWAYS" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+         </children>
+      </HBox>
+   </children>
+</VBox>

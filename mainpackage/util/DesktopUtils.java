@@ -3,8 +3,10 @@ package util;
 import java.awt.Desktop;
 import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 public abstract class DesktopUtils {
 	
@@ -38,6 +40,41 @@ public abstract class DesktopUtils {
 		}
 		catch (IOException | InterruptedException e)
 			{ throw new RuntimeException("Não foi possível executar o processo \"" + processName + " " + processParam + "\"\n\t" + e.getMessage()); }
+	}
+
+	public static boolean isProcessRunning(String processName) {
+		try {
+			Process process = Runtime.getRuntime().exec("tasklist");
+			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+			String line;
+			while ((line = reader.readLine()) != null) {
+				if (line.contains(processName))
+					return true;
+			}
+			return false;
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	public static void taskKillByPid(int pid) {
+		try {
+			new ProcessBuilder("taskkill", "/F", "/PID", "" + pid).start();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+  
+	public static void taskKillByName(String processName) {
+		try {
+			new ProcessBuilder("taskkill", "/F", "/IM", processName).start();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 }

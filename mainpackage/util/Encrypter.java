@@ -1,13 +1,10 @@
 package util;
 
 import java.math.BigInteger;
-import java.security.SecureRandom;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 public abstract class Encrypter { 
 
-	private static Random random = new Random(new SecureRandom().nextInt(Integer.MAX_VALUE));
-	
   /**
    * Codifica/Decodifica uma palavra/codigo baseado em uma palavra chave
    * 
@@ -61,9 +58,9 @@ public abstract class Encrypter {
 		}
 		catch (Exception e) {
 			str = "";
-			int n = random.nextInt(password.length() + 50) + 50;
+			int n = ThreadLocalRandom.current().nextInt(password.length() + 50) + 50;
 			while (str.length() < n)
-				str += (char)(random.nextInt(Short.MAX_VALUE - 31) + 31);
+				str += (char)(ThreadLocalRandom.current().nextInt(Short.MAX_VALUE - 31) + 31);
 			return str;
 		}
   }
@@ -75,7 +72,7 @@ public abstract class Encrypter {
     String str = i.toString(), result = "";
     long b = stringToByte(password);
     for (char c : str.toCharArray())
-    	result += (char)((long)c * b + random.nextLong(b) + 31L);
+    	result += (char)((long)c * b + ThreadLocalRandom.current().nextLong(b) + 31L);
     
     return result;
 	}

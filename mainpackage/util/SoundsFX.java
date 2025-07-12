@@ -2,7 +2,6 @@ package util;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -22,7 +21,6 @@ public abstract class SoundsFX {
 	private static Map<String, MediaPlayer> mp3s = new LinkedHashMap<>();
 	private static Map<MediaPlayer, String> mp3Timers = new LinkedHashMap<>();
 	private static double masterGain = 1;
-	private static Map<String, Integer> mp3tries = new HashMap<>();
 	private static Consumer<String> onError = null;
 	
 	public static double getMasterGain() {
@@ -105,12 +103,9 @@ public abstract class SoundsFX {
 				mp3.setRate(rate);
 				mp3.setBalance(balance);
 				mp3.setVolume(volume);
-				if (!mp3tries.containsKey(mp3Path))
-					mp3tries.put(mp3Path, 0);
 
 				if (doLoop != null) {
 					mp3.setOnPlaying(() -> {
-						mp3tries.remove(mp3Path);
 						String timerName = "playMp3DoLoop@" + uniqueTimerId++;
 						long seekEnd = (long) doLoop.getKey().toMillis();
 						long seekStart = (long) doLoop.getValue().toMillis();
@@ -130,23 +125,14 @@ public abstract class SoundsFX {
 				mp3.setOnReady(() -> mp3.play());
 
 				mp3.setOnError(() -> {
-					mp3tries.put(mp3Path, mp3tries.get(mp3Path) + 1);
-					if (mp3tries.get(mp3Path) <= 5)
-						playMp3(mp3Path, rate, balance, volume, stopCurrent, doLoop);
-					else {
-						mp3tries.remove(mp3Path);
-						if (onError != null)
-							onError.accept(mp3Path);
-						else
-							throw new RuntimeException("Não foi possível reproduzir o arquivo \"" + file.getName() + "\" Houve alguma dificuldade interna ao reproduzir. Verifique se o caminho do arquivo contém caracteres acentuados ou caracteres especiais.\n" + mp3.getError().getMessage());
-					}
+					mp3.dispose();
+					DurationTimerFX.createTimer("mp3TryAgain@" + mp3.hashCode(), Duration.seconds(1), () -> playMp3(mp3Path, rate, balance, volume, stopCurrent, doLoop));
 				});
 
 				return mp3;
 			}
 			catch (Exception e) {
 				e.printStackTrace();
-				mp3tries.remove(mp3Path);
 				currentMediaPlayer = null;
 				return null;
 			}
