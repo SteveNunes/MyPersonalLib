@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Optional;
 
 public abstract class DesktopUtils {
 	
@@ -59,9 +60,9 @@ public abstract class DesktopUtils {
 		}
 	}
 	
-	public static void taskKillByPid(int pid) {
+	public static void taskKillByPid(Long processPid) {
 		try {
-			new ProcessBuilder("taskkill", "/F", "/PID", "" + pid).start();
+			new ProcessBuilder("taskkill", "/F", "/PID", "" + processPid).start();
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -76,5 +77,22 @@ public abstract class DesktopUtils {
 			e.printStackTrace();
 		}
 	}
-
+	
+	public static boolean proccessExists(String processName, Long processPid) {
+		Optional<ProcessHandle> processHandleOptional = ProcessHandle.of(processPid);
+		if (processHandleOptional.isPresent()) {
+			ProcessHandle processHandle = processHandleOptional.get();
+			if (processHandle.isAlive()) {
+				ProcessHandle.Info info = processHandle.info();
+				Optional<String> commandOptional = info.command();
+				if (commandOptional.isPresent()) {
+					String command = commandOptional.get();
+					String actualExecutableName = new File(command).getName();
+					return actualExecutableName.toLowerCase().contains(processName.toLowerCase());
+				}
+			}
+		}
+		return false;
+	}
+	
 }

@@ -23,7 +23,64 @@ import javafx.stage.Stage;
 
 public abstract class MyFile {
 	
-	private static List<File> selectFilesJavaFX(Stage stage, String initialFolder, List<ExtensionFilter> extensionFilters, String dialogTitle, Boolean multiSel) {
+	public static File selectDirectoryJavaFX(Stage stage, String initialFolder, String dialogTitle) {
+	  DirectoryChooser dirChooser = new DirectoryChooser();
+	  dirChooser.setTitle(dialogTitle);
+	  if (initialFolder != null)
+	  	dirChooser.setInitialDirectory(new File(initialFolder));
+	  File file = dirChooser.showDialog(stage);
+		return file;
+	}
+
+	public static File selectDirectoryJavaFX(Stage stage, String dialogTitle) {
+		return selectDirectoryJavaFX(stage, null, dialogTitle);
+	}	
+	
+	private static List<File> selectFilesToSaveJavaFX(Stage stage, String initialFolder, List<ExtensionFilter> extensionFilters, String dialogTitle, Boolean multiSel) {
+	  FileChooser fileChooser = new FileChooser();
+	  fileChooser.setTitle(dialogTitle);
+	  if (initialFolder != null)
+	  	fileChooser.setInitialDirectory(new File(initialFolder));
+	  if (extensionFilters != null)
+	  	for (ExtensionFilter ef : extensionFilters)
+	  		fileChooser.getExtensionFilters().add(ef);
+	  if (multiSel) {
+			List<File> files = fileChooser.showOpenMultipleDialog(stage);
+			return files != null ? files : null;
+	  }
+	  File file = fileChooser.showSaveDialog(stage);
+		return file != null ? Arrays.asList(file) : null;
+	}
+
+	public static List<File> selectFilesToSaveJavaFX(Stage stage, String initialFolder, List<ExtensionFilter> extensionFilters, String dialogTitle) {
+		return selectFilesToSaveJavaFX(stage, initialFolder, extensionFilters, dialogTitle, true);
+	}
+	
+	public static File selectFileToSaveJavaFX(Stage stage, String initialFolder, ExtensionFilter extensionFilter, String dialogTitle) {
+		List<File> files = selectFilesToSaveJavaFX(stage, initialFolder, Arrays.asList(extensionFilter), dialogTitle, false);
+		return files != null ? files.get(0) : null;
+	}
+	
+	public static File selectFileToSaveJavaFX(Stage stage, String initialFolder, String dialogTitle) {
+		return selectFileToSaveJavaFX(stage, initialFolder, new FileChooser.ExtensionFilter("Todos os arquivos", "*.*"), dialogTitle);
+	}
+
+	public static List<File> selectFilesToSaveJavaFX(Stage stage, List<ExtensionFilter> extensionFilters, String dialogTitle) {
+		return selectFilesToSaveJavaFX(stage, null, extensionFilters, dialogTitle, true);
+	}
+	
+	public static File selectFileToSaveJavaFX(Stage stage, ExtensionFilter extensionFilter, String dialogTitle) {
+		List<File> files = selectFilesToSaveJavaFX(stage, null, Arrays.asList(extensionFilter), dialogTitle, false);
+		return files != null ? files.get(0) : null;
+	}
+	
+	public static File selectFileToSaveJavaFX(Stage stage, String dialogTitle) {
+		return selectFileToSaveJavaFX(stage, new FileChooser.ExtensionFilter("Todos os arquivos", "*.*"), dialogTitle);
+	}
+
+	//-----------
+	
+	private static List<File> selectFilesToOpenJavaFX(Stage stage, String initialFolder, List<ExtensionFilter> extensionFilters, String dialogTitle, Boolean multiSel) {
 	  FileChooser fileChooser = new FileChooser();
 	  fileChooser.setTitle(dialogTitle);
 	  if (initialFolder != null)
@@ -39,44 +96,33 @@ public abstract class MyFile {
 		return file != null ? Arrays.asList(file) : null;
 	}
 
-	public static File selectDirectoryJavaFX(Stage stage, String initialFolder, String dialogTitle) {
-	  DirectoryChooser dirChooser = new DirectoryChooser();
-	  dirChooser.setTitle(dialogTitle);
-	  if (initialFolder != null)
-	  	dirChooser.setInitialDirectory(new File(initialFolder));
-	  File file = dirChooser.showDialog(stage);
-		return file;
-	}
-
-	public static List<File> selectFilesJavaFX(Stage stage, String initialFolder, List<ExtensionFilter> extensionFilters, String dialogTitle) {
-		return selectFilesJavaFX(stage, initialFolder, extensionFilters, dialogTitle, true);
+	public static List<File> selectFilesToOpenJavaFX(Stage stage, String initialFolder, List<ExtensionFilter> extensionFilters, String dialogTitle) {
+		return selectFilesToOpenJavaFX(stage, initialFolder, extensionFilters, dialogTitle, true);
 	}
 	
-	public static File selectFileJavaFX(Stage stage, String initialFolder, ExtensionFilter extensionFilter, String dialogTitle) {
-		List<File> files = selectFilesJavaFX(stage, initialFolder, Arrays.asList(extensionFilter), dialogTitle, false);
+	public static File selectFileToOpenJavaFX(Stage stage, String initialFolder, ExtensionFilter extensionFilter, String dialogTitle) {
+		List<File> files = selectFilesToOpenJavaFX(stage, initialFolder, Arrays.asList(extensionFilter), dialogTitle, false);
 		return files != null ? files.get(0) : null;
 	}
 	
-	public static File selectFileJavaFX(Stage stage, String initialFolder, String dialogTitle) {
-		return selectFileJavaFX(stage, initialFolder, new FileChooser.ExtensionFilter("Todos os arquivos", "*.*"), dialogTitle);
+	public static File selectFileToOpenJavaFX(Stage stage, String initialFolder, String dialogTitle) {
+		return selectFileToOpenJavaFX(stage, initialFolder, new FileChooser.ExtensionFilter("Todos os arquivos", "*.*"), dialogTitle);
 	}
 
-	public static List<File> selectFilesJavaFX(Stage stage, List<ExtensionFilter> extensionFilters, String dialogTitle) {
-		return selectFilesJavaFX(stage, null, extensionFilters, dialogTitle, true);
+	public static List<File> selectFilesToOpenJavaFX(Stage stage, List<ExtensionFilter> extensionFilters, String dialogTitle) {
+		return selectFilesToOpenJavaFX(stage, null, extensionFilters, dialogTitle, true);
 	}
 	
-	public static File selectFileJavaFX(Stage stage, ExtensionFilter extensionFilter, String dialogTitle) {
-		List<File> files = selectFilesJavaFX(stage, null, Arrays.asList(extensionFilter), dialogTitle, false);
+	public static File selectFileToOpenJavaFX(Stage stage, ExtensionFilter extensionFilter, String dialogTitle) {
+		List<File> files = selectFilesToOpenJavaFX(stage, null, Arrays.asList(extensionFilter), dialogTitle, false);
 		return files != null ? files.get(0) : null;
 	}
 	
-	public static File selectFileJavaFX(Stage stage, String dialogTitle) {
-		return selectFileJavaFX(stage, new FileChooser.ExtensionFilter("Todos os arquivos", "*.*"), dialogTitle);
+	public static File selectFileToOpenJavaFX(Stage stage, String dialogTitle) {
+		return selectFileToOpenJavaFX(stage, new FileChooser.ExtensionFilter("Todos os arquivos", "*.*"), dialogTitle);
 	}
-	
-	public static File selectDirectoryJavaFX(Stage stage, String dialogTitle) {
-		return selectDirectoryJavaFX(stage, null, dialogTitle);
-	}	
+
+	//-----------
 	
 	private static List<File> selectFilesAndDirs(String initialFolder, String dialogTitle, Boolean listFiles, Boolean listDirs, Boolean multiSel) {
 		File initPath = initialFolder == null ? FileSystemView.getFileSystemView().getHomeDirectory() : new File(initialFolder);

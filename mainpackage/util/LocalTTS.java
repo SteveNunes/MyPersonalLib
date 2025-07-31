@@ -126,6 +126,14 @@ public class LocalTTS {
 		speech(request);
 	}
 	
+	public static void generateAudio(String outputFilePath, String text, TTSVoice voice, int gain, int rate) {
+		if (text == null || text.isBlank() || outputFilePath == null || outputFilePath.isBlank())
+			return;
+		text = text.replace("’", "").replace("\'", "").replace("\"", "").toLowerCase();
+		TTSRequest request = new TTSRequest(text, voice, gain, rate, null, false);
+		executorServiceExecute(() -> sendToServer(outputFilePath + "¡" + request.rate + "¡" + request.gain + "¡" + request.voice.getSystemName() + "¡" + request.text));
+	}
+	
 	public static void stopAll() {
 		sendToServer("STOP_ALL");
 	}

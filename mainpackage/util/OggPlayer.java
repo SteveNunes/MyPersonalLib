@@ -25,7 +25,6 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 
 import de.jarnbjo.vorbis.VorbisAudioFileReader;
 import enums.OggState;
-import util.Misc;
 
 public final class OggPlayer {
 

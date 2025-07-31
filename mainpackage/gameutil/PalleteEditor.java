@@ -282,7 +282,7 @@ public class PalleteEditor {
 	}
 
 	private void loadFromDisk() {
-    File file = MyFile.selectFileJavaFX(stage, "./", new FileChooser.ExtensionFilter("Imagens PNG", "*.png"), "Selecione o arquivo de sprite");
+    File file = MyFile.selectFileToOpenJavaFX(stage, "./", new FileChooser.ExtensionFilter("Imagens PNG", "*.png"), "Selecione o arquivo de sprite");
     if (file != null) {
 			originalSpriteFileName = file.getAbsoluteFile().toString();
 			originalSprite = ImageUtils.loadWritableImageFromFile(originalSpriteFileName);
@@ -317,7 +317,7 @@ public class PalleteEditor {
 	}
 	
 	private void saveToDisk() {
-		File file = MyFile.selectFileJavaFX(stage, "C:\\", "Informe o arquivo de destino");
+		File file = MyFile.selectFileToSaveJavaFX(stage, "C:\\", "Informe o arquivo de destino");
 		if (file == null)
 			return;
 		int x = 0;

@@ -22,56 +22,63 @@ public class GlobalKeyListener implements NativeKeyListener {
 	private static NativeKeyListener nativeKeyListener = null;
 	public static boolean nativeHookStarted = false;
 
-	private GlobalKeyListener()
-		{ super(); }
-	
+	private GlobalKeyListener() {
+		super();
+	}
+
 	@Override
 	public void nativeKeyPressed(NativeKeyEvent n) {
+		startListener();
 		if (!isKeyPressed(n.getRawCode()) && onKeyPressedEvent != null)
 			onKeyPressedEvent.accept(n);
 		else if (onKeyRepeatedEvent != null)
 			onKeyRepeatedEvent.accept(n);
-		if (!pressedKeys.contains(n.getRawCode()))
-			pressedKeys.add(n.getRawCode());
+		if (!pressedKeys.contains(n.getKeyCode()))
+			pressedKeys.add(n.getKeyCode());
 	}
 
 	@Override
 	public void nativeKeyReleased(NativeKeyEvent n) {
-		pressedKeys.remove(Integer.valueOf(n.getRawCode()));
+		startListener();
+		pressedKeys.remove(Integer.valueOf(n.getKeyCode()));
 		if (onKeyReleasedEvent != null)
 			onKeyReleasedEvent.accept(n);
 	}
 
 	@Override
 	public void nativeKeyTyped(NativeKeyEvent n) {
+		startListener();
 		if (!isKeyPressed(n.getRawCode()) && onKeyTypedEvent != null)
 			onKeyTypedEvent.accept(n);
 		else if (onKeyTypedRepeatedEvent != null)
 			onKeyTypedRepeatedEvent.accept(n);
-		if (!pressedKeys.contains(n.getRawCode()))
-			pressedKeys.add(n.getRawCode());
+		if (!pressedKeys.contains(n.getKeyCode()))
+			pressedKeys.add(n.getKeyCode());
 	}
 
-	public static boolean isKeyPressed(int rawCode)
-		{ return pressedKeys.contains(rawCode); }
+	public static boolean isKeyPressed(int keyCode) {
+		startListener();
+		return pressedKeys.contains(keyCode);
+	}
 
-	public static void startListener() {
-		if (nativeKeyListener != null)
-			throw new RuntimeException("Global Key Listener is already active");
-		try {
-			nativeKeyListener = new GlobalKeyListener();
-			if (!nativeHookStarted) {
-				GlobalScreen.registerNativeHook();
-				nativeHookStarted = true;
+	private static void startListener() {
+		if (nativeKeyListener == null) {
+			try {
+				nativeKeyListener = new GlobalKeyListener();
+				if (!nativeHookStarted) {
+					GlobalScreen.registerNativeHook();
+					nativeHookStarted = true;
+				}
+				GlobalScreen.addNativeKeyListener(nativeKeyListener);
+				pressedKeys = new ArrayList<>();
+				Misc.addShutdownEvent(GlobalKeyListener::stopListener);
 			}
-			GlobalScreen.addNativeKeyListener(nativeKeyListener);
-			pressedKeys = new ArrayList<>();
-			Misc.addShutdownEvent(GlobalKeyListener::stopListener);
+			catch (Exception e) {
+				throw new RuntimeException("Unable to start the Global Key Listener\n\t" + e.getMessage());
+			}
 		}
-		catch (Exception e)
-			{ throw new RuntimeException("Unable to start the Global Key Listener\n\t" + e.getMessage()); }
 	}
-	
+
 	private static void stopListener() {
 		if (nativeKeyListener != null) {
 			try {
@@ -85,12 +92,7 @@ public class GlobalKeyListener implements NativeKeyListener {
 			catch (NativeHookException e) {}
 		}
 	}
-	
-	private static void checkIfListenerIsRunning() {
-		if (nativeKeyListener == null)
-			throw new RuntimeException("Global Key Listener is not active. Call 'startListener()' first.");
-	}
-	
+
 	public static Consumer<NativeKeyEvent> getOnKeyTypedEvent() {
 		return onKeyTypedEvent;
 	}
@@ -112,28 +114,28 @@ public class GlobalKeyListener implements NativeKeyListener {
 	}
 
 	public static void setOnKeyTypedEvent(Consumer<NativeKeyEvent> consumer) {
-		checkIfListenerIsRunning();
+		startListener();
 		onKeyTypedEvent = consumer;
 	}
-	
+
 	public static void setOnKeyPressedEvent(Consumer<NativeKeyEvent> consumer) {
-		checkIfListenerIsRunning();
+		startListener();
 		onKeyPressedEvent = consumer;
 	}
-	
+
 	public static void setOnKeyRepeatedEvent(Consumer<NativeKeyEvent> consumer) {
-		checkIfListenerIsRunning();
+		startListener();
 		onKeyRepeatedEvent = consumer;
 	}
-	
+
 	public static void setOnKeyTypedRepeatedEvent(Consumer<NativeKeyEvent> consumer) {
-		checkIfListenerIsRunning();
+		startListener();
 		onKeyTypedRepeatedEvent = consumer;
 	}
-	
+
 	public static void setOnKeyReleasedEvent(Consumer<NativeKeyEvent> consumer) {
-		checkIfListenerIsRunning();
+		startListener();
 		onKeyReleasedEvent = consumer;
 	}
-	
+
 }

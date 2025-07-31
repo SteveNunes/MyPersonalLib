@@ -50,10 +50,8 @@ public class SocketClient {
   public SocketClient(Socket socket) {
   	if (executorService == null)
   		executorService = Executors.newCachedThreadPool();
-		executorServiceExecute(() -> {
-	  	this.socket = socket;
-	  	setSocket(socket);
-		});
+  	this.socket = socket;
+		executorServiceExecute(() -> setSocket(socket));
   }
   
 	public void connect(String address, int port) {

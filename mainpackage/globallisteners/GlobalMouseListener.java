@@ -15,20 +15,21 @@ import com.github.kwhat.jnativehook.mouse.NativeMouseWheelListener;
 import util.Misc;
 
 public class GlobalMouseListener implements NativeMouseInputListener {
-	
+
 	private static Consumer<NativeMouseEvent> onMouseClickedEvent = null;
 	private static Consumer<NativeMouseEvent> onMousePressedEvent = null;
 	private static Consumer<NativeMouseEvent> onMouseReleasedEvent = null;
 	private static Consumer<NativeMouseEvent> onMouseMovedEvent = null;
-	private static Consumer<NativeMouseEvent> mouseDraggedEvent = null;
+	private static Consumer<NativeMouseEvent> onMouseDraggedEvent = null;
 	private static List<Integer> pressedButtons = null;
 	private static NativeMouseInputListener nativeMouseInputListener = null;
 	private static NativeMouseMotionListener nativeMouseMotionListener = null;
 	private static NativeMouseWheelListener nativeMouseWheelListener = null;
-	
-	private GlobalMouseListener()
-		{ super(); }
-	
+
+	private GlobalMouseListener() {
+		super();
+	}
+
 	@Override
 	public void nativeMouseClicked(NativeMouseEvent e) {
 		if (!pressedButtons.contains(e.getButton()))
@@ -60,34 +61,37 @@ public class GlobalMouseListener implements NativeMouseInputListener {
 
 	@Override
 	public void nativeMouseDragged(NativeMouseEvent e) {
-		if (mouseDraggedEvent != null)
-			mouseDraggedEvent.accept(e);
+		if (onMouseDraggedEvent != null)
+			onMouseDraggedEvent.accept(e);
 	}
-	
-	public static boolean isButtonPressed(int button)
-		{ return pressedButtons.contains(button); }
 
-	public static void startListener() {
-		if (nativeMouseInputListener != null)
-			throw new RuntimeException("Global Mouse Listener is already active");
-		try {
-			nativeMouseInputListener = new GlobalMouseListener();
-			nativeMouseMotionListener = new GlobalMouseListener();
-			nativeMouseWheelListener = new MyMouseWheelListener();
-			if (!GlobalKeyListener.nativeHookStarted) {
-				GlobalScreen.registerNativeHook();
-				GlobalKeyListener.nativeHookStarted = true;
-			}
-			GlobalScreen.addNativeMouseListener(nativeMouseInputListener);
-			GlobalScreen.addNativeMouseMotionListener(nativeMouseMotionListener);
-			GlobalScreen.addNativeMouseWheelListener(nativeMouseWheelListener);
-			Misc.addShutdownEvent(GlobalMouseListener::stopListener);
-			pressedButtons = new ArrayList<>();
-		}
-		catch (Exception e)
-			{ throw new RuntimeException("Unable to start the Global Mouse Listener\n\t" + e.getMessage()); }
+	public static boolean isButtonPressed(int button) {
+		return pressedButtons.contains(button);
 	}
-	
+
+	private static void startListener() {
+		if (nativeMouseInputListener == null) {
+			try {
+				nativeMouseInputListener = new GlobalMouseListener();
+				nativeMouseMotionListener = new GlobalMouseListener();
+				nativeMouseWheelListener = new MyMouseWheelListener();
+				if (!GlobalKeyListener.nativeHookStarted) {
+					GlobalScreen.registerNativeHook();
+					GlobalKeyListener.nativeHookStarted = true;
+				}
+				GlobalScreen.addNativeMouseListener(nativeMouseInputListener);
+				GlobalScreen.addNativeMouseMotionListener(nativeMouseMotionListener);
+				GlobalScreen.addNativeMouseWheelListener(nativeMouseWheelListener);
+				
+				Misc.addShutdownEvent(GlobalMouseListener::stopListener);
+				pressedButtons = new ArrayList<>();
+			}
+			catch (Exception e) {
+				throw new RuntimeException("Unable to start the Global Mouse Listener\n\t" + e.getMessage());
+			}
+		}
+	}
+
 	private static void stopListener() {
 		if (nativeMouseInputListener != null) {
 			try {
@@ -105,12 +109,7 @@ public class GlobalMouseListener implements NativeMouseInputListener {
 			catch (NativeHookException e) {}
 		}
 	}
-	
-	static void checkIfListenerIsRunning() {
-		if (nativeMouseInputListener == null)
-			throw new RuntimeException("Global Mouse Listener is not active. Call 'startListener()' first.");
-	}
-	
+
 	public static Consumer<NativeMouseEvent> getOnMouseClickedEvent() {
 		return onMouseClickedEvent;
 	}
@@ -128,47 +127,49 @@ public class GlobalMouseListener implements NativeMouseInputListener {
 	}
 
 	public static void setOnMouseClickedEvent(Consumer<NativeMouseEvent> consumer) {
-		checkIfListenerIsRunning();
+		startListener();
 		onMouseClickedEvent = consumer;
 	}
-	
+
 	public static void setOnMousePressedEvent(Consumer<NativeMouseEvent> consumer) {
-		checkIfListenerIsRunning();
+		startListener();
 		onMousePressedEvent = consumer;
 	}
-	
+
 	public static void setOnMouseReleasedEvent(Consumer<NativeMouseEvent> consumer) {
-		checkIfListenerIsRunning();
+		startListener();
 		onMouseReleasedEvent = consumer;
 	}
-	
+
 	public static void setOnMouseMoveEvent(Consumer<NativeMouseEvent> consumer) {
-		checkIfListenerIsRunning();
+		startListener();
 		onMouseMovedEvent = consumer;
 	}
-	
-	public static void setOnMouseWheelEvent(Consumer<NativeMouseWheelEvent> consumer)
-		{ MyMouseWheelListener.setOnMouseWheelEvent(consumer); }
-	
-	public static void main(String[] args) {
+
+	public static void setOnMouseDraggedEvent(Consumer<NativeMouseEvent> consumer) {
 		startListener();
+		onMouseDraggedEvent = consumer;
 	}
-	
+
+	public static void setOnMouseWheelEvent(Consumer<NativeMouseWheelEvent> consumer) {
+		startListener();
+		MyMouseWheelListener.setOnMouseWheelEvent(consumer);
+	}
+
 }
 
 class MyMouseWheelListener implements NativeMouseWheelListener {
-	
+
 	private static Consumer<NativeMouseWheelEvent> mouseWheelEvent = null;
 
 	@Override
-  public void nativeMouseWheelMoved(NativeMouseWheelEvent e) {
+	public void nativeMouseWheelMoved(NativeMouseWheelEvent e) {
 		if (mouseWheelEvent != null)
 			mouseWheelEvent.accept(e);
-  }
-  
+	}
+
 	public static void setOnMouseWheelEvent(Consumer<NativeMouseWheelEvent> consumer) {
-		GlobalMouseListener.checkIfListenerIsRunning();
 		mouseWheelEvent = consumer;
 	}
-  
+
 }

@@ -9,7 +9,13 @@ public enum TTSVoice {
 	LUCIANA(4),
 	CATARINA(5),
 	JOANA(6),
-	JOAQUIM(7);
+	JOAQUIM(7),
+	//Neurais
+	THALITA(8),
+	ANTONIO(9),
+	FRANCISCA(10),
+	DUARTE(11),
+	RAQUEL(12);
 	
 	private int value;
 	private static String[][] voices = {
@@ -20,11 +26,20 @@ public enum TTSVoice {
 			{"VE_Brazilian_Portuguese_Felipe_22kHz", "Felipe (BR)"},
 			{"VE_Portuguese_Catarina_22kHz", "Catarina (PT)"},
 			{"VE_Portuguese_Joana_22kHz", "Joana (PT)"},
-			{"VE_Portuguese_Joaquim_22kHz", "Joaquim (PT)"}
+			{"VE_Portuguese_Joaquim_22kHz", "Joaquim (PT)"},
+			{"pt-BR-ThalitaMultilingualNeural", "Thalita (BR Neural)"},
+			{"pt-BR-AntonioNeural", "Antonio (BR Neural)"},
+			{"pt-BR-FranciscaNeural", "Francisca (BR Neural)"},
+			{"pt-PT-DuarteNeural", "Duarte (PT Neural)"},
+			{"pt-PT-RaquelNeural", "Raquel (PT Neural)"}
 	};
 	
 	private TTSVoice(int value) {
 		this.value = value;
+	}
+	
+	public boolean isNeuralVoice() {
+		return value >= THALITA.value;
 	}
 	
 	public String getSystemName() {

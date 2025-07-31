@@ -1,5 +1,6 @@
 package joystick;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,15 +14,18 @@ import net.java.games.input.Component.Identifier.Button;
 import net.java.games.input.Component.POV;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
+import util.Misc;
+import util.Timer;
 
 public class JInputEX {
-	
+
 	private static List<JInputEX> joysticks = null;
-	private static String povDirNames[] = {"POV (UL)", "POV (U)", "POV (UR)", "POV (R)", "POV (DR)", "POV (D)", "POV (DL)", "POV (L)"};
-	private static float povValues[] = {POV.CENTER, POV.UP_LEFT, POV.UP, POV.UP_RIGHT, POV.RIGHT, POV.DOWN_RIGHT, POV.DOWN, POV.DOWN_LEFT, POV.LEFT};
+	private static String povDirNames[] = { "POV (UL)", "POV (U)", "POV (UR)", "POV (R)", "POV (DR)", "POV (D)", "POV (DL)", "POV (L)" };
+	private static float povValues[] = { POV.CENTER, POV.UP_LEFT, POV.UP, POV.UP_RIGHT, POV.RIGHT, POV.DOWN_RIGHT, POV.DOWN, POV.DOWN_LEFT, POV.LEFT };
 	private static Consumer<JInputEX> onJoystickConnected;
 	private static Consumer<JInputEX> onJoystickDisconnected;
-	
+	private static boolean mainClose = false;
+
 	private boolean pauseThread;
 	private boolean close;
 	private int joystickID;
@@ -40,23 +44,25 @@ public class JInputEX {
 	private BiConsumer<JInputEX, JInputEXComponent> onPovChanges;
 	private BiConsumer<JInputEX, JInputEXComponent> onAxisChanges;
 	private BiConsumer<JInputEX, JInputEXComponent> onTriggerChanges;
-	
-	public static void init() {
-		joysticks = new ArrayList<>();
-		Controller[] controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
-		for (Controller controller : controllers) {
-			if (controller.getType() == Controller.Type.GAMEPAD) {
-				JInputEX joystick = new JInputEX(controller);
-				joystick.joystickID = joysticks.size();
-				joysticks.add(joystick);
-				if (onJoystickConnected != null)
-					onJoystickConnected.accept(joystick);
+
+	private static void init() {
+		if (joysticks == null) {
+			joysticks = new ArrayList<>();
+			Controller[] controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
+			for (Controller controller : controllers) {
+				if (controller.getType() == Controller.Type.GAMEPAD) {
+					JInputEX joystick = new JInputEX(controller);
+					joystick.joystickID = joysticks.size();
+					joysticks.add(joystick);
+					if (onJoystickConnected != null)
+						onJoystickConnected.accept(joystick);
+				}
 			}
+			pollAllJoysticks();
+			Misc.addShutdownEvent(() -> mainClose = true);
 		}
 	}
 
-	private JInputEX() {}
-	
 	private JInputEX(Controller joystick) {
 		this.joystick = joystick;
 		components = new ArrayList<>();
@@ -70,7 +76,7 @@ public class JInputEX {
 		sortComponents();
 		setComponentsId();
 	}
-	
+
 	private void scanComponents() {
 		for (Component component : joystick.getComponents()) {
 			Identifier identifier = component.getIdentifier();
@@ -83,7 +89,7 @@ public class JInputEX {
 				for (int n = 2; n <= 8; n += 2) {
 					JInputEXComponent comp = new JInputEXComponent(component, povDirNames[n - 1]);
 					comp.setExactlyTriggerValues(povValues[n - 1], povValues[n], povValues[n == 8 ? 1 : n + 1]);
-						components.add(comp);
+					components.add(comp);
 				}
 			}
 			else if (identifier instanceof Component.Identifier.Axis) {
@@ -112,12 +118,8 @@ public class JInputEX {
 		components.sort((c1, c2) -> {
 			Identifier i1 = c1.getComponent().getIdentifier();
 			Identifier i2 = c2.getComponent().getIdentifier();
-			int v1 = i1 == Axis.POV ? 7 : i1 == Axis.X ? 6 : i1 == Axis.Y ? 5 :
-							 i1 == Axis.RX ? 4 : i1 == Axis.RY ? 3 :
-							 i1 instanceof Button ? 2 : i1 == Axis.POV.Z ? 1 : 0;
-			int v2 = i2 == Axis.POV ? 7 : i2 == Axis.X ? 6 : i2 == Axis.Y ? 5 :
-							 i2 == Axis.RX ? 4 : i2 == Axis.RY ? 3 :
-							 i2 instanceof Button ? 2 : i2 == Axis.POV.Z ? 1 : 0;
+			int v1 = i1 == Axis.POV ? 7 : i1 == Axis.X ? 6 : i1 == Axis.Y ? 5 : i1 == Axis.RX ? 4 : i1 == Axis.RY ? 3 : i1 instanceof Button ? 2 : i1 == Axis.POV.Z ? 1 : 0;
+			int v2 = i2 == Axis.POV ? 7 : i2 == Axis.X ? 6 : i2 == Axis.Y ? 5 : i2 == Axis.RX ? 4 : i2 == Axis.RY ? 3 : i2 instanceof Button ? 2 : i2 == Axis.POV.Z ? 1 : 0;
 			return v2 - v1;
 		});
 		axes.sort((c1, c2) -> {
@@ -133,7 +135,7 @@ public class JInputEX {
 			return (i1 == Axis.Z ? 0 : 1) - (i2 == Axis.Z ? 0 : 1);
 		});
 	}
-	
+
 	private void setComponentsId() {
 		int componentId = -1;
 		for (JInputEXComponent component : components)
@@ -151,10 +153,8 @@ public class JInputEX {
 		for (JInputEXComponent trigger : triggers)
 			trigger.setIds(-1, -1, -1, -1, ++triggerId);
 	}
-	
-	public static void pollAllJoysticks() {
-		if (joysticks == null)
-			init();
+
+	private static void pollAllJoysticks() {
 		for (JInputEX joy : joysticks)
 			if (joy.isConnected()) {
 				try {
@@ -165,12 +165,15 @@ public class JInputEX {
 					joy.close();
 				}
 			}
+		if (!mainClose)
+			Timer.createTimer("pollAllJoysticks@" + System.nanoTime(), Duration.ofMillis(1), JInputEX::pollAllJoysticks);
 	}
 
-	public void poll() {
+	private void poll() {
 		boolean poll = false;
-		try
-			{ poll = joystick.poll(); }
+		try {
+			poll = joystick.poll();
+		}
 		catch (Exception e) {
 			e.printStackTrace();
 			return;
@@ -213,88 +216,92 @@ public class JInputEX {
 	}
 
 	/** Set if thread is paused ({@code true}) or not ({@code false)} */
-	public void setPauseThread(boolean value)
-		{ pauseThread = value; }
-	
+	public void setPauseThread(boolean value) {
+		pauseThread = value;
+	}
+
 	/** Return {@code true} if thread is paused */
-	public boolean isThreadPaused()
-		{ return pauseThread; }
-	
+	public boolean isThreadPaused() {
+		return pauseThread;
+	}
+
 	/** Return the total of initialized joysticks */
 	public static int getTotalJoysticks() {
-		if (joysticks == null)
-			init();
+		init();
 		return joysticks.size();
 	}
-	
+
 	/** Return a desired Joystick from the initialized Joystick list */
 	public static JInputEX getJoystick(int joystickID) {
-		if (joysticks == null)
-			init();
+		init();
 		if (joystickID < 0 || joystickID >= joysticks.size())
 			throw new RuntimeException(joystickID + " - Invalid Joystick ID");
 		return joysticks.get(joystickID);
 	}
-	
+
 	/** Return a unmidifiable list of all initialized joysticks */
 	public static List<JInputEX> getJoysticks() {
-		if (joysticks == null)
-			init();
+		init();
 		return Collections.unmodifiableList(joysticks);
 	}
-	
+
 	/** Close all initialized joysticks */
 	public static void closeAllJoysticks() {
-		if (joysticks == null)
-			init();
+		init();
 		for (JInputEX joy : joysticks) {
 			joy.close();
 			if (onJoystickDisconnected != null)
 				onJoystickDisconnected.accept(joy);
 		}
 	}
-	
-	/** Set if all joysticks thread is paused ({@code true}) or not ({@code false)} */
+
+	/**
+	 * Set if all joysticks thread is paused ({@code true}) or not ({@code false)}
+	 */
 	public static void setPauseAllJoysticks(boolean value) {
-		if (joysticks == null)
-			init();
+		init();
 		for (JInputEX joy : joysticks)
-			joy.setPauseThread(value);		
+			joy.setPauseThread(value);
 	}
-	
+
 	/** Set all joysticks deadzone value */
 	public void setAllAnalogicComponentsDeadZoneValue(float value) {
-		if (joysticks == null)
-			init();
+		init();
 		for (JInputEXComponent axis : axes)
-			axis.setDeadZone(value);		
+			axis.setDeadZone(value);
 		for (JInputEXComponent trigger : triggers)
-			trigger.setDeadZone(value);		
+			trigger.setDeadZone(value);
 	}
-	
+
 	/** Return ({@code true}) if the joystick is connected */
-	public boolean isConnected()
-		{ return !close; }
-	
+	public boolean isConnected() {
+		return !close;
+	}
+
 	/** Return the joystick name */
-	public String getName()
-		{ return joystick.getName(); }
-	
+	public String getName() {
+		return joystick.getName();
+	}
+
 	/** Return the joystick ID */
-	public int getID()
-		{ return joystickID; }
+	public int getID() {
+		return joystickID;
+	}
 
 	/** Close the joystick */
-	public void close()
-		{ close = true; }
+	public void close() {
+		close = true;
+	}
 
 	/** Return the total of buttons from the joystick */
-	public int getTotalButtons()
-		{ return buttons.size(); }
-	
+	public int getTotalButtons() {
+		return buttons.size();
+	}
+
 	/** Return a unmodifiable list of buttons from the joystick */
-	public List<JInputEXComponent> getButtons()
-		{ return Collections.unmodifiableList(buttons); }
+	public List<JInputEXComponent> getButtons() {
+		return Collections.unmodifiableList(buttons);
+	}
 
 	/** Return a desired button from the joystick */
 	public JInputEXComponent getButton(int buttonID) {
@@ -304,13 +311,15 @@ public class JInputEX {
 	}
 
 	/** Return the total of axes from the joystick */
-	public int getTotalAxes()
-		{ return axes.size(); }
-	
+	public int getTotalAxes() {
+		return axes.size();
+	}
+
 	/** Return a unmodifiable list of axes from the joystick */
-	public List<JInputEXComponent> getAxes()
-		{ return Collections.unmodifiableList(axes); }
-	
+	public List<JInputEXComponent> getAxes() {
+		return Collections.unmodifiableList(axes);
+	}
+
 	/** Return a desired axis from the joystick */
 	public JInputEXComponent getAxis(int axisID) {
 		if (axisID < 0 || axisID >= axes.size())
@@ -319,13 +328,15 @@ public class JInputEX {
 	}
 
 	/** Return the total of triggers from the joystick */
-	public int getTotalTriggers()
-		{ return triggers.size(); }
-	
+	public int getTotalTriggers() {
+		return triggers.size();
+	}
+
 	/** Return a unmodifiable list of triggers from the joystick */
-	public List<JInputEXComponent> getTriggers()
-		{ return Collections.unmodifiableList(triggers); }
-	
+	public List<JInputEXComponent> getTriggers() {
+		return Collections.unmodifiableList(triggers);
+	}
+
 	/** Return a desired trigger from the joystick */
 	public JInputEXComponent getTrigger(int triggerID) {
 		if (triggerID < 0 || triggerID >= triggers.size())
@@ -334,34 +345,46 @@ public class JInputEX {
 	}
 
 	/** Return the total of Povs from the joystick */
-	public int getTotalPovs()
-		{ return povs.size(); }
-	
+	public int getTotalPovs() {
+		return povs.size();
+	}
+
 	/** Return a unmodifiable list of povs from the joystick */
-	public List<JInputEXComponent> getPovs()
-		{ return Collections.unmodifiableList(povs); }
-	
+	public List<JInputEXComponent> getPovs() {
+		return Collections.unmodifiableList(povs);
+	}
+
 	/** Return a desired pov from the joystick */
 	public JInputEXComponent getPov(int povID) {
 		if (povID < 0 || povID >= povs.size())
 			throw new RuntimeException(povID + " - Invalid Pov ID");
 		return povs.get(povID);
-	}	
-		
-	/** Return the total of components (Axes, Povs, Triggers and Buttons) from the joystick,
-	 *  threated as buttons. These will be another instance of the original ones, which
-	 *  triggers as a button. Axes and Povs will be returned as 4-direction buttons, and all
-	 *  other analogic components (such analogic triggers) will be returned as a button.
-	 *  These cloned components will trigger only {@code on...ComponentEvent()}. 
+	}
+
+	/**
+	 * Return the total of components (Axes, Povs, Triggers and Buttons) from the
+	 * joystick, threated as buttons. These will be another instance of the original
+	 * ones, which triggers as a button. Axes and Povs will be returned as
+	 * 4-direction buttons, and all other analogic components (such analogic
+	 * triggers) will be returned as a button. These cloned components will trigger
+	 * only {@code on...ComponentEvent()}.
 	 */
-	public int getTotalComponents()
-		{ return components.size(); }
-	
-	/** Return a unmodifiable list of components from the joystick (Read {@code getTotalCOmponents()} note) */
-	public List<JInputEXComponent> getComponents()
-		{ return Collections.unmodifiableList(components); }
-	
-	/** Return a desired pov from the joystick (Read {@code getTotalCOmponents()} note) */
+	public int getTotalComponents() {
+		return components.size();
+	}
+
+	/**
+	 * Return a unmodifiable list of components from the joystick (Read
+	 * {@code getTotalCOmponents()} note)
+	 */
+	public List<JInputEXComponent> getComponents() {
+		return Collections.unmodifiableList(components);
+	}
+
+	/**
+	 * Return a desired pov from the joystick (Read {@code getTotalCOmponents()}
+	 * note)
+	 */
 	public JInputEXComponent getComponent(int componentID) {
 		if (componentID < 0 || componentID >= components.size())
 			throw new RuntimeException(componentID + " - Invalid Button ID");
@@ -369,48 +392,74 @@ public class JInputEX {
 	}
 
 	/** Set a consumer which will trigger everytime when a button is pressed */
-	public void setOnPressButtonEvent(BiConsumer<JInputEX, JInputEXComponent> consumer)
-		{ onPressButton = consumer; }
+	public void setOnPressButtonEvent(BiConsumer<JInputEX, JInputEXComponent> consumer) {
+		onPressButton = consumer;
+	}
 
 	/** Set a consumer which will trigger while a button is hold */
-	public void setOnHoldButtonEvent(BiConsumer<JInputEX, JInputEXComponent> consumer)
-		{ onHoldButton = consumer; }
+	public void setOnHoldButtonEvent(BiConsumer<JInputEX, JInputEXComponent> consumer) {
+		onHoldButton = consumer;
+	}
 
-	/** Set a consumer which will trigger everytime when a held button is released */
-	public void setOnReleaseButtonEvent(BiConsumer<JInputEX, JInputEXComponent> consumer)
-		{ onReleaseButton = consumer; }
+	/**
+	 * Set a consumer which will trigger everytime when a held button is released
+	 */
+	public void setOnReleaseButtonEvent(BiConsumer<JInputEX, JInputEXComponent> consumer) {
+		onReleaseButton = consumer;
+	}
 
 	/** Set a consumer which will trigger everytime when a pov value is changed */
-	public void setOnPovChangesEvent(BiConsumer<JInputEX, JInputEXComponent> consumer)
-		{ onPovChanges = consumer; }
+	public void setOnPovChangesEvent(BiConsumer<JInputEX, JInputEXComponent> consumer) {
+		onPovChanges = consumer;
+	}
 
 	/** Set a consumer which will trigger everytime when an axis value is changed */
-	public void setOnAxisChangesEvent(BiConsumer<JInputEX, JInputEXComponent> consumer)
-		{ onAxisChanges = consumer; }
+	public void setOnAxisChangesEvent(BiConsumer<JInputEX, JInputEXComponent> consumer) {
+		onAxisChanges = consumer;
+	}
 
-	/** Set a consumer which will trigger everytime when a trigger value is changed */
-	public void setOnTriggerChangesEvent(BiConsumer<JInputEX, JInputEXComponent> consumer)
-		{ onTriggerChanges = consumer; }
+	/**
+	 * Set a consumer which will trigger everytime when a trigger value is changed
+	 */
+	public void setOnTriggerChangesEvent(BiConsumer<JInputEX, JInputEXComponent> consumer) {
+		onTriggerChanges = consumer;
+	}
 
-	/** Set a consumer which will trigger everytime when a button is pressed (Read {@code getTotalCOmponents()} note) */
-	public void setOnPressComponentEvent(BiConsumer<JInputEX, JInputEXComponent> consumer)
-		{ onPressComponent = consumer; }
+	/**
+	 * Set a consumer which will trigger everytime when a button is pressed (Read
+	 * {@code getTotalCOmponents()} note)
+	 */
+	public void setOnPressComponentEvent(BiConsumer<JInputEX, JInputEXComponent> consumer) {
+		onPressComponent = consumer;
+	}
 
-	/** Set a consumer which will trigger while a button is hold (Read {@code getTotalCOmponents()} note) */
-	public void setOnHoldComponentEvent(BiConsumer<JInputEX, JInputEXComponent> consumer)
-		{ onHoldComponent = consumer; }
+	/**
+	 * Set a consumer which will trigger while a button is hold (Read
+	 * {@code getTotalCOmponents()} note)
+	 */
+	public void setOnHoldComponentEvent(BiConsumer<JInputEX, JInputEXComponent> consumer) {
+		onHoldComponent = consumer;
+	}
 
-	/** Set a consumer which will trigger everytime when a held button is released (Read {@code getTotalCOmponents()} note) */
-	public void setOnReleaseComponentEvent(BiConsumer<JInputEX, JInputEXComponent> consumer)
-		{ onReleaseComponent = consumer; }
+	/**
+	 * Set a consumer which will trigger everytime when a held button is released
+	 * (Read {@code getTotalCOmponents()} note)
+	 */
+	public void setOnReleaseComponentEvent(BiConsumer<JInputEX, JInputEXComponent> consumer) {
+		onReleaseComponent = consumer;
+	}
 
-	/** Set a consumer which will trigger when a joystick is connected (Triggers only a time, after calling the {@code initializeJoysticks()} method */
-	public static void setOnJoystickConnectedEvent(Consumer<JInputEX> consumer)
-		{ onJoystickConnected = consumer; }
+	/**
+	 * Set a consumer which will trigger when a joystick is connected (Triggers only
+	 * a time, after calling the {@code initializeJoysticks()} method
+	 */
+	public static void setOnJoystickConnectedEvent(Consumer<JInputEX> consumer) {
+		onJoystickConnected = consumer;
+	}
 
 	/** Set a consumer which will trigger when a joystick is disconnected */
-	public static void setOnJoystickDisconnectedEvent(Consumer<JInputEX> consumer)
-		{ onJoystickDisconnected = consumer; }
-	
-}
+	public static void setOnJoystickDisconnectedEvent(Consumer<JInputEX> consumer) {
+		onJoystickDisconnected = consumer;
+	}
 
+}

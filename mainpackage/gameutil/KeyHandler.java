@@ -8,16 +8,18 @@ import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 
 public abstract class KeyHandler {
-	
+
 	private static int repeatDelay = -1;
 	private static Map<KeyCode, Integer> repeatKeys = new HashMap<>();
 	private static Consumer<KeyCode> onRepeatKeyCall;
-	
-	public static void setRepatKeyDelay(int delay)
-		{ repeatDelay = delay; }
-	
-	public static boolean isKeyDown(KeyCode keyCode)
-		{ return repeatKeys.containsKey(keyCode); }
+
+	public static void setRepatKeyDelay(int delay) {
+		repeatDelay = delay;
+	}
+
+	public static boolean isKeyDown(KeyCode keyCode) {
+		return repeatKeys.containsKey(keyCode);
+	}
 
 	public static void setOnKeyPressEvent(Scene scene, Consumer<KeyCode> consumer) {
 		scene.setOnKeyPressed(keyEvent -> {
@@ -25,22 +27,25 @@ public abstract class KeyHandler {
 			consumer.accept(keyEvent.getCode());
 		});
 	}
-	
-	public static void setOnKeyHoldEvent(Consumer<KeyCode> consumer)
-		{ onRepeatKeyCall = consumer; }
-	
+
+	public static void setOnKeyHoldEvent(Consumer<KeyCode> consumer) {
+		onRepeatKeyCall = consumer;
+	}
+
 	public static void setOnKeyReleaseEvent(Scene scene, Consumer<KeyCode> consumer) {
-		scene.setOnKeyPressed(keyEvent -> {
+		scene.setOnKeyReleased(keyEvent -> {
 			repeatKeys.remove(keyEvent.getCode());
 			consumer.accept(keyEvent.getCode());
 		});
 	}
-	
-	public static KeyCode[] getAllHoldKeys()
-		{ return (KeyCode[])repeatKeys.keySet().toArray(); }
-	
-	public static int getNumberOfHoldKeys()
-		{ return repeatKeys.size(); }
+
+	public static KeyCode[] getAllHoldKeys() {
+		return (KeyCode[]) repeatKeys.keySet().toArray();
+	}
+
+	public static int getNumberOfHoldKeys() {
+		return repeatKeys.size();
+	}
 
 	/** Call it on your main loop every frame */
 	public static void holdKeyPoll() {

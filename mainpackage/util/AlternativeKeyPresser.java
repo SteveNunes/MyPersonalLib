@@ -21,4 +21,16 @@ public class AlternativeKeyPresser {
 		User32.INSTANCE.keybd_event((byte) keyCode, (byte) 0, KEYEVENTF_KEYUP, null);
 	}
 
+	public static void delay(int ms) {
+		Thread thread = Thread.currentThread();
+		if (!thread.isInterrupted()) {
+			try {
+				Thread.sleep(ms);
+			}
+			catch (final InterruptedException ignored) {
+				thread.interrupt();
+			}
+		}
+	}
+
 }
