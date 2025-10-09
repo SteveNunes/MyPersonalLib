@@ -28,9 +28,10 @@ public abstract class DrawUtils {
 		return rectangle;
 	}
 
-	public static Rectangle drawRectangle(ObservableList<Node> childrens, double x, double y, double width, double height, Color fillColor, Color strokeColor, int strokeWidth)
-		{ return drawRectangle(childrens, x, y, width, height, fillColor, strokeColor, strokeWidth, 1, 0); }
-	
+	public static Rectangle drawRectangle(ObservableList<Node> childrens, double x, double y, double width, double height, Color fillColor, Color strokeColor, int strokeWidth) {
+		return drawRectangle(childrens, x, y, width, height, fillColor, strokeColor, strokeWidth, 1, 0);
+	}
+
 	public static Line drawLine(ObservableList<Node> childrens, double startX, double startY, double endX, double endY, Color strokeColor, int strokeWidth, double opacity, double rotate) {
 		Line line = new Line();
 		line.setStartX(startX);
@@ -45,9 +46,10 @@ public abstract class DrawUtils {
 		return line;
 	}
 
-	public static Line drawLine(ObservableList<Node> childrens, double startX, double startY, double endX, double endY, Color strokeColor, int strokeWidth)
-		{ return drawLine(childrens, startX, startY, endX, endY, strokeColor, strokeWidth, 1, 0); }
-	
+	public static Line drawLine(ObservableList<Node> childrens, double startX, double startY, double endX, double endY, Color strokeColor, int strokeWidth) {
+		return drawLine(childrens, startX, startY, endX, endY, strokeColor, strokeWidth, 1, 0);
+	}
+
 	public static Text drawText(ObservableList<Node> childrens, double x, double y, Font font, String text, Color color, int strokeWidth, double opacity, double rotate) {
 		Text txt = new Text();
 		txt.setText(text);
@@ -62,9 +64,10 @@ public abstract class DrawUtils {
 		return txt;
 	}
 
-	public static Text drawText(ObservableList<Node> childrens, double x, double y, Font font, String text, Color color, int strokeWidth)
-		{ return drawText(childrens, x, y, font, text, color, strokeWidth, 1, 0); }
-	
+	public static Text drawText(ObservableList<Node> childrens, double x, double y, Font font, String text, Color color, int strokeWidth) {
+		return drawText(childrens, x, y, font, text, color, strokeWidth, 1, 0);
+	}
+
 	public static Polygon drawPolygon(ObservableList<Node> childrens, List<Double> points, Color strokeColor, int strokeWidth, Color fillColor, double opacity, double rotate) {
 		Polygon polygon = new Polygon();
 		polygon.getPoints().setAll(400.0, 200.0, 500.0, 300.0, 400.0, 300.0);
@@ -76,8 +79,9 @@ public abstract class DrawUtils {
 		childrens.add(polygon);
 		return polygon;
 	}
-	
-	public static Polygon drawPolygon(ObservableList<Node> childrens, List<Double> points, Color strokeColor, int strokeWidth, Color fillColor)
-		{ return drawPolygon(childrens, points, strokeColor, strokeWidth, fillColor, 1, 0); }
-	
+
+	public static Polygon drawPolygon(ObservableList<Node> childrens, List<Double> points, Color strokeColor, int strokeWidth, Color fillColor) {
+		return drawPolygon(childrens, points, strokeColor, strokeWidth, fillColor, 1, 0);
+	}
+
 }

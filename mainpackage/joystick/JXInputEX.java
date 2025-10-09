@@ -71,6 +71,7 @@ public class JXInputEX {
 	private static Consumer<JXInputEX> onJoystickConnectedEvent;
 	private static Consumer<JXInputEX> onJoystickDisconnectedEvent;
 	private static boolean autoPollIsRunning = false;
+	private static int pollTimerId = 0;
 
 	private XInputDevice14 device;
 	private XInputComponents components;
@@ -145,7 +146,7 @@ public class JXInputEX {
 			if (device.getXInputDevice().isConnected())
 				device.poll();
 		if (!mainClose)
-			Timer.createTimer("pollJoysticks@" + System.nanoTime(), Duration.ofMillis(1), JXInputEX::pollJoysticks);
+			Timer.createTimer("pollJoysticks@" + pollTimerId++, Duration.ofMillis(1), JXInputEX::pollJoysticks);
 	}
 
 	public void setOnHoldButtonEvent(BiConsumer<Pair<Integer, String>, Long> biConsumer) {

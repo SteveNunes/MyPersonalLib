@@ -15,11 +15,9 @@ import javafx.util.Pair;
 
 public abstract class SoundsFX {
 
-	private static long uniqueTimerId = 0;
 	private static MediaPlayer currentMediaPlayer = null;
 	private static Map<String, AudioClip> waves = new LinkedHashMap<>();
 	private static Map<String, MediaPlayer> mp3s = new LinkedHashMap<>();
-	private static Map<MediaPlayer, String> mp3Timers = new LinkedHashMap<>();
 	private static double masterGain = 1;
 	private static Consumer<String> onError = null;
 	
@@ -88,7 +86,6 @@ public abstract class SoundsFX {
 				MediaPlayer mp3;
 				if (mp3s.containsKey(mp3Path)) {
 					mp3 = mp3s.get(mp3Path);
-					mp3Timers.remove(mp3s.get(mp3Path));
 					mp3s.remove(mp3Path);
 					try {
 						mp3.seek(Duration.ZERO);
@@ -100,29 +97,23 @@ public abstract class SoundsFX {
 				if (stopCurrent)
 					mp3s.put(mp3Path, mp3);
 				currentMediaPlayer = mp3;
-				mp3.setRate(rate);
-				mp3.setBalance(balance);
-				mp3.setVolume(volume);
 
-				if (doLoop != null) {
-					mp3.setOnPlaying(() -> {
-						String timerName = "playMp3DoLoop@" + uniqueTimerId++;
-						long seekEnd = (long) doLoop.getKey().toMillis();
-						long seekStart = (long) doLoop.getValue().toMillis();
-						mp3Timers.put(mp3, timerName);
-						if (seekEnd < 0)
-							seekEnd += (long) mp3.getTotalDuration().toMillis();
-						if (seekStart < 0)
-							seekStart += (long) mp3.getTotalDuration().toMillis();
-						final long seekEnd2 = seekEnd, seekStart2 = seekStart;
-						DurationTimerFX.createTimer(timerName, Duration.millis(20), 0, () -> {
-							if (mp3.getCurrentTime().toMillis() >= seekEnd2)
-								mp3.seek(Duration.millis(seekStart2));
+				mp3.setOnReady(() -> {
+					mp3.setRate(rate);
+					mp3.setBalance(balance);
+					mp3.setVolume(volume);
+					if (doLoop != null) {
+						double start = doLoop.getValue().toMillis();
+						double end = doLoop.getKey().toMillis();
+						long seekStart = start < 0 ? (long)mp3.getTotalDuration().toMillis() : (long)start;
+						long seekEnd = end < 0 ? (long)mp3.getTotalDuration().toMillis() : (long)end;
+						mp3.currentTimeProperty().addListener((o, oldV, newV) -> {
+							if (newV.toMillis() >= seekEnd)
+								mp3.seek(Duration.millis(seekStart));
 						});
-					});
-				}
-
-				mp3.setOnReady(() -> mp3.play());
+					}
+					mp3.play();					
+				});
 
 				mp3.setOnError(() -> {
 					mp3.dispose();
@@ -132,6 +123,7 @@ public abstract class SoundsFX {
 				return mp3;
 			}
 			catch (Exception e) {
+				System.err.println("Erro ao reproduzir: " + file.toURI().toString());
 				e.printStackTrace();
 				currentMediaPlayer = null;
 				return null;
@@ -149,12 +141,8 @@ public abstract class SoundsFX {
 	}
 	
 	public static void stopMp3(String mp3Path) {
-		if (mp3Timers.containsKey(mp3s.get(mp3Path))) {
-			if (mp3s.containsKey(mp3Path)) {
-				DurationTimerFX.stopTimer(mp3Timers.get(mp3s.get(mp3Path)));
-				mp3Timers.remove(mp3s.get(mp3Path));
-				forceStopMp3(mp3s.get(mp3Path));
-			}
+		if (mp3s.containsKey(mp3Path)) {
+			forceStopMp3(mp3s.get(mp3Path));
 			mp3s.remove(mp3Path);
 		}
 	}

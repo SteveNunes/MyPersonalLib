@@ -7,6 +7,7 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 import enums.Direction;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 
 public abstract class ShapeUtils {
@@ -134,6 +135,18 @@ public abstract class ShapeUtils {
     int randomX = rectangle.x + random.nextInt(rectangle.width);
     int randomY = rectangle.y + random.nextInt(rectangle.height);
     return new Point((int)randomX, (int)randomY);
+	}
+	
+	public static boolean circleIntersects(Circle c1, Circle c2) {
+		double centerX1 = c1.getCenterX(),
+					 centerY1 = c1.getCenterY(),
+					 centerX2 = c2.getCenterX(),
+					 centerY2 = c2.getCenterY(),
+					 distanceX = centerX1 - centerX2,
+					 distanceY = centerY1 - centerY2,
+					 distanceBetweenCenters = Math.sqrt((distanceX * distanceX) + (distanceY * distanceY));
+		double sumOfRadii = c1.getRadius() + c2.getRadius();
+		return distanceBetweenCenters <= sumOfRadii;
 	}
 	
 }

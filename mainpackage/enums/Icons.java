@@ -46,6 +46,7 @@ public enum Icons {
 	PLAY("/icons/play.png"),
 	PLUS("/icons/plus.png"),
 	RANDOM("/icons/random.png"),
+	RECORD("/icons/record.png"),
 	REFRESH("/icons/refresh.png"),
 	RESIZE("/icons/resize.png"),
 	UNREAD_MESSAGE("/icons/unread_message.png"),

@@ -65,10 +65,6 @@ public abstract class ImageUtils {
 		}
 	}
 
-	private static Robot getRobot() {
-		return robot;
-	}
-
 	public static BufferedImage cloneBufferedImage(BufferedImage image) {
 		return removeBgColor(image, -Integer.MAX_VALUE, -1);
 	}
@@ -255,21 +251,14 @@ public abstract class ImageUtils {
 		return replaceColor(image, new Color[] { beforeColor }, new Color[] { afterColor }, null);
 	}
 
-	public static BufferedImage getScreenShot(Rectangle captureArea, double scaleDpi) {
-		MultiResolutionImage multiResolutionImage = getRobot().createMultiResolutionScreenCapture(captureArea);
-		return (BufferedImage) multiResolutionImage.getResolutionVariant(captureArea.width * scaleDpi, captureArea.height * scaleDpi);
-	}
-
 	public static BufferedImage getScreenShot(Rectangle captureArea) {
-		return getScreenShot(captureArea, 1);
-	}
-
-	public static BufferedImage getScreenShot(double scaleDpi) {
-		return getScreenShot(new Rectangle(0, 0, DesktopUtils.getHardwareScreenWidth(), DesktopUtils.getHardwareScreenWidth()), scaleDpi);
+		int w = (int)captureArea.width, h = (int)captureArea.height;
+		MultiResolutionImage multiResolutionImage = robot.createMultiResolutionScreenCapture(new Rectangle(0, 0, w, h));
+		return (BufferedImage) multiResolutionImage.getResolutionVariant(w, h);
 	}
 
 	public static BufferedImage getScreenShot() {
-		return getScreenShot(1);
+		return getScreenShot(new Rectangle(0, 0, DesktopUtils.getSystemScreenWidth(), DesktopUtils.getSystemScreenHeight()));
 	}
 
 	public static WritableImage convertToWritableImage(BufferedImage bufferedImage) {

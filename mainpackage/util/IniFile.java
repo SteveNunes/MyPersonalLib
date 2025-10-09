@@ -1,11 +1,13 @@
 package util;
 
 import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,23 +21,23 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class IniFile {
-	
+
 	private Path file;
 	private String fileName, lastReadVal = null;
 	private List<String> fileBuffer;
 	private LinkedHashMap<String, LinkedHashMap<String, String>> iniBody;
 	private boolean wasModified;
 	static LinkedHashMap<String, IniFile> openedIniFiles = new LinkedHashMap<>();
-	
+
 	static {
-		Misc.addShutdownEvent(IniFile::saveAllFilesToDisk);
+		Misc.addShutdownEvent(() -> IniFile.closeAllOpenedIniFiles());
 	}
-	
+
 	private void runSaveTimer() {
 		wasModified = true;
 		Timer.createTimer("IniFileSaveToDisk@" + hashCode(), Duration.ofSeconds(1), () -> saveToDisk());
 	}
-	
+
 	private void stopSaveTimer() {
 		wasModified = false;
 		Timer.stopTimer("IniFileSaveToDisk@" + hashCode());
@@ -46,12 +48,14 @@ public class IniFile {
 			if (iniFile.wasModified)
 				iniFile.saveToDisk();
 	}
-	
+
 	void saveToDisk() {
-		if (wasModified && openedIniFiles.containsKey(fileName)) {
-			wasModified = false;
-			updateFileBuffer();
-			MyFile.writeAllLinesOnFile(fileBuffer, fileName);
+		synchronized (this) {
+			if (wasModified && openedIniFiles.containsKey(fileName)) {
+				wasModified = false;
+				updateFileBuffer();
+				MyFile.writeAllLinesOnFile(fileBuffer, fileName);
+			}
 		}
 	}
 
@@ -63,53 +67,53 @@ public class IniFile {
 		openedIniFiles.put(fileName, this);
 		stopSaveTimer();
 	}
-	
-	static {
-		Misc.addShutdownEvent(() -> IniFile.closeAllOpenedIniFiles());
-	}
-	
+
 	public static IniFile getNewIniFileInstance(String fileName) {
-		if (!openedIniFiles.containsKey(fileName)) 
+		if (!openedIniFiles.containsKey(fileName))
 			return new IniFile(fileName);
 		return openedIniFiles.get(fileName);
 	}
-	
-	public static Collection<IniFile> getOpenedIniFilesList()
-		{ return openedIniFiles.values(); }
 
-	public Path getFilePath()
-		{ return file; }
-	
+	public static Collection<IniFile> getOpenedIniFilesList() {
+		return openedIniFiles.values();
+	}
+
+	public Path getFilePath() {
+		return file;
+	}
+
 	public String getNextFreeNumericItem(String section) {
 		int n = 1;
-		for (; itemExists(section, "" + n); n++);
+		for (; itemExists(section, "" + n); n++)
+			;
 		return "" + n;
 	}
-	
+
 	public void removeNumericItemAndReorderSection(String section, String item) {
+		if (!sectionExists(section) || !itemExists(section, item))
+			return;
 		Map<String, String> newSection = new HashMap<>();
 		int n = 1;
-		for (String s : getItemList(section))
-			if (!read(section, s).equals(item))
-				newSection.put("" + (n++), read(section, s));
-		while (!getItemList(section).isEmpty())
-			remove(section, getItemList(section).get(0));
-		for (String s : newSection.keySet())
-			write(section, s, newSection.get(s));
+		for (String item2 : getItemList(section))
+			if (!item.equals(item2))
+				newSection.put("" + (n++), read(section, item2));
+		iniBody.put(section, new LinkedHashMap<>(newSection));
 		runSaveTimer();
 	}
-	
+
 	private static Boolean stringIsSection(String s) {
 		int i = s != null ? s.indexOf("]") : -1;
 		return s != null && !s.isBlank() && s.charAt(0) == '[' && i > 1;
 	}
 
-	private static Boolean stringIsItem(String s) 
-		{ return !s.isEmpty() && s.charAt(0) != '=' && s.contains("="); }
+	private static Boolean stringIsItem(String s) {
+		return !s.isEmpty() && s.charAt(0) != '=' && s.contains("=");
+	}
 
-	private static String getSectionFromString(String s)
-		{ return s.split("]")[0].substring(1); }
-	
+	private static String getSectionFromString(String s) {
+		return s.split("]")[0].substring(1);
+	}
+
 	public void loadIniFromDisk(String fileName) {
 		iniBody = new LinkedHashMap<String, LinkedHashMap<String, String>>();
 		if (!fileName.isBlank()) {
@@ -119,12 +123,12 @@ public class IniFile {
 				for (String s : fileBuffer) {
 					if (stringIsSection(s)) {
 						section = getSectionFromString(s);
-					  iniBody.put(section, new LinkedHashMap<String, String>());
+						iniBody.put(section, new LinkedHashMap<String, String>());
 					}
 					else if (!section.isBlank() && stringIsItem(s)) {
-						String[] split = s.split("=");
+						String[] split = s.split("=", 2);
 						String item = split[0];
-						String val = MyConverters.arrayToString(split, 1, "=");
+						String val = split.length > 1 ? split[1] : "";
 						write(section, item, val);
 					}
 				}
@@ -135,9 +139,10 @@ public class IniFile {
 		}
 	}
 
-	public void loadIniFromDisk() 
-		{ loadIniFromDisk(fileName); }
-	
+	public void loadIniFromDisk() {
+		loadIniFromDisk(fileName);
+	}
+
 	private void insertMissingItems(String section, List<String> fileBuffer, Map<String, List<String>> addeds) {
 		if (!section.isBlank()) {
 			if (!addeds.containsKey(section)) {
@@ -154,7 +159,7 @@ public class IniFile {
 		}
 		fileBuffer.add("");
 	}
-	
+
 	public static void main(String[] args) {
 		IniFile iniFile = IniFile.getNewIniFileInstance("D:\\teste.ini");
 		for (int n = 0; n < 10; n++)
@@ -169,7 +174,7 @@ public class IniFile {
 			for (int n2 = 200; n2 < 250; n2++)
 				iniFile.write("" + n, "" + n2, "" + MyMath.getRandom(10000, 99999));
 	}
-	
+
 	private void updateFileBuffer() {
 		Map<String, List<String>> addeds = new HashMap<>();
 		List<String> newFileBuffer = new ArrayList<>();
@@ -177,7 +182,8 @@ public class IniFile {
 		for (int l = 0; l < fileBuffer.size(); l++) {
 			String line = fileBuffer.get(l);
 			if (!section.isBlank() && stringIsSection(line) && !section.equals(getSectionFromString(line))) {
-				// Se estava com um SECTION aberto, e encontrou um novo SECTION, adiciona itens novos ao final do SECTION atual
+				// Se estava com um SECTION aberto, e encontrou um novo SECTION, adiciona itens
+				// novos ao final do SECTION atual
 				while (!newFileBuffer.isEmpty() && newFileBuffer.get(newFileBuffer.size() - 1).isBlank())
 					newFileBuffer.remove(newFileBuffer.size() - 1);
 				insertMissingItems(section, newFileBuffer, addeds);
@@ -193,7 +199,7 @@ public class IniFile {
 			}
 			else if (stringIsItem(line)) {
 				if (!section.isBlank()) {
-					String[] split = line.split("=");
+					String[] split = line.split("=", 2);
 					String item = split[0];
 					if (itemExists(section, item)) {
 						String value = read(section, item);
@@ -216,10 +222,10 @@ public class IniFile {
 			newFileBuffer.remove(newFileBuffer.size() - 1);
 		fileBuffer = new ArrayList<>(newFileBuffer);
 	}
-	
+
 	public void write(String iniSection, String iniItem, String value) {
 		if (!iniBody.containsKey(iniSection))
-		  iniBody.put(iniSection, new LinkedHashMap<String, String>());
+			iniBody.put(iniSection, new LinkedHashMap<String, String>());
 		iniBody.get(iniSection).put(iniItem, value);
 		runSaveTimer();
 	}
@@ -227,395 +233,550 @@ public class IniFile {
 	public void write(String iniSection, String iniItem, boolean value) {
 		write(iniSection, iniItem, "" + value);
 	}
-	
+
 	public <T extends Number> void write(String iniSection, String iniItem, T number) {
 		write(iniSection, iniItem, "" + number);
 	}
-	
+
 	public <T> void write(String section, String item, List<T> numberList, String separator) {
 		StringBuilder sb = new StringBuilder();
-		for (T v : numberList)
-			sb.append((sb.isEmpty() ? "" : separator) + v.toString());
+		boolean first = true;
+		for (T v : numberList) {
+			sb.append((first ? "" : separator) + v.toString());
+			first = false;
+		}
 		write(section, item, sb.toString());
 	}
-	
-	public <T extends Number> void write(String section, String item, List<T> numberList)
-		{ write(section, item, numberList, " "); }
-	
+
+	public <T extends Number> void write(String section, String item, List<T> numberList) {
+		write(section, item, numberList, " ");
+	}
+
 	public <T extends Number> void write(String section, String item, T[] numberArray, String separator) {
 		StringBuilder sb = new StringBuilder();
-		for (T v : numberArray)
-			sb.append((sb.isEmpty() ? "" : separator) + v.toString());
+		boolean first = true;
+		for (T v : numberArray) {
+			sb.append((first ? "" : separator) + v.toString());
+			first = false;
+		}
 		write(section, item, sb.toString());
 	}
-	
-	public <T extends Number> void write(String section, String item, T[] numberArray)
-		{ write(section, item, numberArray, " "); }
-	
+
+	public <T extends Number> void write(String section, String item, T[] numberArray) {
+		write(section, item, numberArray, " ");
+	}
+
 	public void write(String section, String item, Boolean[] numberArray, String separator) {
 		StringBuilder sb = new StringBuilder();
-		for (Boolean b : numberArray)
-			sb.append((sb.isEmpty() ? "" : separator) + b.toString());
+		boolean first = true;
+		for (Boolean b : numberArray) {
+			sb.append((first ? "" : separator) + b.toString());
+			first = false;
+		}
 		write(section, item, sb.toString());
 	}
-	
-	public void write(String section, String item, Boolean[] numberArray)
-		{ write(section, item, numberArray, " "); }
-	
-	public String getLastReadVal()
-		{ return lastReadVal; }
-	
+
+	public void write(String section, String item, Boolean[] numberArray) {
+		write(section, item, numberArray, " ");
+	}
+
+	public String getLastReadVal() {
+		return lastReadVal;
+	}
+
 	public String read(String iniSection, String iniItem) {
-		if (itemExists(iniSection, iniItem)) 
+		if (itemExists(iniSection, iniItem))
 			return (lastReadVal = iniBody.get(iniSection).get(iniItem));
 		return (lastReadVal = null);
 	}
 
-	public String read(String iniSection, String iniItem, String defaultValue)
-		{ return read(iniSection, iniItem) != null ? lastReadVal : (lastReadVal = defaultValue); }
+	public String read(String iniSection, String iniItem, String defaultValue) {
+		return read(iniSection, iniItem) != null ? lastReadVal : (lastReadVal = defaultValue);
+	}
 
-  public <T extends Enum<T>> T readAsEnum(String section, String item, Class<T> enumClass, T defaultReturnValue) {
-		try
-			{ return T.valueOf(enumClass, read(section, item)); }
-		catch (Exception e)
-			{ return defaultReturnValue; }
-  }
-	
-  public <T extends Enum<T>> T readAsEnum(String section, String item, Class<T> enumClass)
-  	{ return readAsEnum(section, item, enumClass, null); }
-  
-	public Boolean readAsBoolean(String section, String item, Boolean defaultReturnValue) {
-		if (read(section, item) == null)
+	public <T extends Enum<T>> T readAsEnum(String section, String item, Class<T> enumClass, T defaultReturnValue) {
+		String val = read(section, item);
+		if (val == null)
 			return defaultReturnValue;
-		try
-			{ return Boolean.parseBoolean(read(section, item)); }
-		catch (Exception e)
-			{ return defaultReturnValue; }
+		try {
+			return T.valueOf(enumClass, val);
+		}
+		catch (Exception e) {
+			return defaultReturnValue;
+		}
 	}
-	
-	public Boolean readAsBoolean(String section, String item)
-		{ return readAsBoolean(section, item, null); }
-	
+
+	public <T extends Enum<T>> T readAsEnum(String section, String item, Class<T> enumClass) {
+		return readAsEnum(section, item, enumClass, null);
+	}
+
+	public Boolean readAsBoolean(String section, String item, Boolean defaultReturnValue) {
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnValue;
+		try {
+			return Boolean.parseBoolean(val);
+		}
+		catch (Exception e) {
+			return defaultReturnValue;
+		}
+	}
+
+	public Boolean readAsBoolean(String section, String item) {
+		return readAsBoolean(section, item, null);
+	}
+
 	public Byte readAsByte(String section, String item, Byte defaultReturnValue) {
-		try
-			{ return Byte.parseByte(read(section, item)); }
-		catch (Exception e)
-			{ return defaultReturnValue; }
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnValue;
+		try {
+			return Byte.parseByte(val);
+		}
+		catch (Exception e) {
+			return defaultReturnValue;
+		}
 	}
-	
-	public Byte readAsByte(String section, String item)
-		{ return readAsByte(section, item, null); }
-	
+
+	public Byte readAsByte(String section, String item) {
+		return readAsByte(section, item, null);
+	}
+
 	public Short readAsShort(String section, String item, Short defaultReturnValue) {
-		try
-			{ return Short.parseShort(read(section, item)); }
-		catch (Exception e)
-			{ return defaultReturnValue; }
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnValue;
+		try {
+			return Short.parseShort(val);
+		}
+		catch (Exception e) {
+			return defaultReturnValue;
+		}
 	}
-	
-	public Short readAsShort(String section, String item)
-		{ return readAsShort(section, item, null); }
-	
+
+	public Short readAsShort(String section, String item) {
+		return readAsShort(section, item, null);
+	}
+
 	public Integer readAsInteger(String section, String item, Integer defaultReturnValue) {
-		try
-			{ return Integer.parseInt(read(section, item)); }
-		catch (Exception e)
-			{ return defaultReturnValue; }
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnValue;
+		try {
+			return Integer.parseInt(val);
+		}
+		catch (Exception e) {
+			return defaultReturnValue;
+		}
 	}
-	
-	public Integer readAsInteger(String section, String item)
-		{ return readAsInteger(section, item, null); }
+
+	public Integer readAsInteger(String section, String item) {
+		return readAsInteger(section, item, null);
+	}
 
 	public Long readAsLong(String section, String item, Long defaultReturnValue) {
-		try
-			{ return Long.parseLong(read(section, item)); }
-		catch (Exception e)
-			{ return defaultReturnValue; }
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnValue;
+		try {
+			return Long.parseLong(val);
+		}
+		catch (Exception e) {
+			return defaultReturnValue;
+		}
 	}
-	
-	public Long readAsLong(String section, String item)
-		{ return readAsLong(section, item, null); }
+
+	public Long readAsLong(String section, String item) {
+		return readAsLong(section, item, null);
+	}
 
 	public Float readAsFloat(String section, String item, Float defaultReturnValue) {
-		try
-			{ return Float.parseFloat(read(section, item)); }
-		catch (Exception e)
-			{ return defaultReturnValue; }
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnValue;
+		try {
+			return Float.parseFloat(val);
+		}
+		catch (Exception e) {
+			return defaultReturnValue;
+		}
 	}
-	
-	public Float readAsFloat(String section, String item)
-		{ return readAsFloat(section, item, null); }
+
+	public Float readAsFloat(String section, String item) {
+		return readAsFloat(section, item, null);
+	}
 
 	public Double readAsDouble(String section, String item, Double defaultReturnValue) {
-		try
-			{ return Double.parseDouble(read(section, item)); }
-		catch (Exception e)
-			{ return defaultReturnValue; }
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnValue;
+		try {
+			return Double.parseDouble(val);
+		}
+		catch (Exception e) {
+			return defaultReturnValue;
+		}
 	}
-	
-	public Double readAsDouble(String section, String item)
-		{ return readAsDouble(section, item, null); }
+
+	public Double readAsDouble(String section, String item) {
+		return readAsDouble(section, item, null);
+	}
 
 	public Character readAsCharacter(String section, String item, Character defaultReturnChar) {
-		try
-			{ return read(section, item).charAt(0); }
-		catch (Exception e)
-			{ return defaultReturnChar; }
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnChar;
+		try {
+			return val.charAt(0);
+		}
+		catch (Exception e) {
+			return defaultReturnChar;
+		}
 	}
 
-	public Character readAsCharacter(String section, String item)
-		{ return readAsCharacter(section, item, null); }
+	public Character readAsCharacter(String section, String item) {
+		return readAsCharacter(section, item, null);
+	}
 
 	public BigInteger readAsBigInteger(String section, String item, BigInteger defaultReturnChar) {
-		try
-			{ return new BigInteger(read(section, item)); }
-		catch (Exception e)
-			{ return defaultReturnChar; }
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnChar;
+		try {
+			return new BigInteger(val);
+		}
+		catch (Exception e) {
+			return defaultReturnChar;
+		}
 	}
 
-	public BigInteger readAsBigInteger(String section, String item)
-		{ return readAsBigInteger(section, item, null); }
+	public BigInteger readAsBigInteger(String section, String item) {
+		return readAsBigInteger(section, item, null);
+	}
 
 	public BigDecimal readAsBigDecimal(String section, String item, BigDecimal defaultReturnChar) {
-		try
-			{ return new BigDecimal(read(section, item)); }
-		catch (Exception e)
-			{ return defaultReturnChar; }
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnChar;
+		try {
+			return new BigDecimal(val);
+		}
+		catch (Exception e) {
+			return defaultReturnChar;
+		}
 	}
 
-	public BigDecimal readAsBigDecimal(String section, String item)
-		{ return readAsBigDecimal(section, item, null); }
+	public BigDecimal readAsBigDecimal(String section, String item) {
+		return readAsBigDecimal(section, item, null);
+	}
 
 	public <T extends Enum<T>> List<T> readAsEnumList(String section, String item, Class<T> enumClass, List<T> defaultReturnArray, String separator) {
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnArray;
 		try {
-			String[] split = read(section, item).split(separator);
+			String[] split = val.split(separator);
 			List<T> list = new ArrayList<>();
 			for (int i = 0; i < split.length; i++)
 				list.add(T.valueOf(enumClass, split[i]));
 			return list;
 		}
-		catch (Exception e)
-			{ return defaultReturnArray; }
+		catch (Exception e) {
+			return defaultReturnArray;
+		}
 	}
 
-	public <T extends Enum<T>> List<T> readAsEnumList(String section, String item, Class<T> enumClass, List<T> defaultReturnArray)
-		{ return readAsEnumList(section, item, enumClass, defaultReturnArray, " "); }
+	public <T extends Enum<T>> List<T> readAsEnumList(String section, String item, Class<T> enumClass, List<T> defaultReturnArray) {
+		return readAsEnumList(section, item, enumClass, defaultReturnArray, " ");
+	}
 
-	public <T extends Enum<T>> List<T> readAsEnumList(String section, String item, Class<T> enumClass, String separator)
-		{ return readAsEnumList(section, item, enumClass, null, separator); }
+	public <T extends Enum<T>> List<T> readAsEnumList(String section, String item, Class<T> enumClass, String separator) {
+		return readAsEnumList(section, item, enumClass, null, separator);
+	}
 
-	public <T extends Enum<T>> List<T> readAsEnumList(String section, String item, Class<T> enumClass)
-		{ return readAsEnumList(section, item, enumClass, " "); }
+	public <T extends Enum<T>> List<T> readAsEnumList(String section, String item, Class<T> enumClass) {
+		return readAsEnumList(section, item, enumClass, " ");
+	}
 
 	public Boolean[] readAsBooleanArray(String section, String item, Boolean[] defaultReturnArray, String separator) {
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnArray;
 		try {
-			String[] split = read(section, item).split(separator);
+			String[] split = val.split(separator);
 			Boolean[] array = new Boolean[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = Boolean.parseBoolean(split[i]);
 			return array;
 		}
-		catch (Exception e)
-			{ return defaultReturnArray; }
+		catch (Exception e) {
+			return defaultReturnArray;
+		}
 	}
 
-	public Boolean[] readAsBooleanArray(String section, String item, Boolean[] defaultReturnArray)
-		{ return readAsBooleanArray(section, item, defaultReturnArray, " "); }
+	public Boolean[] readAsBooleanArray(String section, String item, Boolean[] defaultReturnArray) {
+		return readAsBooleanArray(section, item, defaultReturnArray, " ");
+	}
 
-	public Boolean[] readAsBooleanArray(String section, String item, String separator)
-		{ return readAsBooleanArray(section, item, null, separator); }
+	public Boolean[] readAsBooleanArray(String section, String item, String separator) {
+		return readAsBooleanArray(section, item, null, separator);
+	}
 
-	public Boolean[] readAsBooleanArray(String section, String item)
-		{ return readAsBooleanArray(section, item, " "); }
+	public Boolean[] readAsBooleanArray(String section, String item) {
+		return readAsBooleanArray(section, item, " ");
+	}
 
 	public byte[] readAsByteArray(String section, String item, byte[] defaultReturnArray, String separator) {
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnArray;
 		try {
-			String[] split = read(section, item).split(separator);
+			String[] split = val.split(separator);
 			byte[] array = new byte[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = Byte.parseByte(split[i]);
 			return array;
 		}
-		catch (Exception e)
-			{ return defaultReturnArray; }
+		catch (Exception e) {
+			return defaultReturnArray;
+		}
 	}
 
-	public byte[] readAsByteArray(String section, String item, byte[] defaultReturnArray)
-		{ return readAsByteArray(section, item, defaultReturnArray, " "); }
+	public byte[] readAsByteArray(String section, String item, byte[] defaultReturnArray) {
+		return readAsByteArray(section, item, defaultReturnArray, " ");
+	}
 
-	public byte[] readAsByteArray(String section, String item, String separator)
-		{ return readAsByteArray(section, item, null, separator); }
+	public byte[] readAsByteArray(String section, String item, String separator) {
+		return readAsByteArray(section, item, null, separator);
+	}
 
-	public byte[] readAsByteArray(String section, String item)
-		{ return readAsByteArray(section, item, " "); }
+	public byte[] readAsByteArray(String section, String item) {
+		return readAsByteArray(section, item, " ");
+	}
 
 	public short[] readAsShortArray(String section, String item, short[] defaultReturnArray, String separator) {
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnArray;
 		try {
-			String[] split = read(section, item).split(separator);
+			String[] split = val.split(separator);
 			short[] array = new short[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = Short.parseShort(split[i]);
 			return array;
 		}
-		catch (Exception e)
-			{ return defaultReturnArray; }
+		catch (Exception e) {
+			return defaultReturnArray;
+		}
 	}
 
-	public short[] readAsShortArray(String section, String item, short[] defaultReturnArray)
-		{ return readAsShortArray(section, item, defaultReturnArray, " "); }
+	public short[] readAsShortArray(String section, String item, short[] defaultReturnArray) {
+		return readAsShortArray(section, item, defaultReturnArray, " ");
+	}
 
-	public short[] readAsShortArray(String section, String item, String separator)
-		{ return readAsShortArray(section, item, null, separator); }
+	public short[] readAsShortArray(String section, String item, String separator) {
+		return readAsShortArray(section, item, null, separator);
+	}
 
-	public short[] readAsShortArray(String section, String item)
-		{ return readAsShortArray(section, item, " "); }
+	public short[] readAsShortArray(String section, String item) {
+		return readAsShortArray(section, item, " ");
+	}
 
 	public int[] readAsIntArray(String section, String item, int[] defaultReturnArray, String separator) {
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnArray;
 		try {
-			String[] split = read(section, item).split(separator);
+			String[] split = val.split(separator);
 			int[] array = new int[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = Integer.parseInt(split[i]);
 			return array;
 		}
-		catch (Exception e)
-			{ return defaultReturnArray; }
+		catch (Exception e) {
+			return defaultReturnArray;
+		}
 	}
-	
-	public int[] readAsIntArray(String section, String item, int[] defaultReturnArray)
-		{ return readAsIntArray(section, item, defaultReturnArray, " "); }
-	
-	public int[] readAsIntArray(String section, String item, String separator)
-		{ return readAsIntArray(section, item, null, separator); }
-	
-	public int[] readAsIntArray(String section, String item)
-		{ return readAsIntArray(section, item, " "); }
+
+	public int[] readAsIntArray(String section, String item, int[] defaultReturnArray) {
+		return readAsIntArray(section, item, defaultReturnArray, " ");
+	}
+
+	public int[] readAsIntArray(String section, String item, String separator) {
+		return readAsIntArray(section, item, null, separator);
+	}
+
+	public int[] readAsIntArray(String section, String item) {
+		return readAsIntArray(section, item, " ");
+	}
 
 	public long[] readAsLongArray(String section, String item, long[] defaultReturnArray, String separator) {
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnArray;
 		try {
-			String[] split = read(section, item).split(separator);
+			String[] split = val.split(separator);
 			long[] array = new long[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = Long.parseLong(split[i]);
 			return array;
 		}
-		catch (Exception e)
-			{ return defaultReturnArray; }
+		catch (Exception e) {
+			return defaultReturnArray;
+		}
 	}
-	
-	public long[] readAsLongArray(String section, String item, long[] defaultReturnArray)
-		{ return readAsLongArray(section, item, defaultReturnArray, " "); }
-	
-	public long[] readAsLongArray(String section, String item, String separator)
-		{ return readAsLongArray(section, item, null, separator); }
-	
-	public long[] readAsLongArray(String section, String item)
-		{ return readAsLongArray(section, item, " "); }
+
+	public long[] readAsLongArray(String section, String item, long[] defaultReturnArray) {
+		return readAsLongArray(section, item, defaultReturnArray, " ");
+	}
+
+	public long[] readAsLongArray(String section, String item, String separator) {
+		return readAsLongArray(section, item, null, separator);
+	}
+
+	public long[] readAsLongArray(String section, String item) {
+		return readAsLongArray(section, item, " ");
+	}
 
 	public float[] readAsFloatArray(String section, String item, float[] defaultReturnArray, String separator) {
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnArray;
 		try {
-			String[] split = read(section, item).split(separator);
+			String[] split = val.split(separator);
 			float[] array = new float[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = Float.parseFloat(split[i]);
 			return array;
 		}
-		catch (Exception e)
-			{ return defaultReturnArray; }
+		catch (Exception e) {
+			return defaultReturnArray;
+		}
 	}
-	
-	public float[] readAsFloatArray(String section, String item, float[] defaultReturnArray)
-		{ return readAsFloatArray(section, item, defaultReturnArray, " "); }
-	
-	public float[] readAsFloatArray(String section, String item, String separator)
-		{ return readAsFloatArray(section, item, null, separator); }
-	
-	public float[] readAsFloatArray(String section, String item)
-		{ return readAsFloatArray(section, item, " "); }
+
+	public float[] readAsFloatArray(String section, String item, float[] defaultReturnArray) {
+		return readAsFloatArray(section, item, defaultReturnArray, " ");
+	}
+
+	public float[] readAsFloatArray(String section, String item, String separator) {
+		return readAsFloatArray(section, item, null, separator);
+	}
+
+	public float[] readAsFloatArray(String section, String item) {
+		return readAsFloatArray(section, item, " ");
+	}
 
 	public double[] readAsDoubleArray(String section, String item, double[] defaultReturnArray, String separator) {
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnArray;
 		try {
-			String[] split = read(section, item).split(separator);
+			String[] split = val.split(separator);
 			double[] array = new double[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = Double.parseDouble(split[i]);
 			return array;
 		}
-		catch (Exception e)
-			{ return defaultReturnArray; }
+		catch (Exception e) {
+			return defaultReturnArray;
+		}
 	}
-	
-	public double[] readAsDoubleArray(String section, String item, double[] defaultReturnArray)
-		{ return readAsDoubleArray(section, item, defaultReturnArray, " "); }
-	
-	public double[] readAsDoubleArray(String section, String item, String separator)
-		{ return readAsDoubleArray(section, item, null, separator); }
-	
-	public double[] readAsDoubleArray(String section, String item)
-		{ return readAsDoubleArray(section, item, " "); }
+
+	public double[] readAsDoubleArray(String section, String item, double[] defaultReturnArray) {
+		return readAsDoubleArray(section, item, defaultReturnArray, " ");
+	}
+
+	public double[] readAsDoubleArray(String section, String item, String separator) {
+		return readAsDoubleArray(section, item, null, separator);
+	}
+
+	public double[] readAsDoubleArray(String section, String item) {
+		return readAsDoubleArray(section, item, " ");
+	}
 
 	public char[] readAsCharArray(String section, String item, char[] defaultReturnArray, String separator) {
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnArray;
 		try {
-			String[] split = read(section, item).split(separator);
+			String[] split = val.split(separator);
 			char[] array = new char[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = split[i].charAt(0);
 			return array;
 		}
-		catch (Exception e)
-			{ return defaultReturnArray; }
+		catch (Exception e) {
+			return defaultReturnArray;
+		}
 	}
-	
-	public char[] readAsCharArray(String section, String item, char[] defaultReturnArray)
-		{ return readAsCharArray(section, item, defaultReturnArray, " "); }
-	
-	public char[] readAsCharArray(String section, String item, String separator)
-		{ return readAsCharArray(section, item, null, separator); }
-	
-	public char[] readAsCharArray(String section, String item)
-		{ return readAsCharArray(section, item, " "); }
+
+	public char[] readAsCharArray(String section, String item, char[] defaultReturnArray) {
+		return readAsCharArray(section, item, defaultReturnArray, " ");
+	}
+
+	public char[] readAsCharArray(String section, String item, String separator) {
+		return readAsCharArray(section, item, null, separator);
+	}
+
+	public char[] readAsCharArray(String section, String item) {
+		return readAsCharArray(section, item, " ");
+	}
 
 	public BigInteger[] readAsBigIntegerArray(String section, String item, BigInteger[] defaultReturnArray, String separator) {
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnArray;
 		try {
-			String[] split = read(section, item).split(separator);
+			String[] split = val.split(separator);
 			BigInteger[] array = new BigInteger[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = new BigInteger(split[i]);
 			return array;
 		}
-		catch (Exception e)
-			{ return defaultReturnArray; }
+		catch (Exception e) {
+			return defaultReturnArray;
+		}
 	}
-	
-	public BigInteger[] readAsBigIntegerArray(String section, String item, BigInteger[] defaultReturnArray)
-		{ return readAsBigIntegerArray(section, item, defaultReturnArray, " "); }
-	
-	public BigInteger[] readAsBigIntegerArray(String section, String item, String separator)
-		{ return readAsBigIntegerArray(section, item, null, separator); }
-	
-	public BigInteger[] readAsBigIntegerArray(String section, String item)
-		{ return readAsBigIntegerArray(section, item, " "); }
+
+	public BigInteger[] readAsBigIntegerArray(String section, String item, BigInteger[] defaultReturnArray) {
+		return readAsBigIntegerArray(section, item, defaultReturnArray, " ");
+	}
+
+	public BigInteger[] readAsBigIntegerArray(String section, String item, String separator) {
+		return readAsBigIntegerArray(section, item, null, separator);
+	}
+
+	public BigInteger[] readAsBigIntegerArray(String section, String item) {
+		return readAsBigIntegerArray(section, item, " ");
+	}
 
 	public BigDecimal[] readAsBigDecimalArray(String section, String item, BigDecimal[] defaultReturnArray, String separator) {
+		String val = read(section, item);
+		if (val == null)
+			return defaultReturnArray;
 		try {
-			String[] split = read(section, item).split(separator);
+			String[] split = val.split(separator);
 			BigDecimal[] array = new BigDecimal[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = new BigDecimal(split[i]);
 			return array;
 		}
-		catch (Exception e)
-			{ return defaultReturnArray; }
+		catch (Exception e) {
+			return defaultReturnArray;
+		}
 	}
-	
-	public BigDecimal[] readAsBigDecimalArray(String section, String item, BigDecimal[] defaultReturnArray)
-		{ return readAsBigDecimalArray(section, item, defaultReturnArray, " "); }
-	
-	public BigDecimal[] readAsBigDecimalArray(String section, String item, String separator)
-		{ return readAsBigDecimalArray(section, item, null, separator); }
-	
-	public BigDecimal[] readAsBigDecimalArray(String section, String item)
-		{ return readAsBigDecimalArray(section, item, " "); }
+
+	public BigDecimal[] readAsBigDecimalArray(String section, String item, BigDecimal[] defaultReturnArray) {
+		return readAsBigDecimalArray(section, item, defaultReturnArray, " ");
+	}
+
+	public BigDecimal[] readAsBigDecimalArray(String section, String item, String separator) {
+		return readAsBigDecimalArray(section, item, null, separator);
+	}
+
+	public BigDecimal[] readAsBigDecimalArray(String section, String item) {
+		return readAsBigDecimalArray(section, item, " ");
+	}
 
 	public String remove(String iniSection, String iniItem) {
 		if (itemExists(iniSection, iniItem)) {
@@ -635,11 +796,13 @@ public class IniFile {
 		return null;
 	}
 
-	public String fileName()
-		{ return fileName; }
+	public String fileName() {
+		return fileName;
+	}
 
-	public int getIniSize()
-		{ return !iniBody.isEmpty() ? iniBody.size() : 0; }
+	public int getIniSize() {
+		return !iniBody.isEmpty() ? iniBody.size() : 0;
+	}
 
 	public int getSectionPos(String iniSection) {
 		if (sectionExists(iniSection)) {
@@ -661,16 +824,18 @@ public class IniFile {
 		return null;
 	}
 
-	public Boolean sectionExists(String iniSection)
-		{ return !iniBody.isEmpty() ? iniBody.containsKey(iniSection) : false; }
+	public Boolean sectionExists(String iniSection) {
+		return !iniBody.isEmpty() ? iniBody.containsKey(iniSection) : false;
+	}
 
-	public int getSectionSize(String iniSection)
-		{ return sectionExists(iniSection) ? iniBody.get(iniSection).size() : -1; }
+	public int getSectionSize(String iniSection) {
+		return sectionExists(iniSection) ? iniBody.get(iniSection).size() : -1;
+	}
 
 	public int getItemPos(String iniSection, String iniItem) {
 		if (itemExists(iniSection, iniItem)) {
 			Iterator<String> it = iniBody.get(iniSection).keySet().iterator();
-			for (int n = 0; it.hasNext(); n++) 
+			for (int n = 0; it.hasNext(); n++)
 				if (it.next().equals(iniItem))
 					return n + 1;
 		}
@@ -687,8 +852,9 @@ public class IniFile {
 		return null;
 	}
 
-	public Boolean itemExists(String iniSection, String iniItem)
-		{ return sectionExists(iniSection) ? iniBody.get(iniSection).containsKey(iniItem) : false; }
+	public Boolean itemExists(String iniSection, String iniItem) {
+		return sectionExists(iniSection) ? iniBody.get(iniSection).containsKey(iniItem) : false;
+	}
 
 	public void clearSection(String iniSection) {
 		if (iniBody.containsKey(iniSection)) {
@@ -707,7 +873,7 @@ public class IniFile {
 		saveToDisk();
 		openedIniFiles.remove(fileName);
 	}
-	
+
 	public void deleteFile() {
 		try {
 			new File(fileName).delete();
@@ -718,16 +884,15 @@ public class IniFile {
 			throw new RuntimeException("Unable to delete file \"" + fileName + "\"");
 		}
 	}
-	
+
 	public boolean isSameFile(IniFile otherIniFile) {
 		return fileName().equals(otherIniFile.fileName());
 	}
-	
+
 	public static void closeAllOpenedIniFiles() {
-		saveAllFilesToDisk();
-		if (!openedIniFiles.isEmpty()) {
-			for (IniFile ini : openedIniFiles.values())
-				ini.clearFile();
+		synchronized (IniFile.class) {
+			saveAllFilesToDisk();
+			openedIniFiles.values().forEach(IniFile::clearFile);
 			openedIniFiles.clear();
 		}
 	}
@@ -738,8 +903,8 @@ public class IniFile {
 			Iterator<String> it = iniBody.keySet().iterator();
 			String item;
 			while (it.hasNext())
-			  if ((item = it.next()) != null && !item.isEmpty())
-			  	list.add(item);
+				if ((item = it.next()) != null && !item.isEmpty())
+					list.add(item);
 		}
 		return list;
 	}
@@ -750,68 +915,70 @@ public class IniFile {
 			Iterator<String> it = iniBody.get(iniSection).keySet().iterator();
 			String item;
 			while (it.hasNext())
-			  if ((item = it.next()) != null && !item.isEmpty())
-			  	list.add(item);
+				if ((item = it.next()) != null && !item.isEmpty())
+					list.add(item);
 		}
 		return list;
 	}
 
 	public void renameFileTo(String newFileName) {
-		File file = new File(fileName);
-		if (file.exists() && !file.delete())
-			throw new RuntimeException("Não foi possível renomear o arquivo " + fileName);
-		newFileName = file.getParent().toString() + "\\" + newFileName;
-		File file2 = new File(newFileName);
-		if (file2.exists() && !file2.delete())
-			throw new RuntimeException("Não foi possível renomear o arquivo " + fileName);
-		openedIniFiles.put(newFileName, this);
-		openedIniFiles.remove(fileName);
-		fileName = newFileName;
-		saveToDisk();
+		try {
+			Path source = Paths.get(fileName);
+			Path target = source.resolveSibling(newFileName);
+			Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+			openedIniFiles.put(newFileName, this);
+			openedIniFiles.remove(fileName);
+			fileName = newFileName;
+			saveToDisk();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+			throw new RuntimeException("Unable to rename file \"" + fileName + "\" to \"" + newFileName + "\"");
+		}
 	}
-	
+
 	/**
 	 * Retorna um LinkedHashMap, contendo vários itens=valores provindos de uma
 	 * string no formato: {ITEM=VAL}{ITEM2=VAL}{ITEM3=VAL}
-	 * @enclosers - Caracteres que isolam o grupo de ITEM=VAL.
-	 * 							 Exemplo: Se o formato for {ITEM=VAL} use no {@code enclosers} "{}"
-	 * 							 ou simplesmente nem especifique o {@code enclosers}, pois é passado
-	 * 							 o valor "{}" por padrão.
+	 * 
+	 * @enclosers - Caracteres que isolam o grupo de ITEM=VAL. Exemplo: Se o formato
+	 *            for {ITEM=VAL} use no {@code enclosers} "{}" ou simplesmente nem
+	 *            especifique o {@code enclosers}, pois é passado o valor "{}" por
+	 *            padrão.
 	 */
 	public static LinkedHashMap<String, String> subItemStringToLinkedHashMap(String val, String enclosers) {
 		LinkedHashMap<String, String> subItems = new LinkedHashMap<>();
-		Pattern pattern = Pattern.compile("(\\" + enclosers.substring(0, 1) + "[^" + enclosers.substring(1, 2) + "]+\\" + enclosers.substring(1, 2) + ")", Pattern.CASE_INSENSITIVE);
-//		Pattern pattern = Pattern.compile("(\\" + enclosers.substring(0, 1) + "[^\\" + enclosers.substring(1, 2) + ".]+\\" + enclosers.substring(1, 2) + ")", Pattern.CASE_INSENSITIVE);
+		String open = Pattern.quote(enclosers.substring(0, 1));
+		String close = Pattern.quote(enclosers.substring(1, 2));
+		Pattern pattern = Pattern.compile("(" + open + "[^" + close + "]+" + close + ")", Pattern.CASE_INSENSITIVE);
 		Matcher matcher = pattern.matcher(val);
-		StringBuilder result;
 		while (matcher.find()) {
-			String[] split = matcher.group(0).substring(1, matcher.group(0).length() - 1).split("=");
-			val = val.replace(matcher.group(0), "");
+			String match = matcher.group(0);
+			String[] split = match.substring(1, match.length() - 1).split("=", 2);
+			val = val.replace(match, "");
 			matcher = pattern.matcher(val);
-			result = new StringBuilder();
-			if (split.length > 1) {
-				result.append(split[1]);
-				for (int n = 2; n < split.length; n++) {
-					result.append("=");
-					result.append(split[n]);
-				}
-			}
-			subItems.put(split[0], result.toString());
+			String result = split.length > 1 ? split[1] : "";
+			subItems.put(split[0], result);
 		}
+
 		return subItems;
 	}
 
-	public static LinkedHashMap<String, String> subItemStringToLinkedHashMap(String val)
-		{ return subItemStringToLinkedHashMap(val, "{}"); }
-	
-	/** Converte uma string no formato {ITEM=VAL}{ITEM2=VAL}{ITEM3=VAL} em um
-	 *  LinkedHashMap<String, String> contendo esses itens e seus valores respectivamente.
-	 * @enclosers - Caracteres que isolam o grupo de ITEM=VAL.
-	 * 							 Exemplo: Se o formato for {ITEM=VAL} use no {@code enclosers} "{}"
-	 * 							 ou simplesmente nem especifique o {@code enclosers}, pois é passado
-	 * 							 o valor "{}" por padrão.
+	public static LinkedHashMap<String, String> subItemStringToLinkedHashMap(String val) {
+		return subItemStringToLinkedHashMap(val, "{}");
+	}
+
+	/**
+	 * Converte uma string no formato {ITEM=VAL}{ITEM2=VAL}{ITEM3=VAL} em um
+	 * LinkedHashMap<String, String> contendo esses itens e seus valores
+	 * respectivamente.
+	 * 
+	 * @enclosers - Caracteres que isolam o grupo de ITEM=VAL. Exemplo: Se o formato
+	 *            for {ITEM=VAL} use no {@code enclosers} "{}" ou simplesmente nem
+	 *            especifique o {@code enclosers}, pois é passado o valor "{}" por
+	 *            padrão.
 	 */
-	
+
 	public static String linkedHashMapToSubItemString(LinkedHashMap<String, String> map, String enclosers) {
 		StringBuilder str = new StringBuilder();
 		map.forEach((k, v) -> {
@@ -823,9 +990,10 @@ public class IniFile {
 		});
 		return str.toString();
 	}
-	
-	public static String linkedHashMapToSubItemString(LinkedHashMap<String, String> map)
-		{ return linkedHashMapToSubItemString(map, "{}"); }
+
+	public static String linkedHashMapToSubItemString(LinkedHashMap<String, String> map) {
+		return linkedHashMapToSubItemString(map, "{}");
+	}
 
 	@Override
 	public int hashCode() {
@@ -842,5 +1010,5 @@ public class IniFile {
 			return false;
 		return fileName.equals(((IniFile) obj).fileName);
 	}
-	
+
 }

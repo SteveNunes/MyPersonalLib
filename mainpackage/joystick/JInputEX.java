@@ -25,6 +25,7 @@ public class JInputEX {
 	private static Consumer<JInputEX> onJoystickConnected;
 	private static Consumer<JInputEX> onJoystickDisconnected;
 	private static boolean mainClose = false;
+	private static long pollTimerId = 0;
 
 	private boolean pauseThread;
 	private boolean close;
@@ -166,7 +167,7 @@ public class JInputEX {
 				}
 			}
 		if (!mainClose)
-			Timer.createTimer("pollAllJoysticks@" + System.nanoTime(), Duration.ofMillis(1), JInputEX::pollAllJoysticks);
+			Timer.createTimer("pollAllJoysticks@" + pollTimerId++, Duration.ofMillis(1), JInputEX::pollAllJoysticks);
 	}
 
 	private void poll() {

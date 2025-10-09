@@ -23,6 +23,9 @@ public abstract class CanvasUtils {
 	private static WritableImage copyCanvas;
 	private static SnapshotParameters copyCanvasParam;
 	
+	/**
+	 * Copia o conteudo de um canvas para outro, esticando o conteudo para preencher, e girando o resultado se necessário
+	 */
 	public static void copyAndRotateAndStretchToFillCanvas(Canvas sourceCanvas, Canvas targetCanvas, double rotationDegrees) {
 
 		if (sourceCanvas == null || targetCanvas == null)

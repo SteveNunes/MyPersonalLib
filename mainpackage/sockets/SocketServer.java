@@ -3,31 +3,78 @@ package sockets;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import util.Misc;
+import util.Timer;
+
+/**
+ * Servidor de socket que aceita conexões de clientes. Gerencia o ciclo de vida
+ * do servidor, aceita novas conexões e distribui eventos. Permite o tratamento
+ * de dados genéricos (bytes) e texto.
+ */
 public class SocketServer {
 
+	private static ExecutorService executorService = null;
 	private static Set<SocketClient> sockets = new HashSet<>();
+	private static int pingClientsInterval = 5;
+	private static List<SocketServer> servers = new CopyOnWriteArrayList<>();
+	private static boolean isShutdown = false;
 	
 	private Map<String, String> mark = new HashMap<>();
 	private ServerSocket serverSocket;
-	private SocketClient client;
 	private Socket socket;
+
+	// Eventos de servidor
 	private BiConsumer<SocketServer, Exception> onStartServerError;
 	private Consumer<Exception> onClientSocketAcceptError;
 	private Consumer<SocketClient> onClientConnected;
-	private BiConsumer<SocketClient, String> onClientMessageReceived;
 	private Consumer<SocketClient> onClientDisconnected;
+
 	private int port;
 	private boolean isRunning = false;
+	
+	static {
+		Misc.addShutdownEvent(() -> {
+			isShutdown = true;
+			for (SocketServer server : servers) {
+				try {
+					server.close();
+				}
+				catch (Exception e) {}
+			}
+			executorService.shutdownNow();
+		});
+	}
 
 	public SocketServer(int port) {
+		if (executorService == null)
+			executorService = Executors.newCachedThreadPool();
 		this.port = port;
+		servers.add(this);
+	}
+	
+	public static int getPingClientsInterval() {
+		return pingClientsInterval;
+	}
+
+	public static void setPingClientsInterval(int intervalInSecs) {
+		pingClientsInterval = intervalInSecs;
+	}
+	
+	private static void executorServiceExecute(Runnable runnable) {
+		if (executorService != null && !executorService.isTerminated() && !executorService.isShutdown())
+			executorService.execute(runnable);
 	}
 
 	public void setOnStartErrorServer(BiConsumer<SocketServer, Exception> onStartServerError) {
@@ -42,105 +89,113 @@ public class SocketServer {
 		this.onClientSocketAcceptError = onClientSocketAcceptError;
 	}
 
-	public void setOnClientMessageReceived(BiConsumer<SocketClient, String> onClientMessageReceived) {
-		this.onClientMessageReceived = onClientMessageReceived;
-	}
-
 	public void setOnClientDisconnected(Consumer<SocketClient> onClientDisconnected) {
 		this.onClientDisconnected = onClientDisconnected;
 	}
 
-	public void start() throws IOException {
-		if (isRunning) {
-			System.out.println("Servidor já está em execução na porta " + port);
-			return;
-		}
-		try {
-			serverSocket = new ServerSocket(port);
-			System.out.println("Servidor iniciado na porta " + port);
-			isRunning = true;
+	public void startListening() throws IOException {
+		if (isRunning)
+			throw new RuntimeException("Servidor já está em execução na porta " + port);
+		executorServiceExecute(() -> {
+			try {
+				serverSocket = new ServerSocket(port);
+				isRunning = true;
 	
-			while (isRunning) {
-				try {
-					Socket c = serverSocket.accept();
-					System.out.println("Cliente conectado (" + c.getInetAddress().getHostAddress() + ")");
-					client = new SocketClient(c);
-					sockets.add(client);
-					client.setOnDataReceiveEvent(data -> {
-						System.out.println("Dado recebido de " + c.getInetAddress().getHostAddress() + " -> " + data);
-						if (onClientMessageReceived != null)
-							onClientMessageReceived.accept(client, data);
-					});
-					client.setOnDisconnectEvent(socketClient -> {
-						System.out.println("Cliente desconectado (" + c.getInetAddress().getHostAddress() + ")");
-						if (onClientDisconnected != null)
-							onClientDisconnected.accept(client);
-					});
-					if (onClientConnected != null)
-						onClientConnected.accept(client);
-				}
-				catch (IOException e) {
-					if (isRunning) {
-						if (onClientSocketAcceptError != null)
-							onClientSocketAcceptError.accept(e);
-						else
-							e.printStackTrace();
+				pingClients();
+				while (isRunning) {
+					try {
+						Socket socket = serverSocket.accept();
+						SocketClient client = new SocketClient(socket);
+						sockets.add(client);
+						if (onClientConnected != null)
+							onClientConnected.accept(client);
+					}
+					catch (IOException e) {
+						if (isRunning) {
+							if (onClientSocketAcceptError != null)
+								onClientSocketAcceptError.accept(e);
+							else
+								e.printStackTrace();
+						}
 					}
 				}
 			}
-			if (isRunning)
-				close();
-		}
-		catch (Exception e) {
-			if (isRunning) {
-				if (onStartServerError != null)
-					onStartServerError.accept(this, e);
-				else
-					e.printStackTrace();
+			catch (Exception e) {
+				if (isRunning) {
+					if (onStartServerError != null)
+						onStartServerError.accept(this, e);
+					else
+						e.printStackTrace();
+				}
 			}
-		}
+		});
 	}
-	
+
+	private void pingClients() {
+		executorServiceExecute(() -> {
+			synchronized (sockets) {
+				sockets.removeIf(c -> {
+					try {
+						c.getSocket().sendUrgentData(0xFF);
+						return false;
+					}
+					catch (Exception e) {
+						if (onClientDisconnected != null)
+							onClientDisconnected.accept(c);
+						return true;
+					}
+				});
+			}
+			if (isRunning)
+				Timer.createTimer("pingClients", Duration.ofSeconds(pingClientsInterval), this::pingClients);
+		});
+	}
+
 	public Socket getSocket() {
 		return socket;
 	}
-	
+
 	private void validate() {
-		if (!isRunning)
+		if (serverSocket == null)
 			throw new RuntimeException("O servidor foi encerrado previamente.");
 	}
-	
+
+	public void stopListening() {
+		if (isRunning) {
+			isRunning = false;
+			try {
+				serverSocket.close();
+			}
+			catch (IOException e) {}
+			serverSocket = null;
+		}
+	}
+
 	public void close() {
 		validate();
-		isRunning = false;
-		System.out.println("Encerrando servidor...");
-		try {
-			if (serverSocket != null && !serverSocket.isClosed()) {
-				for (SocketClient client : sockets)
-					if (client.getSocketStatus() != SocketStatus.DISCONNECTED)
-						client.disconnect();
-				serverSocket.close();
-				sockets.clear();
-			}
+		if (serverSocket != null && !serverSocket.isClosed()) {
+			for (SocketClient client : sockets)
+				if (client.getSocketStatus() != SocketStatus.DISCONNECTED)
+					client.disconnect();
+			sockets.clear();
 		}
-		catch (IOException e) {
-			System.err.println("Erro ao fechar socket do servidor: " + e.getMessage());
-		}
-		System.out.println("Servidor encerrado.");
+		stopListening();
+		if (!isShutdown)
+			servers.remove(this);
 	}
-	
+
 	public void setMark(String mark) {
 		addMark("DefaultMark", mark);
 	}
-	
+
 	public void addMark(String name, String mark) {
 		this.mark.put(name, mark);
 	}
-	
+
 	public String getMark() {
 		return getMark("DefaultMark");
 	}
-	
+
 	public String getMark(String name) {
 		return mark.get(name);
 	}
@@ -148,9 +203,9 @@ public class SocketServer {
 	public void removeMark() {
 		removeMark("DefaultMark");
 	}
-	
+
 	public void removeMark(String name) {
 		mark.remove(name);
 	}
-	
+
 }

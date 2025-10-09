@@ -54,13 +54,13 @@ public class LocalTTS {
 	
 	private static void sendToServer(String text) {
 		SocketClient socket = new SocketClient();
-		socket.connect("localhost", port);
 		socket.setOnConnectEvent(s -> s.sendData(text));
 		socket.setOnConnectErrorEvent(s -> Timer.createTimer("sendToServerAgain@" + socket.hashCode(), Duration.ofSeconds(1), () -> sendToServer(text)));
 		socket.setOnDataReceiveEvent(data -> {
 			if (data.equals("PING"))
 				socket.sendData("PONG");
 		});
+		socket.connect("localhost", port);
 	}
 	
 	public static void initAlternativeTTSServer(int port) {
@@ -86,7 +86,7 @@ public class LocalTTS {
 		if (executorService == null)
 			executorService = Executors.newCachedThreadPool();
 		LocalTTS.port = port;
-		if (DesktopUtils.isProcessRunning("javaTTSServer.exe")) {
+		if (DesktopUtils.processExists("javaTTSServer.exe")) {
 			killTaskAtClose = false;
 			return;
 		}

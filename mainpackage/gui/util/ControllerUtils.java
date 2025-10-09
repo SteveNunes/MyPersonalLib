@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
@@ -26,6 +28,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
+import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
@@ -517,6 +522,26 @@ public abstract class ControllerUtils {
 		addIconToButton(button, imagePath, bounds.getWidth(), bounds.getHeight());
 	}
 	
+	public static void addIconToButton(SplitMenuButton button, String imagePath, double imageWidth, double imageHeight) {
+		button.setGraphic(getImageViewFromImagePath(imagePath, imageWidth, imageHeight, Color.WHITE, -1));
+	}
+
+	public static void addIconToButton(SplitMenuButton button, String imagePath) {
+		Bounds bounds = button.getLayoutBounds();
+		addIconToButton(button, imagePath, bounds.getWidth(), bounds.getHeight());
+	}
+	
+	public static <T> void setSpinnerValues(Spinner<T> spinner, List<T> values) {
+		ObservableList<T> nomes = FXCollections.observableArrayList(values);
+		SpinnerValueFactory<T> valueFactory = new SpinnerValueFactory.ListSpinnerValueFactory<>(nomes);
+		spinner.setValueFactory(valueFactory);
+  }
+	
+	public static void setSpinnerValues(Spinner<Integer> spinner, int minValue, int maxValue, int initValue) {
+  	SpinnerValueFactory<Integer> valueFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(minValue, maxValue, initValue);
+  	spinner.setValueFactory(valueFactory);
+	}
+	
 	public static void addOnKeyPressedToPasteFormatCodes(TextField textField) {
 		textField.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
 			String text = textField.getText() == null ? "" : textField.getText();
@@ -663,6 +688,21 @@ public abstract class ControllerUtils {
 				stage.close();
 		});
 		stage.show();
+	}
+	
+	/**
+	 * Caso você esteja rodando uma aplicação JavaFX, por precisar do ambiente,
+	 * mas não quer iniciar uma janela, chame esse método, pois para que as rotinas
+	 * do JavaFX funcionem corretamente, é necessário criar alguma janela.
+	 * Esse método cria uma janela invisivel, apenas para que as subrotinas do
+	 * JavaFX funcionem corretamente. 
+	 */
+	public static void runDummyStage(Stage stage) {
+    stage.setWidth(1);
+    stage.setHeight(1);
+    stage.setOpacity(0);
+    stage.initStyle(StageStyle.UTILITY);
+    stage.show();
 	}
 	
 }
