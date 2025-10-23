@@ -3,7 +3,6 @@ package sockets;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,7 +15,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import util.Misc;
-import util.Timer;
 
 /**
  * Servidor de socket que aceita conexões de clientes. Gerencia o ciclo de vida
@@ -27,7 +25,6 @@ public class SocketServer {
 
 	private static ExecutorService executorService = null;
 	private static Set<SocketClient> sockets = new HashSet<>();
-	private static int pingClientsInterval = 5;
 	private static List<SocketServer> servers = new CopyOnWriteArrayList<>();
 	private static boolean isShutdown = false;
 	
@@ -39,7 +36,6 @@ public class SocketServer {
 	private BiConsumer<SocketServer, Exception> onStartServerError;
 	private Consumer<Exception> onClientSocketAcceptError;
 	private Consumer<SocketClient> onClientConnected;
-	private Consumer<SocketClient> onClientDisconnected;
 
 	private int port;
 	private boolean isRunning = false;
@@ -64,14 +60,6 @@ public class SocketServer {
 		servers.add(this);
 	}
 	
-	public static int getPingClientsInterval() {
-		return pingClientsInterval;
-	}
-
-	public static void setPingClientsInterval(int intervalInSecs) {
-		pingClientsInterval = intervalInSecs;
-	}
-	
 	private static void executorServiceExecute(Runnable runnable) {
 		if (executorService != null && !executorService.isTerminated() && !executorService.isShutdown())
 			executorService.execute(runnable);
@@ -89,10 +77,6 @@ public class SocketServer {
 		this.onClientSocketAcceptError = onClientSocketAcceptError;
 	}
 
-	public void setOnClientDisconnected(Consumer<SocketClient> onClientDisconnected) {
-		this.onClientDisconnected = onClientDisconnected;
-	}
-
 	public void startListening() throws IOException {
 		if (isRunning)
 			throw new RuntimeException("Servidor já está em execução na porta " + port);
@@ -101,7 +85,6 @@ public class SocketServer {
 				serverSocket = new ServerSocket(port);
 				isRunning = true;
 	
-				pingClients();
 				while (isRunning) {
 					try {
 						Socket socket = serverSocket.accept();
@@ -128,26 +111,6 @@ public class SocketServer {
 						e.printStackTrace();
 				}
 			}
-		});
-	}
-
-	private void pingClients() {
-		executorServiceExecute(() -> {
-			synchronized (sockets) {
-				sockets.removeIf(c -> {
-					try {
-						c.getSocket().sendUrgentData(0xFF);
-						return false;
-					}
-					catch (Exception e) {
-						if (onClientDisconnected != null)
-							onClientDisconnected.accept(c);
-						return true;
-					}
-				});
-			}
-			if (isRunning)
-				Timer.createTimer("pingClients", Duration.ofSeconds(pingClientsInterval), this::pingClients);
 		});
 	}
 

@@ -20,6 +20,11 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Classe para ler/escrever arquivos INI. Preserva comentários (linhas iniciadas
+ * por ';' ou '#', comentários inline após o valor) e a disposição original do
+ * arquivo tanto quanto possível.
+ */
 public class IniFile {
 
 	private Path file;
@@ -68,27 +73,55 @@ public class IniFile {
 		stopSaveTimer();
 	}
 
+	/**
+	 * Retorna (ou cria) uma instância para o arquivo informado.
+	 *
+	 * @param fileName caminho do arquivo INI
+	 * @return instância de IniFile associada ao caminho
+	 */
 	public static IniFile getNewIniFileInstance(String fileName) {
 		if (!openedIniFiles.containsKey(fileName))
 			return new IniFile(fileName);
 		return openedIniFiles.get(fileName);
 	}
 
+	/**
+	 * Lista de arquivos INI abertos.
+	 *
+	 * @return colessão com instâncias abertas
+	 */
 	public static Collection<IniFile> getOpenedIniFilesList() {
 		return openedIniFiles.values();
 	}
 
+	/**
+	 * Retorna o Path do arquivo associado.
+	 *
+	 * @return Path do arquivo
+	 */
 	public Path getFilePath() {
 		return file;
 	}
 
+	/**
+	 * Retorna o próximo nome numérico livre em uma sessão (1, 2, 3...).
+	 *
+	 * @param section nome da sessão
+	 * @return próximo índice numérico livre como string
+	 */
 	public String getNextFreeNumericItem(String section) {
 		int n = 1;
-		for (; itemExists(section, "" + n); n++)
-			;
+		for (; itemExists(section, "" + n); n++);
 		return "" + n;
 	}
 
+	/**
+	 * Remove o item numérico informado e reordena os itens numéricos (1..N).
+	 * Preserva outros itens intactos.
+	 *
+	 * @param section sessão
+	 * @param item    item a remover
+	 */
 	public void removeNumericItemAndReorderSection(String section, String item) {
 		if (!sectionExists(section) || !itemExists(section, item))
 			return;
@@ -101,48 +134,74 @@ public class IniFile {
 		runSaveTimer();
 	}
 
+	/* --- Helpers para reconhecer linhas --- */
+
 	private static Boolean stringIsSection(String s) {
 		int i = s != null ? s.indexOf("]") : -1;
 		return s != null && !s.isBlank() && s.charAt(0) == '[' && i > 1;
 	}
 
 	private static Boolean stringIsItem(String s) {
-		return !s.isEmpty() && s.charAt(0) != '=' && s.contains("=");
+		return s != null && !s.isEmpty() && s.charAt(0) != '=' && s.contains("=");
 	}
 
 	private static String getSectionFromString(String s) {
 		return s.split("]")[0].substring(1);
 	}
 
+	/**
+	 * Carrega o INI do disco. Mantém fileBuffer (linhas originais) para preservar
+	 * comentários e formato; popula iniBody com os valores (sem comentários
+	 * inline).
+	 *
+	 * @param fileName caminho do arquivo
+	 */
 	public void loadIniFromDisk(String fileName) {
-		iniBody = new LinkedHashMap<String, LinkedHashMap<String, String>>();
+		iniBody = new LinkedHashMap<>();
 		if (!fileName.isBlank()) {
 			if (Files.exists(file)) {
 				fileBuffer = MyFile.readAllLinesFromFile(fileName);
 				String section = "";
 				for (String s : fileBuffer) {
+					// Ignora linhas vazias e comentários puros
+					if (s.isBlank() || s.trim().startsWith(";") || s.trim().startsWith("#"))
+						continue;
+
 					if (stringIsSection(s)) {
 						section = getSectionFromString(s);
-						iniBody.put(section, new LinkedHashMap<String, String>());
+						iniBody.put(section, new LinkedHashMap<>());
 					}
 					else if (!section.isBlank() && stringIsItem(s)) {
 						String[] split = s.split("=", 2);
 						String item = split[0];
-						String val = split.length > 1 ? split[1] : "";
+						String val = split.length > 1 ? split[1].trim() : "";
 						write(section, item, val);
 					}
 				}
 			}
-			else
+			else {
 				fileBuffer = new ArrayList<>();
+			}
 			stopSaveTimer();
 		}
 	}
 
+	/**
+	 * Recarrega o arquivo associado.
+	 */
 	public void loadIniFromDisk() {
 		loadIniFromDisk(fileName);
 	}
 
+	/**
+	 * Insere itens que não existiam no arquivo físico (novas seções/itens). Usado
+	 * durante a escrita final para garantir que o conteúdo de iniBody apareça no
+	 * arquivo mesmo que não existisse antes.
+	 *
+	 * @param section    sessão atual (nome)
+	 * @param fileBuffer buffer em construção
+	 * @param addeds     mapa de seções já adicionadas (para evitar duplicidade)
+	 */
 	private void insertMissingItems(String section, List<String> fileBuffer, Map<String, List<String>> addeds) {
 		if (!section.isBlank()) {
 			if (!addeds.containsKey(section)) {
@@ -160,21 +219,12 @@ public class IniFile {
 		fileBuffer.add("");
 	}
 
-	public static void main(String[] args) {
-		IniFile iniFile = IniFile.getNewIniFileInstance("D:\\teste.ini");
-		for (int n = 0; n < 10; n++)
-			iniFile.remove("" + n);
-		for (int n = 0; n < 10; n++)
-			for (int n2 = 0; n2 < 100; n2++)
-				iniFile.write("" + n, "" + n2, "" + MyMath.getRandom(1000, 9999));
-		for (int n = 0; n < 10; n++)
-			for (int n2 = 50; n2 < 100; n2++)
-				iniFile.remove("" + n, "" + n2);
-		for (int n = 0; n < 10; n++)
-			for (int n2 = 200; n2 < 250; n2++)
-				iniFile.write("" + n, "" + n2, "" + MyMath.getRandom(10000, 99999));
-	}
-
+	/**
+	 * Atualiza fileBuffer a partir do fileBuffer original preservando linhas que
+	 * não são items (comentários, espaço em branco, cabeçalhos). Para linhas que
+	 * são items existentes, substitui somente a porção do valor (preserva
+	 * comentários inline e espaçamentos originais).
+	 */
 	private void updateFileBuffer() {
 		Map<String, List<String>> addeds = new HashMap<>();
 		List<String> newFileBuffer = new ArrayList<>();
@@ -211,7 +261,8 @@ public class IniFile {
 			else if (!line.isBlank() || !section.isBlank() || addeds.isEmpty())
 				newFileBuffer.add(line);
 		}
-		insertMissingItems(section, newFileBuffer, addeds);
+		if (sectionExists(section))
+			insertMissingItems(section, newFileBuffer, addeds);
 		for (String sec : getSectionList())
 			if (!getItemList(sec).isEmpty() && !addeds.containsKey(sec))
 				insertMissingItems(sec, newFileBuffer, addeds);
@@ -222,7 +273,14 @@ public class IniFile {
 			newFileBuffer.remove(newFileBuffer.size() - 1);
 		fileBuffer = new ArrayList<>(newFileBuffer);
 	}
-
+	
+	/**
+	 * Escreve/atualiza um valor (string) em uma sessão/item.
+	 *
+	 * @param iniSection	Sessão
+	 * @param iniItem	Item
+	 * @param value Valor
+	 */
 	public void write(String iniSection, String iniItem, String value) {
 		if (!iniBody.containsKey(iniSection))
 			iniBody.put(iniSection, new LinkedHashMap<String, String>());
@@ -230,18 +288,31 @@ public class IniFile {
 		runSaveTimer();
 	}
 
-	public void write(String iniSection, String iniItem, boolean value) {
+	/**
+	 * Escreve um Boolean diretamente no arquivo
+	 */
+	public void write(String iniSection, String iniItem, Boolean value) {
 		write(iniSection, iniItem, "" + value);
 	}
 
+	/**
+	 * Escreve um número diretamente no arquivo
+	 */
 	public <T extends Number> void write(String iniSection, String iniItem, T number) {
 		write(iniSection, iniItem, "" + number);
 	}
 
-	public <T> void write(String section, String item, List<T> numberList, String separator) {
+	/**
+	 * Escreve o conteudo de uma List<T> como texto em um item de uma sessão do arquivo ini
+	 * @param section	Sessão onde será escrito os valores
+	 * @param item	Item onde será escrito os valores
+	 * @param list	List<T> de onde serão obtido os valores á serem escritos
+	 * @param separator	Separador entre cada valor
+	 */
+	public <T> void write(String section, String item, List<T> list, String separator) {
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (T v : numberList) {
+		for (T v : list) {
 			sb.append((first ? "" : separator) + v.toString());
 			first = false;
 		}
@@ -252,24 +323,41 @@ public class IniFile {
 		write(section, item, numberList, " ");
 	}
 
-	public <T extends Number> void write(String section, String item, T[] numberArray, String separator) {
+	/**
+	 * Escreve o conteudo de uma array de <T extends Number> como texto em um item de uma sessão do arquivo ini
+	 * @param section	Sessão onde será escrito os valores
+	 * @param item	Item onde será escrito os valores
+	 * @param array	Array de <T extends Number> de onde serão obtido os valores á serem escritos
+	 * @param separator	Separador entre cada valor
+	 */
+	public <T extends Number> void write(String section, String item, T[] array, String separator) {
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (T v : numberArray) {
+		for (T v : array) {
 			sb.append((first ? "" : separator) + v.toString());
 			first = false;
 		}
 		write(section, item, sb.toString());
 	}
 
-	public <T extends Number> void write(String section, String item, T[] numberArray) {
-		write(section, item, numberArray, " ");
+	/**
+	 * Sobrecarga de {@code write(String section, String item, Boolean[] numberArray, String separator)} que dispensa informar o separador.	
+	 */
+	public <T extends Number> void write(String section, String item, T[] array) {
+		write(section, item, array, " ");
 	}
 
-	public void write(String section, String item, Boolean[] numberArray, String separator) {
+	/**
+	 * Escreve o conteudo de uma array de Boolean como texto em um item de uma sessão do arquivo ini
+	 * @param section	Sessão onde será escrito os valores
+	 * @param item	Item onde será escrito os valores
+	 * @param array	Array de Boolean de onde serão obtido os valores á serem escritos
+	 * @param separator	Separador entre cada valor
+	 */
+	public void write(String section, String item, Boolean[] array, String separator) {
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (Boolean b : numberArray) {
+		for (Boolean b : array) {
 			sb.append((first ? "" : separator) + b.toString());
 			first = false;
 		}
@@ -280,20 +368,44 @@ public class IniFile {
 		write(section, item, numberArray, " ");
 	}
 
+	/**
+	 * Retorna o último valor obtido com a última chamada de read()
+	 *
+	 * @return último valor obtido com a última chamada de read()
+	 */
 	public String getLastReadVal() {
 		return lastReadVal;
 	}
 
+	/**
+	 * Sobrecarga de {@code read(String iniSection, String iniItem)} contendo valor padrão
+	 * @param defaultValue	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 */
+	public String read(String iniSection, String iniItem, String defaultValue) {
+		return read(iniSection, iniItem) != null ? lastReadVal : (lastReadVal = defaultValue);
+	}
+
+	/**
+	 * Lê o valor de um item em uma sessão
+	 *
+	 * @param iniSection	Sessão
+	 * @param iniItem	Item
+	 * @return	valor de um item em uma sessão
+	 */
 	public String read(String iniSection, String iniItem) {
 		if (itemExists(iniSection, iniItem))
 			return (lastReadVal = iniBody.get(iniSection).get(iniItem));
 		return (lastReadVal = null);
 	}
 
-	public String read(String iniSection, String iniItem, String defaultValue) {
-		return read(iniSection, iniItem) != null ? lastReadVal : (lastReadVal = defaultValue);
-	}
-
+	/**
+	 * Retorna um Enum<T> a partir de um valor carregado do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param enumClass	.class da classe do Enum para obter seu tipo
+	 * @param defaultReturnValue	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @return	Enum<T>
+	 */
 	public <T extends Enum<T>> T readAsEnum(String section, String item, Class<T> enumClass, T defaultReturnValue) {
 		String val = read(section, item);
 		if (val == null)
@@ -310,6 +422,13 @@ public class IniFile {
 		return readAsEnum(section, item, enumClass, null);
 	}
 
+	/**
+	 * Retorna um Boolean a partir de um valor carregado do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnValue	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @return	Boolean
+	 */
 	public Boolean readAsBoolean(String section, String item, Boolean defaultReturnValue) {
 		String val = read(section, item);
 		if (val == null)
@@ -326,6 +445,13 @@ public class IniFile {
 		return readAsBoolean(section, item, null);
 	}
 
+	/**
+	 * Retorna um Byte a partir de um valor carregado do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnValue	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @return	Byte
+	 */
 	public Byte readAsByte(String section, String item, Byte defaultReturnValue) {
 		String val = read(section, item);
 		if (val == null)
@@ -342,6 +468,13 @@ public class IniFile {
 		return readAsByte(section, item, null);
 	}
 
+	/**
+	 * Retorna um Short a partir de um valor carregado do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnValue	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @return	Short
+	 */
 	public Short readAsShort(String section, String item, Short defaultReturnValue) {
 		String val = read(section, item);
 		if (val == null)
@@ -358,6 +491,13 @@ public class IniFile {
 		return readAsShort(section, item, null);
 	}
 
+	/**
+	 * Retorna um Integer a partir de um valor carregado do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnValue	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @return	Integer
+	 */
 	public Integer readAsInteger(String section, String item, Integer defaultReturnValue) {
 		String val = read(section, item);
 		if (val == null)
@@ -374,6 +514,13 @@ public class IniFile {
 		return readAsInteger(section, item, null);
 	}
 
+	/**
+	 * Retorna um Long a partir de um valor carregado do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnValue	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @return	Long
+	 */
 	public Long readAsLong(String section, String item, Long defaultReturnValue) {
 		String val = read(section, item);
 		if (val == null)
@@ -390,6 +537,13 @@ public class IniFile {
 		return readAsLong(section, item, null);
 	}
 
+	/**
+	 * Retorna um Float a partir de um valor carregado do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnValue	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @return	Float
+	 */
 	public Float readAsFloat(String section, String item, Float defaultReturnValue) {
 		String val = read(section, item);
 		if (val == null)
@@ -406,6 +560,13 @@ public class IniFile {
 		return readAsFloat(section, item, null);
 	}
 
+	/**
+	 * Retorna um Double a partir de um valor carregado do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnValue	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @return	Double
+	 */
 	public Double readAsDouble(String section, String item, Double defaultReturnValue) {
 		String val = read(section, item);
 		if (val == null)
@@ -422,15 +583,22 @@ public class IniFile {
 		return readAsDouble(section, item, null);
 	}
 
-	public Character readAsCharacter(String section, String item, Character defaultReturnChar) {
+	/**
+	 * Retorna um Character a partir de um valor carregado do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnValue	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @return	Character
+	 */
+	public Character readAsCharacter(String section, String item, Character defaultReturnValue) {
 		String val = read(section, item);
 		if (val == null)
-			return defaultReturnChar;
+			return defaultReturnValue;
 		try {
 			return val.charAt(0);
 		}
 		catch (Exception e) {
-			return defaultReturnChar;
+			return defaultReturnValue;
 		}
 	}
 
@@ -438,15 +606,22 @@ public class IniFile {
 		return readAsCharacter(section, item, null);
 	}
 
-	public BigInteger readAsBigInteger(String section, String item, BigInteger defaultReturnChar) {
+	/**
+	 * Retorna um BigInteger a partir de um valor carregado do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnValue	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @return	BigInteger
+	 */
+	public BigInteger readAsBigInteger(String section, String item, BigInteger defaultReturnValue) {
 		String val = read(section, item);
 		if (val == null)
-			return defaultReturnChar;
+			return defaultReturnValue;
 		try {
 			return new BigInteger(val);
 		}
 		catch (Exception e) {
-			return defaultReturnChar;
+			return defaultReturnValue;
 		}
 	}
 
@@ -454,15 +629,22 @@ public class IniFile {
 		return readAsBigInteger(section, item, null);
 	}
 
-	public BigDecimal readAsBigDecimal(String section, String item, BigDecimal defaultReturnChar) {
+	/**
+	 * Retorna um BigDecimal a partir de um valor carregado do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnValue	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @return	BigDecimal
+	 */
+	public BigDecimal readAsBigDecimal(String section, String item, BigDecimal defaultReturnValue) {
 		String val = read(section, item);
 		if (val == null)
-			return defaultReturnChar;
+			return defaultReturnValue;
 		try {
 			return new BigDecimal(val);
 		}
 		catch (Exception e) {
-			return defaultReturnChar;
+			return defaultReturnValue;
 		}
 	}
 
@@ -470,6 +652,15 @@ public class IniFile {
 		return readAsBigDecimal(section, item, null);
 	}
 
+	/**
+	 * Retorna uma array de Enum<T> a partir de valores carregados do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param enumClass	.class da classe do Enum para obter seu tipo
+	 * @param defaultReturnArray	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @param separator	Separador entre cada valor
+	 * @return	array de Enum<T>
+	 */
 	public <T extends Enum<T>> List<T> readAsEnumList(String section, String item, Class<T> enumClass, List<T> defaultReturnArray, String separator) {
 		String val = read(section, item);
 		if (val == null)
@@ -498,6 +689,14 @@ public class IniFile {
 		return readAsEnumList(section, item, enumClass, " ");
 	}
 
+	/**
+	 * Retorna uma array de Boolean a partir de valores carregados do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnArray	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @param separator	Separador entre cada valor
+	 * @return	array de Boolean
+	 */
 	public Boolean[] readAsBooleanArray(String section, String item, Boolean[] defaultReturnArray, String separator) {
 		String val = read(section, item);
 		if (val == null)
@@ -526,13 +725,21 @@ public class IniFile {
 		return readAsBooleanArray(section, item, " ");
 	}
 
-	public byte[] readAsByteArray(String section, String item, byte[] defaultReturnArray, String separator) {
+	/**
+	 * Retorna uma array de Byte a partir de valores carregados do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnArray	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @param separator	Separador entre cada valor
+	 * @return	array de Byte
+	 */
+	public Byte[] readAsByteArray(String section, String item, Byte[] defaultReturnArray, String separator) {
 		String val = read(section, item);
 		if (val == null)
 			return defaultReturnArray;
 		try {
 			String[] split = val.split(separator);
-			byte[] array = new byte[split.length];
+			Byte[] array = new Byte[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = Byte.parseByte(split[i]);
 			return array;
@@ -542,25 +749,33 @@ public class IniFile {
 		}
 	}
 
-	public byte[] readAsByteArray(String section, String item, byte[] defaultReturnArray) {
+	public Byte[] readAsByteArray(String section, String item, Byte[] defaultReturnArray) {
 		return readAsByteArray(section, item, defaultReturnArray, " ");
 	}
 
-	public byte[] readAsByteArray(String section, String item, String separator) {
+	public Byte[] readAsByteArray(String section, String item, String separator) {
 		return readAsByteArray(section, item, null, separator);
 	}
 
-	public byte[] readAsByteArray(String section, String item) {
+	public Byte[] readAsByteArray(String section, String item) {
 		return readAsByteArray(section, item, " ");
 	}
 
-	public short[] readAsShortArray(String section, String item, short[] defaultReturnArray, String separator) {
+	/**
+	 * Retorna uma array de Short a partir de valores carregados do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnArray	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @param separator	Separador entre cada valor
+	 * @return	array de Short
+	 */
+	public Short[] readAsShortArray(String section, String item, Short[] defaultReturnArray, String separator) {
 		String val = read(section, item);
 		if (val == null)
 			return defaultReturnArray;
 		try {
 			String[] split = val.split(separator);
-			short[] array = new short[split.length];
+			Short[] array = new Short[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = Short.parseShort(split[i]);
 			return array;
@@ -570,25 +785,33 @@ public class IniFile {
 		}
 	}
 
-	public short[] readAsShortArray(String section, String item, short[] defaultReturnArray) {
+	public Short[] readAsShortArray(String section, String item, Short[] defaultReturnArray) {
 		return readAsShortArray(section, item, defaultReturnArray, " ");
 	}
 
-	public short[] readAsShortArray(String section, String item, String separator) {
+	public Short[] readAsShortArray(String section, String item, String separator) {
 		return readAsShortArray(section, item, null, separator);
 	}
 
-	public short[] readAsShortArray(String section, String item) {
+	public Short[] readAsShortArray(String section, String item) {
 		return readAsShortArray(section, item, " ");
 	}
 
-	public int[] readAsIntArray(String section, String item, int[] defaultReturnArray, String separator) {
+	/**
+	 * Retorna uma array de Integer a partir de valores carregados do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnArray	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @param separator	Separador entre cada valor
+	 * @return	array de Integer
+	 */
+	public Integer[] readAsIntArray(String section, String item, Integer[] defaultReturnArray, String separator) {
 		String val = read(section, item);
 		if (val == null)
 			return defaultReturnArray;
 		try {
 			String[] split = val.split(separator);
-			int[] array = new int[split.length];
+			Integer[] array = new Integer[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = Integer.parseInt(split[i]);
 			return array;
@@ -598,25 +821,33 @@ public class IniFile {
 		}
 	}
 
-	public int[] readAsIntArray(String section, String item, int[] defaultReturnArray) {
+	public Integer[] readAsIntArray(String section, String item, Integer[] defaultReturnArray) {
 		return readAsIntArray(section, item, defaultReturnArray, " ");
 	}
 
-	public int[] readAsIntArray(String section, String item, String separator) {
+	public Integer[] readAsIntArray(String section, String item, String separator) {
 		return readAsIntArray(section, item, null, separator);
 	}
 
-	public int[] readAsIntArray(String section, String item) {
+	public Integer[] readAsIntArray(String section, String item) {
 		return readAsIntArray(section, item, " ");
 	}
 
-	public long[] readAsLongArray(String section, String item, long[] defaultReturnArray, String separator) {
+	/**
+	 * Retorna uma array de Long a partir de valores carregados do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnArray	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @param separator	Separador entre cada valor
+	 * @return	array de Long
+	 */
+	public Long[] readAsLongArray(String section, String item, Long[] defaultReturnArray, String separator) {
 		String val = read(section, item);
 		if (val == null)
 			return defaultReturnArray;
 		try {
 			String[] split = val.split(separator);
-			long[] array = new long[split.length];
+			Long[] array = new Long[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = Long.parseLong(split[i]);
 			return array;
@@ -626,25 +857,33 @@ public class IniFile {
 		}
 	}
 
-	public long[] readAsLongArray(String section, String item, long[] defaultReturnArray) {
+	public Long[] readAsLongArray(String section, String item, Long[] defaultReturnArray) {
 		return readAsLongArray(section, item, defaultReturnArray, " ");
 	}
 
-	public long[] readAsLongArray(String section, String item, String separator) {
+	public Long[] readAsLongArray(String section, String item, String separator) {
 		return readAsLongArray(section, item, null, separator);
 	}
 
-	public long[] readAsLongArray(String section, String item) {
+	public Long[] readAsLongArray(String section, String item) {
 		return readAsLongArray(section, item, " ");
 	}
 
-	public float[] readAsFloatArray(String section, String item, float[] defaultReturnArray, String separator) {
+	/**
+	 * Retorna uma array de float a partir de valores carregados do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnArray	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @param separator	Separador entre cada valor
+	 * @return	array de float
+	 */
+	public Float[] readAsFloatArray(String section, String item, Float[] defaultReturnArray, String separator) {
 		String val = read(section, item);
 		if (val == null)
 			return defaultReturnArray;
 		try {
 			String[] split = val.split(separator);
-			float[] array = new float[split.length];
+			Float[] array = new Float[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = Float.parseFloat(split[i]);
 			return array;
@@ -654,25 +893,33 @@ public class IniFile {
 		}
 	}
 
-	public float[] readAsFloatArray(String section, String item, float[] defaultReturnArray) {
+	public Float[] readAsFloatArray(String section, String item, Float[] defaultReturnArray) {
 		return readAsFloatArray(section, item, defaultReturnArray, " ");
 	}
 
-	public float[] readAsFloatArray(String section, String item, String separator) {
+	public Float[] readAsFloatArray(String section, String item, String separator) {
 		return readAsFloatArray(section, item, null, separator);
 	}
 
-	public float[] readAsFloatArray(String section, String item) {
+	public Float[] readAsFloatArray(String section, String item) {
 		return readAsFloatArray(section, item, " ");
 	}
 
-	public double[] readAsDoubleArray(String section, String item, double[] defaultReturnArray, String separator) {
+	/**
+	 * Retorna uma array de double a partir de valores carregados do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnArray	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @param separator	Separador entre cada valor
+	 * @return	array de double
+	 */
+	public Double[] readAsDoubleArray(String section, String item, Double[] defaultReturnArray, String separator) {
 		String val = read(section, item);
 		if (val == null)
 			return defaultReturnArray;
 		try {
 			String[] split = val.split(separator);
-			double[] array = new double[split.length];
+			Double[] array = new Double[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = Double.parseDouble(split[i]);
 			return array;
@@ -682,25 +929,33 @@ public class IniFile {
 		}
 	}
 
-	public double[] readAsDoubleArray(String section, String item, double[] defaultReturnArray) {
+	public Double[] readAsDoubleArray(String section, String item, Double[] defaultReturnArray) {
 		return readAsDoubleArray(section, item, defaultReturnArray, " ");
 	}
 
-	public double[] readAsDoubleArray(String section, String item, String separator) {
+	public Double[] readAsDoubleArray(String section, String item, String separator) {
 		return readAsDoubleArray(section, item, null, separator);
 	}
 
-	public double[] readAsDoubleArray(String section, String item) {
+	public Double[] readAsDoubleArray(String section, String item) {
 		return readAsDoubleArray(section, item, " ");
 	}
 
-	public char[] readAsCharArray(String section, String item, char[] defaultReturnArray, String separator) {
+	/**
+	 * Retorna uma array de Character a partir de valores carregados do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnArray	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @param separator	Separador entre cada valor
+	 * @return	array de Character
+	 */
+	public Character[] readAsCharArray(String section, String item, Character[] defaultReturnArray, String separator) {
 		String val = read(section, item);
 		if (val == null)
 			return defaultReturnArray;
 		try {
 			String[] split = val.split(separator);
-			char[] array = new char[split.length];
+			Character[] array = new Character[split.length];
 			for (int i = 0; i < split.length; i++)
 				array[i] = split[i].charAt(0);
 			return array;
@@ -710,18 +965,26 @@ public class IniFile {
 		}
 	}
 
-	public char[] readAsCharArray(String section, String item, char[] defaultReturnArray) {
+	public Character[] readAsCharArray(String section, String item, Character[] defaultReturnArray) {
 		return readAsCharArray(section, item, defaultReturnArray, " ");
 	}
 
-	public char[] readAsCharArray(String section, String item, String separator) {
+	public Character[] readAsCharArray(String section, String item, String separator) {
 		return readAsCharArray(section, item, null, separator);
 	}
 
-	public char[] readAsCharArray(String section, String item) {
+	public Character[] readAsCharArray(String section, String item) {
 		return readAsCharArray(section, item, " ");
 	}
 
+	/**
+	 * Retorna uma array de BigInteger a partir de valores carregados do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnArray	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @param separator	Separador entre cada valor
+	 * @return	array de BigInteger
+	 */
 	public BigInteger[] readAsBigIntegerArray(String section, String item, BigInteger[] defaultReturnArray, String separator) {
 		String val = read(section, item);
 		if (val == null)
@@ -750,6 +1013,14 @@ public class IniFile {
 		return readAsBigIntegerArray(section, item, " ");
 	}
 
+	/**
+	 * Retorna uma array de BigDecimal a partir de valores carregados do arquivo ini
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @param defaultReturnArray	Valor padrão á ser retornado caso ocorra erro ao tentar carregar o valor informado
+	 * @param separator	Separador entre cada valor
+	 * @return	array de BigDecimal
+	 */
 	public BigDecimal[] readAsBigDecimalArray(String section, String item, BigDecimal[] defaultReturnArray, String separator) {
 		String val = read(section, item);
 		if (val == null)
@@ -774,10 +1045,23 @@ public class IniFile {
 		return readAsBigDecimalArray(section, item, null, separator);
 	}
 
+	/**
+	 * Retorna uma array de BigDecimal a partir de valores carregados do arquivo ini, separados por espaço
+	 * @param section	Sessão do arquivo ini
+	 * @param item	Item do arquivo ini
+	 * @return	array de BigDecimal
+	 */
 	public BigDecimal[] readAsBigDecimalArray(String section, String item) {
 		return readAsBigDecimalArray(section, item, " ");
 	}
 
+	/**
+	 * Remove um item se existir.
+	 *
+	 * @param iniSection	Sessão de onde o item será removido
+	 * @param iniItem	Item á ser removido da sessão
+	 * @return	Nome do item removido se existir, ou null se não existir
+	 */
 	public String remove(String iniSection, String iniItem) {
 		if (itemExists(iniSection, iniItem)) {
 			iniBody.get(iniSection).remove(iniItem);
@@ -787,6 +1071,12 @@ public class IniFile {
 		return null;
 	}
 
+	/**
+	 * Remove uma sessão inteira se existir
+	 *
+	 * @param iniSection Sessão á ser removida
+	 * @return	Nome da sessão removida se existir, ou null se não existir
+	 */
 	public String remove(String iniSection) {
 		if (sectionExists(iniSection)) {
 			iniBody.remove(iniSection);
@@ -796,14 +1086,25 @@ public class IniFile {
 		return null;
 	}
 
+	/**
+	 * @return	Caminho do arquivo atualmente aberto.
+	 */
 	public String fileName() {
 		return fileName;
 	}
 
+	/**
+	 * @return	o total de sessões no arquivo atual
+	 */
 	public int getIniSize() {
 		return !iniBody.isEmpty() ? iniBody.size() : 0;
 	}
 
+	/**
+	 * Retorna a posição da sessão no arquivo atual
+	 * @param iniSection	Sessão á ser retornado sua posição
+	 * @return	a posição da sessão no arquivo atual
+	 */
 	public int getSectionPos(String iniSection) {
 		if (sectionExists(iniSection)) {
 			Iterator<String> it = iniBody.keySet().iterator();
@@ -814,6 +1115,11 @@ public class IniFile {
 		return 0;
 	}
 
+	/**
+	 * Retorna a sessão da posição especificada
+	 * @param coord	Posição da sessão á ser obtida
+	 * @return	a sessão da posição especificada
+	 */
 	public String getSectionAtPos(int coord) {
 		if (!iniBody.isEmpty()) {
 			List<String> list = getSectionList();
@@ -824,14 +1130,30 @@ public class IniFile {
 		return null;
 	}
 
+	/**
+	 * Verifica se uma sessão existe no arquivo atual
+	 * @param iniSection	Sessão á ser verificada
+	 * @return {@code true} se a sessão existir no arquivo atual
+	 */
 	public Boolean sectionExists(String iniSection) {
-		return !iniBody.isEmpty() ? iniBody.containsKey(iniSection) : false;
+		return iniBody.containsKey(iniSection);
 	}
 
+	/**
+	 * Retorna o total de itens em uma sessão
+	 * @param iniSection	Sessão á ser obtida o total de itens
+	 * @return	o total de itens em uma sessão
+	 */
 	public int getSectionSize(String iniSection) {
 		return sectionExists(iniSection) ? iniBody.get(iniSection).size() : -1;
 	}
 
+	/**
+	 * Retorna a posição do item na sessão especificada
+	 * @param iniSection	Sessão onde está o item desejado
+	 * @param iniItem	Item á ser retornado sua posição
+	 * @return	a posição do item na sessão especificada
+	 */
 	public int getItemPos(String iniSection, String iniItem) {
 		if (itemExists(iniSection, iniItem)) {
 			Iterator<String> it = iniBody.get(iniSection).keySet().iterator();
@@ -842,6 +1164,12 @@ public class IniFile {
 		return 0;
 	}
 
+	/**
+	 * Retorna o item da posição especificada dentro de uma sessão
+	 * @param iniSection	Sessão á ser obtido o item
+	 * @param coord	Posição do item á ser obtido
+	 * @return	o item na posição especificada
+	 */
 	public String getItemAtPos(String iniSection, int coord) {
 		if (sectionExists(iniSection) && !iniBody.get(iniSection).isEmpty()) {
 			List<String> list = getItemList(iniSection);
@@ -852,10 +1180,20 @@ public class IniFile {
 		return null;
 	}
 
+	/**
+	 * Verifica se um item existe em uma sessão
+	 * @param iniSection	Sessão á ser verificada
+	 * @param iniItem	Item á ser verificado
+	 * @return	{@code true} se o item existir na sessão especificada
+	 */
 	public Boolean itemExists(String iniSection, String iniItem) {
 		return sectionExists(iniSection) ? iniBody.get(iniSection).containsKey(iniItem) : false;
 	}
 
+	/**
+	 * Apaga todos os itens da sessão informada
+	 * @param iniSection	Sessão á ter os itens apagados
+	 */
 	public void clearSection(String iniSection) {
 		if (iniBody.containsKey(iniSection)) {
 			iniBody.get(iniSection).clear();
@@ -863,17 +1201,17 @@ public class IniFile {
 		}
 	}
 
+	/**
+	 * Limpa o arquivo atual, sem removê-lo do disco.
+	 */
 	public void clearFile() {
 		iniBody.clear();
 		runSaveTimer();
 	}
 
-	public void closeFile() {
-		Timer.stopTimer("IniFileSaveToDisk@" + hashCode());
-		saveToDisk();
-		openedIniFiles.remove(fileName);
-	}
-
+	/**
+	 * Remove o arquivo carregado do disco
+	 */
 	public void deleteFile() {
 		try {
 			new File(fileName).delete();
@@ -885,10 +1223,29 @@ public class IniFile {
 		}
 	}
 
+	/**
+	 * Verifica se a instância de IniFileGPT informada aponta para o mesmo arquivo
+	 * da instância atual
+	 * 
+	 * @param otherIniFile Instância de IniFileGPT á ser comparada
+	 * @return {@code true} se ambas instâncias apontarem para o mesmo arquivo.
+	 */
 	public boolean isSameFile(IniFile otherIniFile) {
 		return fileName().equals(otherIniFile.fileName());
 	}
 
+	/**
+	 * Fecha o arquivo atual, salvando as alterações em disco.
+	 */
+	public void closeFile() {
+		Timer.stopTimer("IniFileSaveToDisk@" + hashCode());
+		saveToDisk();
+		openedIniFiles.remove(fileName);
+	}
+
+	/**
+	 * Fecha todos os arquivos atualmente abertos, salvando as alterações em disco.
+	 */
 	public static void closeAllOpenedIniFiles() {
 		synchronized (IniFile.class) {
 			saveAllFilesToDisk();
@@ -897,6 +1254,12 @@ public class IniFile {
 		}
 	}
 
+	/**
+	 * Retorna uma lista de String contendo o nome de todas as sessões do arquivo
+	 * atual
+	 * 
+	 * @return lista de String
+	 */
 	public List<String> getSectionList() {
 		List<String> list = new ArrayList<String>();
 		if (!iniBody.isEmpty()) {
@@ -909,6 +1272,13 @@ public class IniFile {
 		return list;
 	}
 
+	/**
+	 * Retorna uma lista de String contendo o nome de todos os itens da sessão
+	 * informada
+	 * 
+	 * @param iniSection Sessão da qual se quer obter a lista de itens
+	 * @return lista de String
+	 */
 	public List<String> getItemList(String iniSection) {
 		List<String> list = new ArrayList<String>();
 		if (sectionExists(iniSection) && !iniBody.get(iniSection).isEmpty()) {
@@ -921,8 +1291,14 @@ public class IniFile {
 		return list;
 	}
 
+	/**
+	 * Renomeia o arquivo atualmente aberto.
+	 * 
+	 * @param newFileName Novo nome para o arquivo atualmente aberto.
+	 */
 	public void renameFileTo(String newFileName) {
 		try {
+			saveToDisk();
 			Path source = Paths.get(fileName);
 			Path target = source.resolveSibling(newFileName);
 			Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
@@ -938,13 +1314,13 @@ public class IniFile {
 	}
 
 	/**
-	 * Retorna um LinkedHashMap, contendo vários itens=valores provindos de uma
-	 * string no formato: {ITEM=VAL}{ITEM2=VAL}{ITEM3=VAL}
-	 * 
-	 * @enclosers - Caracteres que isolam o grupo de ITEM=VAL. Exemplo: Se o formato
-	 *            for {ITEM=VAL} use no {@code enclosers} "{}" ou simplesmente nem
-	 *            especifique o {@code enclosers}, pois é passado o valor "{}" por
-	 *            padrão.
+	 * Retorna um LinkedHashMap a partir de uma String formatada
+	 * {Item=Valor}{Item2=Valor2}...
+	 *
+	 * @param val       String formatada
+	 * @param enclosers pares de caracteres que delimitam cada Item=Valor (ex: "{}")
+	 * @return LinkedHashMap contendo os valores Item=Valor encontrados na String
+	 *         formatada
 	 */
 	public static LinkedHashMap<String, String> subItemStringToLinkedHashMap(String val, String enclosers) {
 		LinkedHashMap<String, String> subItems = new LinkedHashMap<>();
@@ -953,14 +1329,9 @@ public class IniFile {
 		Pattern pattern = Pattern.compile("(" + open + "[^" + close + "]+" + close + ")", Pattern.CASE_INSENSITIVE);
 		Matcher matcher = pattern.matcher(val);
 		while (matcher.find()) {
-			String match = matcher.group(0);
-			String[] split = match.substring(1, match.length() - 1).split("=", 2);
-			val = val.replace(match, "");
-			matcher = pattern.matcher(val);
-			String result = split.length > 1 ? split[1] : "";
-			subItems.put(split[0], result);
+			String[] split = matcher.group(0).substring(1, matcher.group(0).length() - 1).split("=", 2);
+			subItems.put(split[0], split.length > 1 ? split[1] : "");
 		}
-
 		return subItems;
 	}
 
@@ -969,16 +1340,12 @@ public class IniFile {
 	}
 
 	/**
-	 * Converte uma string no formato {ITEM=VAL}{ITEM2=VAL}{ITEM3=VAL} em um
-	 * LinkedHashMap<String, String> contendo esses itens e seus valores
-	 * respectivamente.
-	 * 
-	 * @enclosers - Caracteres que isolam o grupo de ITEM=VAL. Exemplo: Se o formato
-	 *            for {ITEM=VAL} use no {@code enclosers} "{}" ou simplesmente nem
-	 *            especifique o {@code enclosers}, pois é passado o valor "{}" por
-	 *            padrão.
+	 * Converte LinkedHashMap em String formatada {Item=Valor}{Item2=Valor2}...
+	 *
+	 * @param map       LinkedHashMap á ser convertido
+	 * @param enclosers pares de caracteres que delimitam cada Item=Valor (ex: "{}")
+	 * @return String formatada
 	 */
-
 	public static String linkedHashMapToSubItemString(LinkedHashMap<String, String> map, String enclosers) {
 		StringBuilder str = new StringBuilder();
 		map.forEach((k, v) -> {
@@ -1008,7 +1375,9 @@ public class IniFile {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		return fileName.equals(((IniFile) obj).fileName);
+		String s1 = file.toAbsolutePath().normalize().toString();
+		String s2 = ((IniFile) obj).file.toAbsolutePath().normalize().toString();
+		return s1.equals(s2);
 	}
 
 }

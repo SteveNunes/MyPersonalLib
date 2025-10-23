@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +36,6 @@ public class SocketClient {
 
 	private Consumer<SocketClient> onConnect;
 	private Consumer<Exception> onConnectError;
-	private Consumer<SocketClient> onConnectionLost;
 	private Consumer<SocketClient> onDisconnect;
 	private Consumer<Exception> onDisconnectError;
 
@@ -102,19 +102,44 @@ public class SocketClient {
 
 	private void setSocket(Socket socket) {
 		try {
+			// Ensure socket options to help detect dead peers
+			//socket.setKeepAlive(true);
+			//socket.setTcpNoDelay(true);
+			// Set a read timeout so we can react periodically (e.g. to send a ping) instead of blocking forever
+			//socket.setSoTimeout(45000); // 45 seconds
+
 			writer = new PrintWriter(socket.getOutputStream(), true);
 			socketStatus = SocketStatus.CONNECTED;
 			executeConsumer(onConnect, this);
-			Timer.createTimer("socketPing@" + hashCode(), Duration.ofSeconds(15), () -> ping());
+			// Create a single periodic ping timer for this connection
+			ping();
 			try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 				String line;
-				while (socketStatus == SocketStatus.CONNECTED && (line = reader.readLine()) != null) {
-					Timer.createTimer("socketPing@" + hashCode(), Duration.ofSeconds(15), () -> ping());
-					executeConsumer(onDataReceive, line);
+				while (socketStatus == SocketStatus.CONNECTED) {
+					try {
+						ping();
+						if ((line = reader.readLine()) != null) {
+							executeConsumer(onDataReceive, line);
+						}
+						else {
+							// peer closed stream
+							connectionLost();
+							break;
+						}
+					}
+					catch (SocketTimeoutException ste) {
+						// read timed out - use this opportunity to check the socket and send a ping
+						if (socket == null || socket.isClosed() || !socket.isConnected()) {
+							connectionLost();
+							break;
+						}
+						ping();
+						continue; // keep waiting for data
+					}
 				}
-				connectionLost();
 			}
 			catch (IOException e) {
+				// IOException during read -> connection lost
 				connectionLost();
 			}
 			catch (Exception e) {
@@ -135,8 +160,22 @@ public class SocketClient {
 	}
 
 	private void connectionLost() {
+		// mark as disconnected and close underlying resources
 		socketStatus = SocketStatus.DISCONNECTED;
-		executeConsumer(onConnectionLost, this);
+		try {
+			if (writer != null) {
+				writer.close();
+				writer = null;
+			}
+		}
+		catch (Exception e) {}
+		try {
+			if (socket != null && !socket.isClosed())
+				socket.close();
+			socket = null;
+		}
+		catch (Exception e) {}
+		executeConsumer(onDisconnect, this);
 	}
 
 	private void handleError(String message, Exception e) {
@@ -154,21 +193,27 @@ public class SocketClient {
 	}
 
 	private void ping() {
-		executorServiceExecute(() -> {
-			try {
-				socket.sendUrgentData(0xFF);
-			}
-			catch (Exception e) {
-				if (onDisconnect != null)
-					onDisconnect.accept(this);
-			}
+		Timer.createTimer("socketPing@" + hashCode(), Duration.ofSeconds(15), () -> {
+			executorServiceExecute(() -> {
+				try {
+					if (socket != null && !socket.isClosed() && socket.isConnected()) {
+						socket.getOutputStream().write(new byte[0]);
+						socket.getOutputStream().flush();
+						Timer.createTimer("socketPing2@" + hashCode(), Duration.ofSeconds(1), () -> ping());
+					}
+				}
+				catch (Exception e) {
+					connectionLost();
+				}
+			});
 		});
 	}
 	
 	public void sendData(String data) {
 		if (socketStatus != SocketStatus.CONNECTED)
 			throw new RuntimeException("Unable to send data because socket is not connected");
-		Timer.createTimer("socketPing@" + hashCode(), Duration.ofSeconds(15), () -> ping());
+		// refresh ping schedule
+		ping();
 		executorServiceExecute(() -> {
 			try {
 				if (writer != null) {
@@ -181,6 +226,8 @@ public class SocketClient {
 					handleError("Unable to send data due to null writer", new RuntimeException("Writer is null"));
 			}
 			catch (Exception e) {
+				// mark connection lost when send fails
+				connectionLost();
 				if (!executeConsumer(onDataSendError, e))
 					handleError("Unable to send data", e);
 			}
@@ -199,6 +246,8 @@ public class SocketClient {
 						dos.close();
 					if (dis != null)
 						dis.close();
+					if (writer != null)
+						writer.close();
 					socket.close();
 					executeConsumer(onDisconnect, this);
 				}
@@ -251,10 +300,6 @@ public class SocketClient {
 		this.onDisconnectError = onDisconnectError;
 	}
 
-	public void setOnConnectionLostEvent(Consumer<SocketClient> onConnectionLost) {
-		this.onConnectionLost = onConnectionLost;
-	}
-
 	private static void close() {
 		if (executorService != null && !executorService.isShutdown() && !executorService.isTerminated())
 			executorService.shutdownNow();
@@ -283,4 +328,5 @@ public class SocketClient {
 	public void removeMark(String name) {
 		mark.remove(name);
 	}
+	
 }
