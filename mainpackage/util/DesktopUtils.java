@@ -9,7 +9,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import com.sun.jna.platform.win32.User32;
+import com.sun.jna.platform.win32.WinDef.HWND;
+
 public abstract class DesktopUtils {
+	
+	public static void removeFocusFromCurrentWindow() {
+    User32 user32 = User32.INSTANCE;
+    HWND desktop = user32.FindWindow("Progman", null);
+    user32.SetForegroundWindow(desktop);
+	}
 
 	public static int getSystemScreenWidth() {
 		return Toolkit.getDefaultToolkit().getScreenSize().width;

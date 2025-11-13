@@ -41,7 +41,6 @@ public class NetUtils {
 	
 	public static CompletableFuture<String> getOnlineIP() {
 		return CompletableFuture.supplyAsync(() -> {
-			String ip = "Unable to retrieve IP";
 			try (Scanner sc = new Scanner(getHtmlBody("http://checkip.dyndns.org/"))) {
 				while (sc.hasNext()) {
 					Pattern p = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+)");
@@ -53,7 +52,7 @@ public class NetUtils {
 			catch (Exception e) {
 				e.printStackTrace();
 			}
-			return ip;
+			return null;
 		});
 	}
 

@@ -1,8 +1,6 @@
 package util;
 
 import java.text.Normalizer;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -134,31 +132,6 @@ public abstract class MyString {
 
 	public static Boolean textMatch(String text, String pattern) {
 		return textMatch(text, pattern, TextMatchType.EXACTLY);
-	}
-
-	/**
-	 * Clone de $strip do mIRC Scripting
-	 */
-	public static String mircStrip(String text) {
-		StringBuilder result = new StringBuilder();
-		int ignore = 0;
-		List<Character> strips = Arrays.asList((char) 2, (char) 3, (char) 15, (char) 29, (char) 30, (char) 31);
-		for (int n = 0; n < text.length(); n++) {
-			char c = text.charAt(n);
-			if (c == (char) 3)
-				ignore = ignore == 0 ? 1 : -1;
-			else if (ignore != 0) {
-				if (ignore == 1 && c == ',')
-					ignore = 2;
-				else if (!Character.isDigit(c))
-					ignore = 0;
-			}
-			if (ignore == 0 && !strips.contains(c))
-				result.append(c);
-			else if (ignore == -1)
-				ignore = 0;
-		}
-		return result.toString();
 	}
 
 	public static String removeTextFormaterCodes(String text) {

@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class Timer {
 
 	static {
-		Misc.addShutdownEvent(Timer::close);
+		Misc.addLateShutdownEvent(Timer::close);
 	}
 
 	private static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);

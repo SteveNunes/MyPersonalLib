@@ -12,7 +12,7 @@ import javafx.util.Duration;
 public abstract class FrameTimerFX {
 
 	static {
-		Misc.addShutdownEvent(FrameTimerFX::close);
+		Misc.addLateShutdownEvent(FrameTimerFX::close);
 	}
 
 	private static final Map<String, AnimationTimer> timers = new ConcurrentHashMap<>();

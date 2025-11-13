@@ -26,7 +26,9 @@ import com.github.strikerx3.jxinput.enums.XInputDeviceType;
 import com.github.strikerx3.jxinput.listener.SimpleXInputDeviceListener;
 import com.github.strikerx3.jxinput.listener.XInputDeviceListener;
 
-import javafx.util.Pair;
+import enums.JXInputEXButton;
+import enums.JXInputEXComponent;
+import util.Pair;
 import util.Timer;
 
 public class JXInputEX {
@@ -34,39 +36,60 @@ public class JXInputEX {
 	/**
 	 * Como usar:
 	 * 
-	 * Defina os métodos setOnJoystickConnectedEvent() e
-	 * setOnJoystickDisconnectedEvent()
+	 * Inicie a aplicação chamando o método refreshJoysticks();
 	 * 
-	 * Agora, chame o método refreshJoysticks() para gera a lista dos controles
-	 * conectados NO MOMENTO. Atualmente, se novos controles se conectarem, a lista
-	 * não é atualizada, sendo necessário rechamar o método refreshJoysticks() cada
-	 * vez que um novo controle for conectado. Os eventos definidos no inicio só são
-	 * aplicados aos controles que o evento refreshJoysticks() detectar.
-	 * 
+	 * Se quizer ler as ações do joystick normalmente, use os eventos
+	 * que não contém "Component" no nome.
+	 * Os eventos com "Component" no nome tratam todos os controles
+	 * analógicos como digitais (cada direção em um stick analógico é
+	 * disparado como um botão único)
 	 */
 
 	private static boolean mainClose = false;
 	private static List<JXInputEX> devices = new ArrayList<>();
-	private final static int startID = 15; // Primeiro ID dos analogicos convertidos em digital
-	private final static Map<XInputButton, String> buttonList = new HashMap<>() {
-		{
-			put(XInputButton.A, "A");
-			put(XInputButton.B, "B");
-			put(XInputButton.X, "X");
-			put(XInputButton.Y, "Y");
-			put(XInputButton.LEFT_SHOULDER, "Left Shoulder");
-			put(XInputButton.RIGHT_SHOULDER, "Right Shoulder");
-			put(XInputButton.LEFT_THUMBSTICK, "Left Alalogic");
-			put(XInputButton.RIGHT_THUMBSTICK, "Right Analogic");
-			put(XInputButton.BACK, "Select");
-			put(XInputButton.START, "Start");
-			put(XInputButton.GUIDE_BUTTON, "PS");
-			put(XInputButton.DPAD_LEFT, "DPAD (Left)");
-			put(XInputButton.DPAD_UP, "DPAD (Up)");
-			put(XInputButton.DPAD_RIGHT, "DPAD (Right)");
-			put(XInputButton.DPAD_DOWN, "DPAD (Down)");
-		}
+	
+	private final static Map<XInputButton, Pair<JXInputEXButton, JXInputEXComponent>> buttonList = new HashMap<>() {{
+		put(XInputButton.A, new Pair<>(JXInputEXButton.BUTTON_A, JXInputEXComponent.BUTTON_A));
+		put(XInputButton.B, new Pair<>(JXInputEXButton.BUTTON_B, JXInputEXComponent.BUTTON_B));
+		put(XInputButton.X, new Pair<>(JXInputEXButton.BUTTON_X, JXInputEXComponent.BUTTON_X));
+		put(XInputButton.Y, new Pair<>(JXInputEXButton.BUTTON_Y, JXInputEXComponent.BUTTON_Y));
+		put(XInputButton.LEFT_SHOULDER, new Pair<>(JXInputEXButton.BUTTON_LB, JXInputEXComponent.BUTTON_LB));
+		put(XInputButton.RIGHT_SHOULDER, new Pair<>(JXInputEXButton.BUTTON_RB, JXInputEXComponent.BUTTON_RB));
+		put(XInputButton.LEFT_THUMBSTICK, new Pair<>(JXInputEXButton.BUTTON_LS, JXInputEXComponent.BUTTON_LS));
+		put(XInputButton.RIGHT_THUMBSTICK, new Pair<>(JXInputEXButton.BUTTON_RS, JXInputEXComponent.BUTTON_RS));
+		put(XInputButton.BACK, new Pair<>(JXInputEXButton.BUTTON_BACK, JXInputEXComponent.BUTTON_BACK));
+		put(XInputButton.START, new Pair<>(JXInputEXButton.BUTTON_START, JXInputEXComponent.BUTTON_START));
+		put(XInputButton.GUIDE_BUTTON, new Pair<>(JXInputEXButton.BUTTON_GUIDE, JXInputEXComponent.BUTTON_GUIDE));
+		put(XInputButton.DPAD_LEFT, new Pair<>(JXInputEXButton.DPAD_LEFT, JXInputEXComponent.DPAD_LEFT));
+		put(XInputButton.DPAD_UP, new Pair<>(JXInputEXButton.DPAD_UP, JXInputEXComponent.DPAD_UP));
+		put(XInputButton.DPAD_RIGHT, new Pair<>(JXInputEXButton.DPAD_RIGHT, JXInputEXComponent.DPAD_RIGHT));
+		put(XInputButton.DPAD_DOWN, new Pair<>(JXInputEXButton.DPAD_DOWN, JXInputEXComponent.DPAD_DOWN));
+	}};
+	
+	private static JXInputEXButton[] analogComponents = {
+		JXInputEXButton.LEFT_TRIGGER,
+		JXInputEXButton.RIGHT_TRIGGER,
+		JXInputEXButton.LEFT_AXIS_X,
+		JXInputEXButton.LEFT_AXIS_Y,
+		JXInputEXButton.RIGHT_AXIS_X,
+		JXInputEXButton.RIGHT_AXIS_Y,
+		JXInputEXButton.LEFT_AXIS_X,
+		JXInputEXButton.LEFT_AXIS_Y,
+		JXInputEXButton.RIGHT_AXIS_X,
+		JXInputEXButton.RIGHT_AXIS_Y
 	};
+	private static JXInputEXComponent[] analogComponentsB = {
+			JXInputEXComponent.LEFT_TRIGGER,
+			JXInputEXComponent.RIGHT_TRIGGER,
+			JXInputEXComponent.LEFT_AXIS_LEFT,
+			JXInputEXComponent.LEFT_AXIS_DOWN,
+			JXInputEXComponent.RIGHT_AXIS_LEFT,
+			JXInputEXComponent.RIGHT_AXIS_DOWN,
+			JXInputEXComponent.LEFT_AXIS_RIGHT,
+			JXInputEXComponent.LEFT_AXIS_UP,
+			JXInputEXComponent.RIGHT_AXIS_RIGHT,
+			JXInputEXComponent.RIGHT_AXIS_UP
+		};
 
 	private static Consumer<JXInputEX> onJoystickConnectedEvent;
 	private static Consumer<JXInputEX> onJoystickDisconnectedEvent;
@@ -80,17 +103,16 @@ public class JXInputEX {
 	private XInputBatteryInformation batteryInfo;
 	private XInputBatteryType batteryType;
 	private XInputBatteryLevel batteryLevel;
-	private BiConsumer<Integer, String> onPressButtonEvent;
-	private BiConsumer<Pair<Integer, String>, Long> onHoldButtonEvent;
-	private BiConsumer<Pair<Integer, String>, Long> onReleaseButtonEvent;
-	private BiConsumer<Pair<Integer, String>, Float> onTriggerChangeEvent;
-	private BiConsumer<Pair<Integer, String>, Float> onAxisChangeEvent;
-	private BiConsumer<Integer, String> onPressAnyComponentEvent;
-	private BiConsumer<Pair<Integer, String>, Long> onHoldAnyComponentEvent;
-	private BiConsumer<Pair<Integer, String>, Long> onReleaseAnyComponentEvent;
+	private Consumer<JXInputEXButton> onPressButtonEvent;
+	private BiConsumer<JXInputEXButton, Integer> onReleaseButtonEvent;
+	private BiConsumer<JXInputEXButton, Pair<Float, Float>> onTriggerChangeEvent;
+	private BiConsumer<JXInputEXButton, Pair<Float, Float>> onAxisChangeEvent;
+	private Consumer<JXInputEXComponent> onPressAnyComponentEvent;
+	private BiConsumer<JXInputEXComponent, Integer> onReleaseAnyComponentEvent;
 	private List<Float> axesValues;
 	private List<Float> deltaAxesValues;
-	private Map<Integer, Long> isHold;
+	private Map<JXInputEXButton, Long> isHoldButton;
+	private Map<JXInputEXComponent, Long> isHoldComponent;
 
 	public static void setOnJoystickConnectedEvent(Consumer<JXInputEX> consumer) {
 		onJoystickConnectedEvent = consumer;
@@ -149,31 +171,27 @@ public class JXInputEX {
 			Timer.createTimer("pollJoysticks@" + pollTimerId++, Duration.ofMillis(1), JXInputEX::pollJoysticks);
 	}
 
-	public void setOnHoldButtonEvent(BiConsumer<Pair<Integer, String>, Long> biConsumer) {
-		onHoldButtonEvent = biConsumer;
+	public void setOnPressButtonEvent(Consumer<JXInputEXButton> consumer) {
+		onPressButtonEvent = consumer;
 	}
 
-	public void setOnReleaseButtonEvent(BiConsumer<Pair<Integer, String>, Long> biConsumer) {
+	public void setOnReleaseButtonEvent(BiConsumer<JXInputEXButton, Integer> biConsumer) {
 		onReleaseButtonEvent = biConsumer;
 	}
 
-	public void setOnTriggerChangeEvent(BiConsumer<Pair<Integer, String>, Float> biConsumer) {
+	public void setOnTriggerChangeEvent(BiConsumer<JXInputEXButton, Pair<Float, Float>> biConsumer) {
 		onTriggerChangeEvent = biConsumer;
 	}
 
-	public void setOnAxisChangeEvent(BiConsumer<Pair<Integer, String>, Float> biConsumer) {
+	public void setOnAxisChangeEvent(BiConsumer<JXInputEXButton, Pair<Float, Float>> biConsumer) {
 		onAxisChangeEvent = biConsumer;
 	}
 
-	public void setOnPressAnyComponentEvent(BiConsumer<Integer, String> consumer) {
+	public void setOnPressAnyComponentEvent(Consumer<JXInputEXComponent> consumer) {
 		onPressAnyComponentEvent = consumer;
 	}
 
-	public void setOnHoldAnyComponentEvent(BiConsumer<Pair<Integer, String>, Long> biConsumer) {
-		onHoldAnyComponentEvent = biConsumer;
-	}
-
-	public void setOnReleaseAnyComponentEvent(BiConsumer<Pair<Integer, String>, Long> biConsumer) {
+	public void setOnReleaseAnyComponentEvent(BiConsumer<JXInputEXComponent, Integer> biConsumer) {
 		onReleaseAnyComponentEvent = biConsumer;
 	}
 
@@ -182,11 +200,12 @@ public class JXInputEX {
 			throw new RuntimeException("'device' value is null");
 		try {
 			this.device = device;
+			isHoldComponent = new HashMap<>();
+			isHoldButton = new HashMap<>();
 			components = device.getComponents();
 			axes = components.getAxes();
 			axesValues = new ArrayList<>(Arrays.asList(0f, 0f, 0f, 0f, 0f, 0f));
 			deltaAxesValues = new ArrayList<>(Arrays.asList(0f, 0f, 0f, 0f, 0f, 0f));
-			isHold = new HashMap<>();
 			caps = device.getCapabilities();
 			batteryInfo = device.getBatteryInformation(XInputBatteryDeviceType.GAMEPAD);
 			batteryType = batteryInfo.getType();
@@ -208,14 +227,12 @@ public class JXInputEX {
 
 				@Override
 				public void buttonChanged(final XInputButton button, final boolean pressed) {
-					int n = 0;
-					for (XInputButton x : buttonList.keySet()) {
+					for (XInputButton x : buttonList.keySet())
 						if (button == x) {
-							onButtonChanged(n, pressed ? 1 : 0, buttonList.get(x));
+							onComponentChanged(buttonList.get(x).getKey(), pressed ? 0 : 1, pressed ? 1 : 0);
+							onComponentChanged(buttonList.get(x).getValue(), pressed ? 0 : 1, pressed ? 1 : 0);
 							break;
 						}
-						n++;
-					}
 				}
 			};
 			device.addListener(listener);
@@ -233,73 +250,71 @@ public class JXInputEX {
 		axesValues.set(3, axes.ly >= -0.0001 && axes.ly <= 0.0001 ? 0 : axes.ly);
 		axesValues.set(4, axes.rx >= -0.0001 && axes.rx <= 0.0001 ? 0 : axes.rx);
 		axesValues.set(5, axes.ry >= -0.0001 && axes.ry <= 0.0001 ? 0 : axes.ry);
-		String[] names = { "Left Trigger", "Right Trigger", "Left Analogic X" + (axes.lx > 0 ? "+" : "-"), "Left Analogic Y" + (axes.ly > 0 ? "-" : "+"), "Right Analogic X" + (axes.rx > 0 ? "+" : "-"), "Right Analogic Y" + (axes.ry > 0 ? "-" : "+") };
 		for (int i = 0; i < 6; i++) {
 			float value = axesValues.get(i);
 			float delta = deltaAxesValues.get(i);
-			if (delta != value) {
-				int buttonID = startID + 2 * i;
-				if (value > 0 || delta > 0)
-					onButtonChanged(buttonID + 1, Math.abs(delta <= 0 ? 0 : delta), Math.abs(value), names[i]);
-				if (value < 0 || delta < 0)
-					onButtonChanged(buttonID, Math.abs(delta >= 0 ? 0 : delta), Math.abs(value), names[i]);
+			if (value != delta) {
+				int v = i < 2 || value < 0 || delta < 0 ? i : i + 4; 
+				JXInputEXButton button = analogComponents[v];
+				JXInputEXComponent comp = analogComponentsB[v];
+				if (i > 2 && i % 2 != 0) {
+					delta = -delta;
+					value = -value;
+				}
+				onComponentChanged(button, delta, value);
+				onComponentChanged(comp, Math.abs(delta), Math.abs(value));
 			}
 		}
-		for (Integer i : isHold.keySet()) {
-			if (onHoldButtonEvent != null)
-				onHoldButtonEvent.accept(new Pair<>(i, ""), isHold.get(i));
-			if (onHoldAnyComponentEvent != null)
-				onHoldAnyComponentEvent.accept(new Pair<>(i, ""), isHold.get(i));
-		}
-
 	}
 
-	public boolean isHold(int buttonID) {
-		return isHold.containsKey(buttonID);
-	}
-
-	public long getHoldTime(int buttonID) {
-		if (!isHold.containsKey(buttonID))
-			return 0;
-		return System.currentTimeMillis() - isHold.get(buttonID);
-	}
-
-	private boolean addToIsHold(int buttonID) {
-		if (!isHold.containsKey(buttonID)) {
-			isHold.put(buttonID, System.currentTimeMillis());
-			return true;
+	private void onComponentChanged(JXInputEXComponent button, float deltaValue, float value) {
+		if (value >= 0.5 && deltaValue < 0.5) {
+			isHoldComponent.put(button, System.currentTimeMillis());
+			if (onPressAnyComponentEvent != null)
+				onPressAnyComponentEvent.accept(button);
 		}
-		return false;
-	}
-
-	private void onButtonChanged(int buttonID, Float deltaValue, float value, String buttonName) {
-		if (buttonID > startID + 1 && onAxisChangeEvent != null) {
-			addToIsHold(buttonID);
-			onAxisChangeEvent.accept(new Pair<>(buttonID, buttonName), value);
-		}
-		if ((buttonID == startID || buttonID == startID + 1) && onTriggerChangeEvent != null) {
-			addToIsHold(buttonID);
-			onTriggerChangeEvent.accept(new Pair<>(buttonID, buttonName), value);
-		}
-		if (Math.abs(value) >= 0.5 && (deltaValue == null || Math.abs(deltaValue) < 0.5)) {
-			if (addToIsHold(buttonID)) {
-				if (onPressAnyComponentEvent != null)
-					onPressAnyComponentEvent.accept(buttonID, buttonName);
-				if (onPressButtonEvent != null)
-					onPressButtonEvent.accept(buttonID, buttonName);
-			}
-		}
-		else if (Math.abs(value) < 0.5 && (deltaValue == null || Math.abs(deltaValue) >= 0.5)) {
+		else if (value < 0.5 && deltaValue >= 0.5) {
 			if (onReleaseAnyComponentEvent != null)
-				onReleaseAnyComponentEvent.accept(new Pair<>(buttonID, buttonName), getHoldTime(buttonID));
-			if (onReleaseButtonEvent != null)
-				onReleaseButtonEvent.accept(new Pair<>(buttonID, buttonName), getHoldTime(buttonID));
-			isHold.remove(buttonID);
+				onReleaseAnyComponentEvent.accept(button, getHoldTime(button));
+			isHoldComponent.remove(button);
 		}
 	}
+	
+	private void onComponentChanged(JXInputEXButton button, float deltaValue, float value) {
+		if (button.isAxis()) {
+			if (onAxisChangeEvent != null)
+				onAxisChangeEvent.accept(button, new Pair<Float, Float>(deltaValue, value));
+		}
+		else if (button.isTrigger()) {
+			if (onTriggerChangeEvent != null)
+				onTriggerChangeEvent.accept(button, new Pair<Float, Float>(deltaValue, value));
+		}
+		else if (value >= 0.5 && deltaValue < 0.5) {
+			isHoldButton.put(button, System.currentTimeMillis());
+			if (onPressButtonEvent != null)
+				onPressButtonEvent.accept(button);
+		}
+		else if (value < 0.5 && deltaValue >= 0.5) {
+			if (onReleaseButtonEvent != null)
+				onReleaseButtonEvent.accept(button, getHoldTime(button));
+			isHoldButton.remove(button);
+		}
+	}
+	
+	public boolean buttonIsHold(JXInputEXButton button) {
+		return isHoldButton.containsKey(button);
+	}
 
-	private void onButtonChanged(int buttonID, float value, String buttonName) {
-		onButtonChanged(buttonID, null, value, buttonName);
+	public boolean buttonIsHold(JXInputEXComponent button) {
+		return isHoldComponent.containsKey(button);
+	}
+
+	public int getHoldTime(JXInputEXButton button) {
+		return !buttonIsHold(button) ? -1 : (int)(System.currentTimeMillis() - isHoldButton.get(button));
+	}
+
+	public int getHoldTime(JXInputEXComponent button) {
+		return !buttonIsHold(button) ? -1 : (int)(System.currentTimeMillis() - isHoldComponent.get(button));
 	}
 
 	public XInputDevice14 getXInputDevice() {
@@ -333,5 +348,5 @@ public class JXInputEX {
 	public XInputCapsResolutions getResolutions() {
 		return caps.getResolutions();
 	}
-
+	
 }

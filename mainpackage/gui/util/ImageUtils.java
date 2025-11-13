@@ -49,13 +49,14 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import util.DesktopUtils;
+import util.MircUtils;
 
 public abstract class ImageUtils {
 
 	private static Robot robot;
 	private static Object ignoreColor = Color.TRANSPARENT;
 	private static ImageScanOrientation imageScanOrientation = ImageScanOrientation.HORIZONTAL;
-	
+
 	static {
 		try {
 			robot = new Robot();
@@ -252,7 +253,7 @@ public abstract class ImageUtils {
 	}
 
 	public static BufferedImage getScreenShot(Rectangle captureArea) {
-		int w = (int)captureArea.width, h = (int)captureArea.height;
+		int w = (int) captureArea.width, h = (int) captureArea.height;
 		MultiResolutionImage multiResolutionImage = robot.createMultiResolutionScreenCapture(new Rectangle(0, 0, w, h));
 		return (BufferedImage) multiResolutionImage.getResolutionVariant(w, h);
 	}
@@ -1042,7 +1043,7 @@ public abstract class ImageUtils {
 	public static Image convertBufferedImageToImage(BufferedImage bufferedImage) {
 		return SwingFXUtils.toFXImage(bufferedImage, null);
 	}
-	
+
 	public static BufferedImage loadBufferedImageFromFile(File file, Color removeBgColor) {
 		try {
 			if (!file.exists())
@@ -1082,7 +1083,7 @@ public abstract class ImageUtils {
 			return null;
 		}
 	}
-	
+
 	public static java.awt.Image loadAwtImage(String filePath) {
 		return loadAwtImage(new File(filePath));
 	}
@@ -1461,46 +1462,54 @@ public abstract class ImageUtils {
 		return canvas.snapshot(params, roundImage);
 	}
 
-	/** Define a cor a ser ignorada no método isImageContained() e outros
-	 *  métodos que invoquem esse método. Nesse caso, todos os pixels com
-	 *  essa cor serão ignorados, e só serão comparados os 'outros' pixels.
-	 *  Se os 'outros' pixels forem iguais, as imagens são tratadas como iguais. 
+	/**
+	 * Define a cor a ser ignorada no método isImageContained() e outros métodos que
+	 * invoquem esse método. Nesse caso, todos os pixels com essa cor serão
+	 * ignorados, e só serão comparados os 'outros' pixels. Se os 'outros' pixels
+	 * forem iguais, as imagens são tratadas como iguais.
 	 */
-	public static void setImageScanIgnoreColor(Color color)
-		{ ignoreColor = color; }
-	
+	public static void setImageScanIgnoreColor(Color color) {
+		ignoreColor = color;
+	}
+
 	/**
 	 * Por padrão, o scan pixel-a-pixel do método isImageContained() é feito
 	 * horizontalmente. Em alguns casos, isso pode prejudicar o resultado obtido.
 	 * Então use esse método para alterar a orientação do scan pixel-a-pixel.
 	 */
-	public static void setImageScanOrientation(ImageScanOrientation orientation)
-		{ imageScanOrientation = orientation; }
-	
-	/** Procura uma imagem menor dentro de uma maior. O processo pode ser demorado ou não,
-	 *  dependendo do tamanho das imagens, do valor de {@code tolerance} e de {@code thickness}
+	public static void setImageScanOrientation(ImageScanOrientation orientation) {
+		imageScanOrientation = orientation;
+	}
+
+	/**
+	 * Procura uma imagem menor dentro de uma maior. O processo pode ser demorado ou
+	 * não, dependendo do tamanho das imagens, do valor de {@code tolerance} e de
+	 * {@code thickness}
 	 * 
-	 * @param smallerImage - Imagem menor á ser procurada dentro da maior
-	 * @param largerImage - Imagem maior aonde será procurada a imagem menor
-	 * @param searchingArea - Área dentro da imagem grande onde a imagem menor será procurada.
-	 *                        Se você tem certeza do local aproximado onde a imagem menor
-	 *                        será localizada na imagem maior, defina essa área, fazendo com
-	 *                        que a pesquisa seja mais rápida e eficaz.
-	 * @param tolerance - Valor de 0 a 255 para a tolerância de cor por pixel (Quanto maior,
-	 *                    mais fácil reconhecer a imagem se houver diferença de cor entre os
-	 *                    pixels comparados, porém torna o processo mais demorado).
-	 * @return - Se a imagem for encontrada, retorna um {@code Point} contendo a coordenada
-	 * 					 do primeiro pixel onde a imagem foi encontrada. Caso contrário, retorna {@code null}
+	 * @param smallerImage  - Imagem menor á ser procurada dentro da maior
+	 * @param largerImage   - Imagem maior aonde será procurada a imagem menor
+	 * @param searchingArea - Área dentro da imagem grande onde a imagem menor será
+	 *                      procurada. Se você tem certeza do local aproximado onde
+	 *                      a imagem menor será localizada na imagem maior, defina
+	 *                      essa área, fazendo com que a pesquisa seja mais rápida e
+	 *                      eficaz.
+	 * @param tolerance     - Valor de 0 a 255 para a tolerância de cor por pixel
+	 *                      (Quanto maior, mais fácil reconhecer a imagem se houver
+	 *                      diferença de cor entre os pixels comparados, porém torna
+	 *                      o processo mais demorado).
+	 * @return - Se a imagem for encontrada, retorna um {@code Point} contendo a
+	 *         coordenada do primeiro pixel onde a imagem foi encontrada. Caso
+	 *         contrário, retorna {@code null}
 	 */
 	public static Point isImageContained(BufferedImage smallerImage, BufferedImage largerImage, Rectangle searchingArea, int tolerance) {
 		if (tolerance < 0 || tolerance > 255)
 			throw new RuntimeException("'tolerance' value must be between 0-255");
-		int smallerWidth = (int)smallerImage.getWidth(), smallerHeight = (int)smallerImage.getHeight();
-		int largerWidth = (int)largerImage.getWidth(), largerHeight = (int)largerImage.getHeight();
+		int smallerWidth = (int) smallerImage.getWidth(), smallerHeight = (int) smallerImage.getHeight();
+		int largerWidth = (int) largerImage.getWidth(), largerHeight = (int) largerImage.getHeight();
 		if (searchingArea == null)
 			searchingArea = new Rectangle(0, 0, largerWidth, largerHeight);
-		int startX = (int)searchingArea.getX(), startY = (int)searchingArea.getY();
-		int width = (int)searchingArea.getWidth(), height = (int)searchingArea.getHeight();
+		int startX = (int) searchingArea.getX(), startY = (int) searchingArea.getY();
+		int width = (int) searchingArea.getWidth(), height = (int) searchingArea.getHeight();
 		if (smallerWidth >= largerWidth || smallerHeight >= largerHeight)
 			throw new RuntimeException("The 'smallerImage' must be smaler in width and height than 'largerImage'");
 		if (width < smallerWidth || height < smallerHeight)
@@ -1526,13 +1535,13 @@ public abstract class ImageUtils {
 								match = false;
 						}
 					}
-				catch (Exception e) {
-					match = false;
-					continue;
-				}
+					catch (Exception e) {
+						match = false;
+						continue;
+					}
 			if (match)
 				return new Point(x, y);
-			if (imageScanOrientation  == ImageScanOrientation.HORIZONTAL) {
+			if (imageScanOrientation == ImageScanOrientation.HORIZONTAL) {
 				if ((startX + ++xxx) >= (largerWidth - smallerWidth)) {
 					xxx = 0;
 					yyy++;
@@ -1546,26 +1555,29 @@ public abstract class ImageUtils {
 		return null;
 	}
 
-	public static Point isImageContained(BufferedImage smallerImage, BufferedImage largerImage, Rectangle searchingArea)
-		{ return isImageContained(smallerImage, largerImage, searchingArea, 0); }
-	
-	public static Point isImageContained(BufferedImage smallerImage, BufferedImage largerImage, int tolerance)
-		{ return isImageContained(smallerImage, largerImage, new Rectangle(0, 0, (int)largerImage.getWidth(), (int)largerImage.getHeight()), tolerance); }
-	
-	public static Point isImageContained(BufferedImage smallerImage, BufferedImage largerImage)
-		{ return isImageContained(smallerImage, largerImage, 0); }
-	
+	public static Point isImageContained(BufferedImage smallerImage, BufferedImage largerImage, Rectangle searchingArea) {
+		return isImageContained(smallerImage, largerImage, searchingArea, 0);
+	}
+
+	public static Point isImageContained(BufferedImage smallerImage, BufferedImage largerImage, int tolerance) {
+		return isImageContained(smallerImage, largerImage, new Rectangle(0, 0, (int) largerImage.getWidth(), (int) largerImage.getHeight()), tolerance);
+	}
+
+	public static Point isImageContained(BufferedImage smallerImage, BufferedImage largerImage) {
+		return isImageContained(smallerImage, largerImage, 0);
+	}
+
 	public static Point isImageContained(WritableImage smallerImage, WritableImage largerImage, Rectangle searchingArea, int tolerance) {
 		if (tolerance < 0 || tolerance > 255)
 			throw new RuntimeException("'tolerance' value must be between 0-255");
 		PixelReader smallerReader = smallerImage.getPixelReader();
 		PixelReader largerReader = largerImage.getPixelReader();
-		int smallerWidth = (int)smallerImage.getWidth(), smallerHeight = (int)smallerImage.getHeight();
-		int largerWidth = (int)largerImage.getWidth(), largerHeight = (int)largerImage.getHeight();
+		int smallerWidth = (int) smallerImage.getWidth(), smallerHeight = (int) smallerImage.getHeight();
+		int largerWidth = (int) largerImage.getWidth(), largerHeight = (int) largerImage.getHeight();
 		if (searchingArea == null)
 			searchingArea = new Rectangle(0, 0, largerWidth, largerHeight);
-		int startX = (int)searchingArea.getX(), startY = (int)searchingArea.getY();
-		int width = (int)searchingArea.getWidth(), height = (int)searchingArea.getHeight();
+		int startX = (int) searchingArea.getX(), startY = (int) searchingArea.getY();
+		int width = (int) searchingArea.getWidth(), height = (int) searchingArea.getHeight();
 		if (smallerWidth >= largerWidth || smallerHeight >= largerHeight)
 			throw new RuntimeException("The 'smallerImage' must be smaler in width and height than 'largerImage'");
 		if (width < smallerWidth || height < smallerHeight)
@@ -1591,13 +1603,13 @@ public abstract class ImageUtils {
 								match = false;
 						}
 					}
-				catch (Exception e) {
-					match = false;
-					continue;
-				}
+					catch (Exception e) {
+						match = false;
+						continue;
+					}
 			if (match)
 				return new Point(x, y);
-			if (imageScanOrientation  == ImageScanOrientation.HORIZONTAL) {
+			if (imageScanOrientation == ImageScanOrientation.HORIZONTAL) {
 				if ((startX + ++xxx) >= (largerWidth - smallerWidth)) {
 					xxx = 0;
 					yyy++;
@@ -1610,24 +1622,18 @@ public abstract class ImageUtils {
 		}
 		return null;
 	}
-	
-	public static Point isImageContained(WritableImage smallerImage, WritableImage largerImage, Rectangle searchingArea)
-		{ return isImageContained(smallerImage, largerImage, searchingArea, 0); }
-	
-	public static Point isImageContained(WritableImage smallerImage, WritableImage largerImage, int tolerance)
-		{ return isImageContained(smallerImage, largerImage, new Rectangle(0, 0, (int)largerImage.getWidth(), (int)largerImage.getHeight()), tolerance); }
 
-	public static Point isImageContained(WritableImage smallerImage, WritableImage largerImage)
-		{ return isImageContained(smallerImage, largerImage, 0); }
-	
-	public static Color getMircColor(int color) {
-		double[] d = mircColors[color];
-		return Color.color(d[0], d[1], d[2], d[3]);
+	public static Point isImageContained(WritableImage smallerImage, WritableImage largerImage, Rectangle searchingArea) {
+		return isImageContained(smallerImage, largerImage, searchingArea, 0);
 	}
 
-	public static double[][] mircColors = { { 1, 1, 1, 1 }, { 0, 0, 0, 1 }, { 0, 0, 0.498, 1 }, { 0, 0.576, 0, 1 }, { 1, 0, 0, 1 }, { 0.498, 0, 0, 1 }, { 0.611, 0, 0.611, 1 }, { 0.988, 0.498, 0, 1 }, { 1, 1, 0, 1 }, { 0, 0.988, 0, 1 }, { 0, 0.576, 0.576, 1 }, { 0, 1, 1, 1 }, { 0, 0, 0.988, 1 }, { 1, 0, 1, 1 }, { 0.498, 0.498, 0.498, 1 }, { 0.823, 0.823, 0.823, 1 }, { 0.278, 0, 0, 1 }, { 0.278, 0.129, 0, 1 }, { 0.278, 0.278, 0, 1 }, { 0.196, 0.278, 0, 1 }, { 0, 0.278, 0, 1 }, { 0, 0.278, 0.172, 1 }, { 0, 0.278, 0.278, 1 }, { 0, 0.152, 0.278, 1 }, { 0, 0, 0.278, 1 }, { 0.180, 0, 0.278, 1 }, { 0.278, 0, 0.278, 1 }, { 0.278, 0, 0.164, 1 }, { 0.454, 0, 0, 1 }, { 0.454, 0.227, 0, 1 }, { 0.454, 0.454, 0, 1 }, { 0.317, 0.454, 0, 1 }, { 0, 0.454, 0, 1 }, { 0, 0.454, 0.286, 1 }, { 0, 0.454, 0.454, 1 }, { 0, 0.250, 0.454, 1 }, { 0, 0, 0.454, 1 }, { 0.294, 0, 0.454, 1 }, { 0.454, 0, 0.454, 1 }, { 0.454, 0, 0.270, 1 }, { 0.709, 0, 0, 1 }, { 0.709, 0.388, 0, 1 }, { 0.709, 0.709, 0, 1 },
-	    { 0.490, 0.709, 0, 1 }, { 0, 0.709, 0, 1 }, { 0, 0.709, 0.443, 1 }, { 0, 0.709, 0.709, 1 }, { 0, 0.388, 0.709, 1 }, { 0, 0, 0.709, 1 }, { 0.458, 0, 0.709, 1 }, { 0.709, 0, 0.709, 1 }, { 0.709, 0, 0.419, 1 }, { 1, 0, 0, 1 }, { 1, 0.549, 0, 1 }, { 1, 1, 0, 1 }, { 0.698, 1, 0, 1 }, { 0, 1, 0, 1 }, { 0, 1, 0.627, 1 }, { 0, 1, 1, 1 }, { 0, 0.549, 1, 1 }, { 0, 0, 1, 1 }, { 0.647, 0, 1, 1 }, { 1, 0, 1, 1 }, { 1, 0, 0.596, 1 }, { 1, 0.349, 0.349, 1 }, { 1, 0.705, 0.349, 1 }, { 1, 1, 0.443, 1 }, { 0.811, 1, 0.376, 1 }, { 0.435, 1, 0.435, 1 }, { 0.396, 1, 0.788, 1 }, { 0.427, 1, 1, 1 }, { 0.349, 0.705, 1, 1 }, { 0.349, 0.349, 1, 1 }, { 0.768, 0.349, 1, 1 }, { 1, 0.4, 1, 1 }, { 1, 0.349, 0.737, 1 }, { 1, 0.611, 0.611, 1 }, { 1, 0.827, 0.611, 1 }, { 1, 1, 0.611, 1 }, { 0.886, 1, 0.611, 1 }, { 0.611, 1, 0.611, 1 }, { 0.611, 1, 0.858, 1 }, { 0.611, 1, 1, 1 }, { 0.611, 0.827, 1, 1 }, { 0.611, 0.611, 1, 1 }, { 0.862, 0.611, 1, 1 }, { 1, 0.611, 1, 1 }, { 1, 0.580, 0.827, 1 }, { 0, 0, 0, 1 },
-	    { 0.074, 0.074, 0.074, 1 }, { 0.156, 0.156, 0.156, 1 }, { 0.211, 0.211, 0.211, 1 }, { 0.301, 0.301, 0.301, 1 }, { 0.396, 0.396, 0.396, 1 }, { 0.505, 0.505, 0.505, 1 }, { 0.623, 0.623, 0.623, 1 }, { 0.737, 0.737, 0.737, 1 }, { 0.886, 0.886, 0.886, 1 }, { 1, 1, 1, 1 } };
+	public static Point isImageContained(WritableImage smallerImage, WritableImage largerImage, int tolerance) {
+		return isImageContained(smallerImage, largerImage, new Rectangle(0, 0, (int) largerImage.getWidth(), (int) largerImage.getHeight()), tolerance);
+	}
+
+	public static Point isImageContained(WritableImage smallerImage, WritableImage largerImage) {
+		return isImageContained(smallerImage, largerImage, 0);
+	}
 
 	public static int drawTextWithFormaters(GraphicsContext gc, String text, Font font, int x, int y) {
 		if (text == null || text.isBlank())
@@ -1684,10 +1690,10 @@ public abstract class ImageUtils {
 					}
 					else if (matcher3.matches()) {
 						word = word.replace(matcher3.group(1), "");
-						Color color = getMircColor(Integer.parseInt(matcher3.group(2)));
+						Color color = MircUtils.getMircColorAsJavaFXColor(Integer.parseInt(matcher3.group(2)));
 						gc.setFill(color);
 						if (matcher3.group(3) != null)
-							gc.setStroke(getMircColor(Integer.parseInt(matcher3.group(3).substring(1))));
+							gc.setStroke(MircUtils.getMircColorAsJavaFXColor(Integer.parseInt(matcher3.group(3).substring(1))));
 						else
 							gc.setStroke(color);
 					}
@@ -1835,5 +1841,5 @@ public abstract class ImageUtils {
 
 		return x;
 	}
-
+	
 }

@@ -13,7 +13,7 @@ import javafx.util.Duration;
 public abstract class DurationTimerFX {
 
 	static {
-		Misc.addShutdownEvent(DurationTimerFX::close);
+		Misc.addLateShutdownEvent(DurationTimerFX::close);
 	}
 
 	private static final Map<String, Timeline> timers = new ConcurrentHashMap<>();

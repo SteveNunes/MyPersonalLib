@@ -342,4 +342,93 @@ public class JNAUtils {
 		INSTANCE_USER32.LockWorkStation();
 	}
 
+	private interface MyUser32Clipboard extends User32 {
+		MyUser32Clipboard INSTANCE = Native.load("user32", MyUser32Clipboard.class, W32APIOptions.DEFAULT_OPTIONS);
+
+		boolean OpenClipboard(WinDef.HWND hWndNewOwner);
+
+		boolean CloseClipboard();
+
+		boolean EmptyClipboard();
+
+		WinNT.HANDLE GetClipboardData(int uFormat);
+
+		WinNT.HANDLE SetClipboardData(int uFormat, WinNT.HANDLE hMem);
+	}
+
+	private interface MyKernel32Clipboard extends Kernel32 {
+		MyKernel32Clipboard INSTANCE = Native.load("kernel32", MyKernel32Clipboard.class, W32APIOptions.DEFAULT_OPTIONS);
+
+		int GMEM_MOVEABLE = 0x0002;
+
+		WinNT.HANDLE GlobalAlloc(int uFlags, int dwBytes);
+
+		Pointer GlobalLock(WinNT.HANDLE hMem);
+
+		boolean GlobalUnlock(WinNT.HANDLE hMem);
+
+		WinNT.HANDLE GlobalFree(WinNT.HANDLE hMem);
+	}
+
+	public static boolean copyToClipboard(String text) {
+		if (text == null)
+			return false;
+
+		byte[] data = text.getBytes(java.nio.charset.StandardCharsets.UTF_16LE);
+		int size = data.length + 2; // +2 para o terminador nulo wide-char
+
+		if (!MyUser32Clipboard.INSTANCE.OpenClipboard(null))
+			return false;
+
+		try {
+			MyUser32Clipboard.INSTANCE.EmptyClipboard();
+
+			WinNT.HANDLE hMem = MyKernel32Clipboard.INSTANCE.GlobalAlloc(MyKernel32Clipboard.GMEM_MOVEABLE, size);
+			if (hMem == null)
+				return false;
+
+			Pointer ptr = MyKernel32Clipboard.INSTANCE.GlobalLock(hMem);
+			if (ptr == null) {
+				MyKernel32Clipboard.INSTANCE.GlobalFree(hMem);
+				return false;
+			}
+
+			ptr.write(0, data, 0, data.length);
+			ptr.setChar(data.length, '\0'); // null-terminador wide-char
+
+			MyKernel32Clipboard.INSTANCE.GlobalUnlock(hMem);
+			MyUser32Clipboard.INSTANCE.SetClipboardData(13, hMem); // CF_UNICODETEXT = 13
+
+			return true;
+		}
+		finally {
+			MyUser32Clipboard.INSTANCE.CloseClipboard();
+		}
+	}
+
+	public static String readFromClipboard() {
+		if (!MyUser32Clipboard.INSTANCE.OpenClipboard(null))
+			return null;
+
+		try {
+			WinNT.HANDLE handle = MyUser32Clipboard.INSTANCE.GetClipboardData(13); // CF_UNICODETEXT
+			if (handle == null)
+				return null;
+
+			Pointer ptr = MyKernel32Clipboard.INSTANCE.GlobalLock(handle);
+			if (ptr == null)
+				return null;
+
+			try {
+				return ptr.getWideString(0); // lê até o terminador nulo
+			}
+			finally {
+				MyKernel32Clipboard.INSTANCE.GlobalUnlock(handle);
+			}
+		}
+		finally {
+			MyUser32Clipboard.INSTANCE.CloseClipboard();
+		}
+	}
+	
 }

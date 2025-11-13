@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  * arquivo tanto quanto possível.
  */
 public class IniFile {
-
+	
 	private Path file;
 	private String fileName, lastReadVal = null;
 	private List<String> fileBuffer;
@@ -50,8 +50,7 @@ public class IniFile {
 
 	private static void saveAllFilesToDisk() {
 		for (IniFile iniFile : openedIniFiles.values())
-			if (iniFile.wasModified)
-				iniFile.saveToDisk();
+			iniFile.saveToDisk();
 	}
 
 	void saveToDisk() {
@@ -1205,6 +1204,7 @@ public class IniFile {
 	 * Limpa o arquivo atual, sem removê-lo do disco.
 	 */
 	public void clearFile() {
+		Timer.stopTimer("IniFileSaveToDisk@" + hashCode());
 		iniBody.clear();
 		runSaveTimer();
 	}
@@ -1224,10 +1224,10 @@ public class IniFile {
 	}
 
 	/**
-	 * Verifica se a instância de IniFileGPT informada aponta para o mesmo arquivo
+	 * Verifica se a instância de IniFile informada aponta para o mesmo arquivo
 	 * da instância atual
 	 * 
-	 * @param otherIniFile Instância de IniFileGPT á ser comparada
+	 * @param otherIniFile Instância de IniFile á ser comparada
 	 * @return {@code true} se ambas instâncias apontarem para o mesmo arquivo.
 	 */
 	public boolean isSameFile(IniFile otherIniFile) {

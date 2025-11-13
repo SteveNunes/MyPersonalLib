@@ -51,7 +51,7 @@ public class JInputEX {
 			joysticks = new ArrayList<>();
 			Controller[] controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
 			for (Controller controller : controllers) {
-				if (controller.getType() == Controller.Type.GAMEPAD) {
+				if (controller.getType() == Controller.Type.GAMEPAD || controller.getType() == Controller.Type.STICK) {
 					JInputEX joystick = new JInputEX(controller);
 					joystick.joystickID = joysticks.size();
 					joysticks.add(joystick);

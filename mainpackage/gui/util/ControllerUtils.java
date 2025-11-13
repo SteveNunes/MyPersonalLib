@@ -52,6 +52,7 @@ import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import util.CollectionUtils;
+import util.MircUtils;
 
 public abstract class ControllerUtils {
 	
@@ -651,7 +652,7 @@ public abstract class ControllerUtils {
 		VBox vBox = new VBox();
 		vBox.setSpacing(3);
 		HBox hBox = null;
-		for (int n = 0; n < ImageUtils.mircColors.length; n++) {
+		for (int n = 0; n < MircUtils.mircColors.size(); n++) {
 			if (n % 10 == 0) {
 				if (n != 0)
 					vBox.getChildren().add(hBox);
@@ -666,7 +667,7 @@ public abstract class ControllerUtils {
 			for (int y = 0; y < 20; y++)
 				for (int x = 0; x < 20; x++) {
 					if (x > 1 && y > 1 && x < 18 && y < 18)
-						square.getPixelWriter().setColor(y, x, Color.color(ImageUtils.mircColors[n][0], ImageUtils.mircColors[n][1], ImageUtils.mircColors[n][2], ImageUtils.mircColors[n][3]));
+						square.getPixelWriter().setColor(y, x, MircUtils.getMircColorAsJavaFXColor(n));
 					else 
 						square.getPixelWriter().setColor(y, x, Color.BLACK);
 				}

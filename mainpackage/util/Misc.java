@@ -1,9 +1,5 @@
 package util;
 
-import java.awt.Toolkit;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -27,8 +23,10 @@ public abstract class Misc {
 	
 	private static Map<String, Map<Long, ?>> uniqueId = new HashMap<>();
 	private static List<Runnable> shutdownEvents = null;
+	private static List<Runnable> lateShutdownEvents = null;
 	private static boolean loggingErrors = false;
-
+	private static boolean runShotdownEventTriggered = false;
+	
 	/** Retorna alternadamente entre os valores {@code v1} e {@code v2} baseadp no valor atual de {@code var} (Versão para tipos numéricos) */
 	public static <T extends Number & Comparable<? super T>> T toogleValues(T var, T v1, T v2)
 		{ return var == v1 ? v2 : v1; }
@@ -42,7 +40,7 @@ public abstract class Misc {
 		if (shutdownEvents == null) {
 			shutdownEvents = new ArrayList<>();
 			shutdownEvents.add(() -> executorService.shutdownNow());
-			System.out.println("Para garantir o encerratento correto da sua aplicação,\nexecute o método 'Misc.runShutdownEvents()' ao encerrar sua aplicação.");
+			displayShutdownMessage();
 		}
 		shutdownEvents.add(runnable);
 	}
@@ -54,8 +52,30 @@ public abstract class Misc {
 				runnable.run();
 			shutdownEvents = null;
 		}
+		if (lateShutdownEvents != null) {
+			for (Runnable runnable : lateShutdownEvents)
+				runnable.run();
+			lateShutdownEvents = null;
+		}
 	}
 	
+	/** Adiciona um evento que será disparado quando o programa for encerrado */
+	public static void addLateShutdownEvent(Runnable runnable) {
+		if (lateShutdownEvents == null) {
+			lateShutdownEvents = new ArrayList<>();
+			lateShutdownEvents.add(() -> executorService.shutdownNow());
+			displayShutdownMessage();
+		}
+		lateShutdownEvents.add(runnable);
+	}
+	
+	private static void displayShutdownMessage() {
+		if (!runShotdownEventTriggered ) {
+			System.out.println("Para garantir o encerratento correto da sua aplicação,\nexecute o método 'Misc.runShutdownEvents()' ao encerrar sua aplicação.");
+			runShotdownEventTriggered = true;
+		}
+	}
+
 	/** Atalho para pausar a thread, sem precisar se preocupar com o try catch envolvido. */
 	public static void sleep(long millis) {
 		try
@@ -119,29 +139,6 @@ public abstract class Misc {
 		for (T object : objectList)
 			if (object != null)
 				return object;
-		return null;
-	}
-	
-	/** Coloca a {@code String} informada na área de transferência. */
-	public static void putTextOnClipboard(String text) {
-		try {
-			StringSelection selection = new StringSelection(text);
-			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, null);
-		}
-		catch (Exception e) {}
-	}
-
-	/** Recebe o conteudo da área de transferência. */
-	public static String getTextFromClipboard() {
-		try {
-			Toolkit toolkit = Toolkit.getDefaultToolkit();
-			Transferable transferable = toolkit.getSystemClipboard().getContents(null);
-			if (transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-				String str = (String)transferable.getTransferData(DataFlavor.stringFlavor);
-				return str;
-			}
-		}
-		catch (Exception e) {}
 		return null;
 	}
 	

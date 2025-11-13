@@ -27,33 +27,39 @@ public class GlobalKeyListener implements NativeKeyListener {
 	}
 
 	@Override
-	public void nativeKeyPressed(NativeKeyEvent n) {
+	public void nativeKeyPressed(NativeKeyEvent e) {
+		if (e.getKeyCode() == 0)
+			return;
 		startListener();
-		if (!isKeyPressed(n.getRawCode()) && onKeyPressedEvent != null)
-			onKeyPressedEvent.accept(n);
+		if (!isKeyPressed(e.getRawCode()) && onKeyPressedEvent != null)
+			onKeyPressedEvent.accept(e);
 		else if (onKeyRepeatedEvent != null)
-			onKeyRepeatedEvent.accept(n);
-		if (!pressedKeys.contains(n.getKeyCode()))
-			pressedKeys.add(n.getKeyCode());
+			onKeyRepeatedEvent.accept(e);
+		if (!pressedKeys.contains(e.getKeyCode()))
+			pressedKeys.add(e.getKeyCode());
 	}
 
 	@Override
-	public void nativeKeyReleased(NativeKeyEvent n) {
+	public void nativeKeyReleased(NativeKeyEvent e) {
+		if (e.getKeyCode() == 0)
+			return;
 		startListener();
-		pressedKeys.remove(Integer.valueOf(n.getKeyCode()));
+		pressedKeys.remove(Integer.valueOf(e.getKeyCode()));
 		if (onKeyReleasedEvent != null)
-			onKeyReleasedEvent.accept(n);
+			onKeyReleasedEvent.accept(e);
 	}
 
 	@Override
-	public void nativeKeyTyped(NativeKeyEvent n) {
+	public void nativeKeyTyped(NativeKeyEvent e) {
+		if (e.getKeyCode() == 0)
+			return;
 		startListener();
-		if (!isKeyPressed(n.getRawCode()) && onKeyTypedEvent != null)
-			onKeyTypedEvent.accept(n);
+		if (!isKeyPressed(e.getRawCode()) && onKeyTypedEvent != null)
+			onKeyTypedEvent.accept(e);
 		else if (onKeyTypedRepeatedEvent != null)
-			onKeyTypedRepeatedEvent.accept(n);
-		if (!pressedKeys.contains(n.getKeyCode()))
-			pressedKeys.add(n.getKeyCode());
+			onKeyTypedRepeatedEvent.accept(e);
+		if (!pressedKeys.contains(e.getKeyCode()))
+			pressedKeys.add(e.getKeyCode());
 	}
 
 	public static boolean isKeyPressed(int keyCode) {
