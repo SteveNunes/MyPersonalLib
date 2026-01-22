@@ -131,7 +131,7 @@ public class ColoredLightSpot extends LightSpot {
 		{ spots.remove(spot); }
 
 	public static void setMultipleColoredLightSpots(GraphicsContext gc) {
-		gc.save();
+		double alpha = gc.getGlobalAlpha();
     for (int n = 0; n < 2; n++)
 	    for (ColoredLightSpot spot : n == 0 ? spots : tempSpots) {
 	    	int x = spot.getX() + spot.offsetX, y = spot.getY() + spot.offsetY;
@@ -140,7 +140,7 @@ public class ColoredLightSpot extends LightSpot {
 				gc.setGlobalAlpha(spot.getOpacity());
 				gc.fillOval(x - spot.getRadius(), y - spot.getRadius(), spot.getRadius() * 2, spot.getRadius() * 2);
 	    }
-		gc.restore();
+		gc.setGlobalAlpha(alpha);
 	}
 
 }

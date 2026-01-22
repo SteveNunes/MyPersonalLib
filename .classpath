@@ -21,5 +21,8 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="D:/Java/java-libs/sikulixide-2.0.5-win.jar"/>
+	<classpathentry kind="lib" path="D:/Java/java-libs/gson-2.13.2.jar"/>
+	<classpathentry kind="lib" path="D:/Java/java-libs/Java-WebSocket-1.6.0.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Excel Edit"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

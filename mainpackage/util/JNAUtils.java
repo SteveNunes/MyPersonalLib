@@ -5,6 +5,7 @@ import java.awt.Point;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 import com.sun.jna.Native;
@@ -17,6 +18,7 @@ import com.sun.jna.platform.win32.WinBase;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinDef.DWORD;
 import com.sun.jna.platform.win32.WinDef.POINT;
+import com.sun.jna.platform.win32.WinDef.RECT;
 import com.sun.jna.platform.win32.WinError;
 import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.platform.win32.WinReg;
@@ -36,6 +38,82 @@ public class JNAUtils {
 	public static final int EWX_FORCE = 0x00000004;
 	public static final int TOKEN_ADJUST_PRIVILEGES = 0x0020;
 	public static final int TOKEN_QUERY = 0x0008;
+	
+	private static Thread JNATimersThread;
+	private static List<Consumer<String>> onChangeWindowEvents;
+	private static List<Consumer<RECT>> onMoveWindowEvents;
+	private static List<Consumer<String>> onClipboardChangeEvents;
+	
+	private static String previousWindowName;
+	private static RECT previewWindowRect;
+	private static String previousClipboardText;
+	
+	public static void addOnChangeWindowEvent(Consumer<String> consumer) {
+		if (onChangeWindowEvents == null)
+			onChangeWindowEvents = new ArrayList<>();
+		onChangeWindowEvents.add(consumer);
+		runTimerEventsThread();
+	}
+	
+	public static void addOnMoveWindowEvent(Consumer<RECT> consumer) {
+		if (onMoveWindowEvents == null)
+			onMoveWindowEvents = new ArrayList<>();
+		onMoveWindowEvents.add(consumer);
+		runTimerEventsThread();
+	}
+	
+	public static void addOnClipboardChangeEvent(Consumer<String> consumer) {
+		if (onClipboardChangeEvents == null)
+			onClipboardChangeEvents = new ArrayList<>();
+		onClipboardChangeEvents.add(consumer);
+		runTimerEventsThread();
+	}
+	
+	private static void runTimerEventsThread() {
+		if (JNATimersThread == null) {
+			JNATimersThread = new Thread(() -> {
+				while (true) {
+					if (onChangeWindowEvents != null) {
+						String window = getActiveWindowTitle();
+						if (previousWindowName == null || !previousWindowName.equals(window)) {
+							String finalWindow = window.isBlank() ? "No active windows found" : window;
+							for (Consumer<String> consumer : onChangeWindowEvents)
+								consumer.accept(finalWindow);
+							previousWindowName = window;
+						}
+					}
+					if (onMoveWindowEvents != null) {
+						RECT rect = getCurrentWindowCoordinates();
+						if (rect == null || previewWindowRect == null ||
+								previewWindowRect.bottom != rect.bottom || 
+								previewWindowRect.left != rect.left || 
+								previewWindowRect.right != rect.right || 
+								previewWindowRect.top != rect.top) {
+									for (Consumer<RECT> consumer : onMoveWindowEvents)
+										consumer.accept(rect);
+									previewWindowRect = rect;
+						}
+					}
+					if (onClipboardChangeEvents != null) {
+						String text = readFromClipboard();
+						if (text != null && (previousClipboardText == null || !previousClipboardText.equals(text))) {
+							for (Consumer<String> consumer : onClipboardChangeEvents)
+								consumer.accept(text);
+							previousClipboardText = text;
+						}
+					}
+					try {
+						Thread.sleep(5);
+					}
+					catch (InterruptedException ex) {
+						return;
+					}
+				}
+			});
+			JNATimersThread.start();
+			Misc.addShutdownEvent(() -> JNATimersThread.interrupt());
+		}
+	}
 
 	private interface MyUser32 extends User32 {
 		MyUser32 INSTANCE = Native.load("user32", MyUser32.class, W32APIOptions.DEFAULT_OPTIONS);
@@ -71,7 +149,7 @@ public class JNAUtils {
 		boolean OpenProcessToken(WinNT.HANDLE ProcessHandle, int DesiredAccess, WinNT.HANDLEByReference TokenHandle); // Adicionado para resolver o erro
 	}
 
-	public static WinDef.RECT getCurrentWindowCoordinates() {
+	public static RECT getCurrentWindowCoordinates() {
 		WinDef.HWND hWnd = User32.INSTANCE.GetForegroundWindow();
 		if (hWnd != null) {
 			WinDef.RECT rect = new WinDef.RECT();
@@ -375,29 +453,34 @@ public class JNAUtils {
 			return false;
 
 		byte[] data = text.getBytes(java.nio.charset.StandardCharsets.UTF_16LE);
-		int size = data.length + 2; // +2 para o terminador nulo wide-char
+		int size = data.length + 2;
 
-		if (!MyUser32Clipboard.INSTANCE.OpenClipboard(null))
-			return false;
+		while (!MyUser32Clipboard.INSTANCE.OpenClipboard(null))
+			Misc.sleep(1);
 
 		try {
 			MyUser32Clipboard.INSTANCE.EmptyClipboard();
+			WinNT.HANDLE hMem = null;
+			Pointer ptr = null;
 
-			WinNT.HANDLE hMem = MyKernel32Clipboard.INSTANCE.GlobalAlloc(MyKernel32Clipboard.GMEM_MOVEABLE, size);
-			if (hMem == null)
-				return false;
-
-			Pointer ptr = MyKernel32Clipboard.INSTANCE.GlobalLock(hMem);
-			if (ptr == null) {
-				MyKernel32Clipboard.INSTANCE.GlobalFree(hMem);
-				return false;
+			while (true) {
+				hMem = MyKernel32Clipboard.INSTANCE.GlobalAlloc(MyKernel32Clipboard.GMEM_MOVEABLE, size);
+				if (hMem != null) {
+					ptr = MyKernel32Clipboard.INSTANCE.GlobalLock(hMem);
+					if (ptr != null)
+						break;
+					MyKernel32Clipboard.INSTANCE.GlobalFree(hMem);
+				}
+				Misc.sleep(1);
 			}
 
 			ptr.write(0, data, 0, data.length);
-			ptr.setChar(data.length, '\0'); // null-terminador wide-char
+			ptr.setChar(data.length, '\0');
 
 			MyKernel32Clipboard.INSTANCE.GlobalUnlock(hMem);
-			MyUser32Clipboard.INSTANCE.SetClipboardData(13, hMem); // CF_UNICODETEXT = 13
+
+			while (MyUser32Clipboard.INSTANCE.SetClipboardData(13, hMem) == null)
+				Misc.sleep(1);
 
 			return true;
 		}
@@ -407,20 +490,32 @@ public class JNAUtils {
 	}
 
 	public static String readFromClipboard() {
+		final int MAX_ATTEMPTS = 40; // tenta por ~400 ms
+		final int DELAY_MS = 10;
+		for (int i = 0; i < MAX_ATTEMPTS; i++) {
+			String result = tryReadClipboardOnce();
+			if (result != null)
+				return result;
+			try {
+				Thread.sleep(DELAY_MS);
+			}
+			catch (InterruptedException ignored) {}
+		}
+		return null;
+	}
+
+	private static String tryReadClipboardOnce() {
 		if (!MyUser32Clipboard.INSTANCE.OpenClipboard(null))
 			return null;
-
 		try {
 			WinNT.HANDLE handle = MyUser32Clipboard.INSTANCE.GetClipboardData(13); // CF_UNICODETEXT
 			if (handle == null)
 				return null;
-
 			Pointer ptr = MyKernel32Clipboard.INSTANCE.GlobalLock(handle);
 			if (ptr == null)
 				return null;
-
 			try {
-				return ptr.getWideString(0); // lê até o terminador nulo
+				return ptr.getWideString(0);
 			}
 			finally {
 				MyKernel32Clipboard.INSTANCE.GlobalUnlock(handle);

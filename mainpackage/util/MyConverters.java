@@ -110,6 +110,10 @@ public abstract class MyConverters {
 		keyMaps.add(new KeyMap("NUMPAD7", 103, KeyEvent.VK_NUMPAD7));
 		keyMaps.add(new KeyMap("NUMPAD8", 104, KeyEvent.VK_NUMPAD8));
 		keyMaps.add(new KeyMap("NUMPAD9", 105, KeyEvent.VK_NUMPAD9));
+		keyMaps.add(new KeyMap("LEFT", 105, KeyEvent.VK_LEFT));
+		keyMaps.add(new KeyMap("UP", 105, KeyEvent.VK_UP));
+		keyMaps.add(new KeyMap("RIGHT", 105, KeyEvent.VK_RIGHT));
+		keyMaps.add(new KeyMap("DOWN", 105, KeyEvent.VK_DOWN));
 		keyMaps.add(new KeyMap("LSHIFT", NativeKeyEvent.VC_SHIFT, 160));
 		keyMaps.add(new KeyMap("LCONTROL", NativeKeyEvent.VC_CONTROL, 162));
 		keyMaps.add(new KeyMap("LALT", NativeKeyEvent.VC_ALT, 164));
@@ -128,6 +132,7 @@ public abstract class MyConverters {
 		keyMaps.add(new KeyMap("DELETE", NativeKeyEvent.VC_DELETE, KeyEvent.VK_DELETE));
 		keyMaps.add(new KeyMap("END", NativeKeyEvent.VC_END, KeyEvent.VK_END));
 		keyMaps.add(new KeyMap("ENTER", NativeKeyEvent.VC_ENTER, KeyEvent.VK_ENTER));
+		keyMaps.add(new KeyMap("SPACE", NativeKeyEvent.VC_SPACE, KeyEvent.VK_SPACE));
 		keyMaps.add(new KeyMap("EQUALS", NativeKeyEvent.VC_EQUALS, KeyEvent.VK_EQUALS));
 		keyMaps.add(new KeyMap("ESCAPE", NativeKeyEvent.VC_ESCAPE, KeyEvent.VK_ESCAPE));
 		keyMaps.add(new KeyMap("HOME", NativeKeyEvent.VC_HOME, KeyEvent.VK_HOME));

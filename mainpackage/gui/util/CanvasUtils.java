@@ -48,8 +48,6 @@ public abstract class CanvasUtils {
 		double targetHeight = targetCanvas.getHeight();
 
 		gcTarget.save();
-		gcTarget.translate(targetWidth / 2, targetHeight / 2);
-		gcTarget.rotate(rotationDegrees);
 
 		double newImageWidth;
 		double newImageHeight;
