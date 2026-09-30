@@ -96,20 +96,4 @@ public abstract class CollectionUtils {
 			targetArray[i] = sourceArray[i];
 	}
 
-	public static <T> T getRandomItemFromList(List<T> list) {
-		return list == null || list.size() == 0 ? null : getRandomItemFromList(list, 0, list.size() - 1);
-	}
-
-	public static <T> T getRandomItemFromList(List<T> list, int minIdex, int maxIndex) {
-		return list == null || list.size() == 0 ? null : list.size() == 1 ? list.get(0) : list.get((int) MyMath.getRandom(minIdex, maxIndex));
-	}
-
-	public static <T> T getRandomItemFromArray(T[] list) {
-		return list == null || list.length == 0 ? null : getRandomItemFromArray(list, 0, list.length - 1);
-	}
-
-	public static <T> T getRandomItemFromArray(T[] list, int minIdex, int maxIndex) {
-		return list == null || list.length == 0 ? null : list.length == 1 ? list[0] : list[(int) MyMath.getRandom(minIdex, maxIndex)];
-	}
-
 }

@@ -28,6 +28,10 @@ public abstract class Timer {
 			scheduler = Executors.newScheduledThreadPool(1);
 	}
 
+	public static void createTimer(String timerName, Duration startingDelay) {
+		createTimer(timerName, startingDelay, null, 1, () -> {});
+	}
+
 	public static void createTimer(String timerName, Duration startingDelay, Runnable runnable) {
 		createTimer(timerName, startingDelay, null, 1, runnable);
 	}

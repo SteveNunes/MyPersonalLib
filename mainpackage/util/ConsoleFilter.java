@@ -11,20 +11,24 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 /**
- * Ativar ou desativar filtro de mensagens que saem no console.
- * Util para eliminar aquelas mensagens de warning indesejadas.
+ * Ativar ou desativar filtro de mensagens que saem no console. Util para
+ * eliminar aquelas mensagens de warning indesejadas.
  */
-
 public class ConsoleFilter {
 
-	private static String logFilePath = null;
 	private static FileOutputStream logFileOutputStream = null;
 	private static PrintStream logFilePrintStream = null;
+
 	private static final PrintStream originalOut = System.out;
 	private static final PrintStream originalErr = System.err;
+
+	private static String logFilePath = null;
+	
 	private static Consumer<String> onReceiveData = null;
+
 	private static List<String> filterStrings = new ArrayList<>();
 	private static List<Pattern> filterPatterns = new ArrayList<>();
+
 	private static boolean useRegex = false;
 	private static boolean filterAll = false;
 
@@ -33,7 +37,7 @@ public class ConsoleFilter {
 	}
 
 	public static void setFilterStrings(List<String> strings) {
-		filterStrings = new ArrayList<>(strings);
+		filterStrings = strings == null ? new ArrayList<>() : new ArrayList<>(strings);
 		filterPatterns = new ArrayList<>();
 		useRegex = false;
 	}
@@ -41,9 +45,15 @@ public class ConsoleFilter {
 	public static void setFilterPatterns(List<String> regexPatterns) {
 		filterStrings = new ArrayList<>();
 		filterPatterns = new ArrayList<>();
-		for (String pattern : regexPatterns) {
-			filterPatterns.add(Pattern.compile(pattern));
+
+		if (regexPatterns != null) {
+			for (String pattern : regexPatterns) {
+				if (pattern != null && !pattern.isBlank()) {
+					filterPatterns.add(Pattern.compile(pattern));
+				}
+			}
 		}
+
 		useRegex = true;
 	}
 
@@ -66,37 +76,69 @@ public class ConsoleFilter {
 	}
 
 	public static void setTextLogOutput(String path) {
-		logFilePath = path;
 		try {
-			if (logFileOutputStream != null) {
-				logFileOutputStream.close();
+			if (logFilePrintStream != null) {
 				logFilePrintStream.close();
 			}
+
+			if (logFileOutputStream != null) {
+				logFileOutputStream.close();
+			}
+
+			logFilePath = path;
+
 			logFileOutputStream = new FileOutputStream(path, true);
 			logFilePrintStream = new PrintStream(logFileOutputStream, true, StandardCharsets.UTF_8);
 		}
 		catch (IOException e) {
-			System.err.println("Erro ao configurar o log de texto: " + e.getMessage());
-			logFilePath = null;
+			originalErr.println("Erro ao configurar o log de texto: " + e.getMessage());
+
 			logFileOutputStream = null;
 			logFilePrintStream = null;
+			logFilePath = null;
 		}
 	}
 
-	public static void disableTextLogOutput() {
-		if (logFileOutputStream != null) {
-			try {
-				logFileOutputStream.close();
+	public static void clearLog() {
+		if (logFilePath == null) {
+			return;
+		}
+
+		try {
+			if (logFilePrintStream != null) {
 				logFilePrintStream.close();
 			}
-			catch (IOException e) {
-				System.err.println("Erro ao fechar o arquivo de log: " + e.getMessage());
+
+			if (logFileOutputStream != null) {
+				logFileOutputStream.close();
 			}
-			finally {
-				logFilePath = null;
-				logFileOutputStream = null;
-				logFilePrintStream = null;
+
+			// Reabre sem append para apagar todo o conteúdo
+			logFileOutputStream = new FileOutputStream(logFilePath, false);
+			logFilePrintStream = new PrintStream(logFileOutputStream, true, StandardCharsets.UTF_8);
+		}
+		catch (IOException e) {
+			originalErr.println("Erro ao limpar o arquivo de log: " + e.getMessage());
+		}
+	}
+	
+	public static void disableTextLogOutput() {
+		try {
+			if (logFilePrintStream != null) {
+				logFilePrintStream.close();
 			}
+
+			if (logFileOutputStream != null) {
+				logFileOutputStream.close();
+			}
+		}
+		catch (IOException e) {
+			originalErr.println("Erro ao fechar o arquivo de log: " + e.getMessage());
+		}
+		finally {
+			logFileOutputStream = null;
+			logFilePrintStream = null;
+			logFilePath = null;
 		}
 	}
 
@@ -109,27 +151,44 @@ public class ConsoleFilter {
 				@Override
 				public void write(int b) {}
 			});
+
 			this.delegate = delegate;
 		}
 
+		private String safeString(String s) {
+			return s == null ? "null" : s;
+		}
+
+		private String safeString(char[] chars) {
+			return chars == null ? "null" : new String(chars);
+		}
+
 		private void logToFile(String message) {
-			if (logFilePrintStream != null)
+			message = safeString(message);
+
+			if (logFilePrintStream != null) {
 				logFilePrintStream.println(message);
-			if (onReceiveData != null)
+			}
+
+			if (onReceiveData != null) {
 				onReceiveData.accept(message);
+			}
 		}
 
 		private void printToDelegateWithLineBreaks(String s) {
-			if (s != null) {
-				String[] lines = s.split(System.lineSeparator());
-				for (String line : lines) {
-					delegate.println(line);
-				}
+			s = safeString(s);
+
+			String[] lines = s.split("\\R", -1);
+
+			for (String line : lines) {
+				delegate.println(line);
 			}
 		}
 
 		@Override
 		public void print(String s) {
+			s = safeString(s);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				printToDelegateWithLineBreaks(s);
 				logToFile(s);
@@ -138,6 +197,8 @@ public class ConsoleFilter {
 
 		@Override
 		public void println(String s) {
+			s = safeString(s);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				delegate.println(s);
 				logToFile(s);
@@ -147,6 +208,7 @@ public class ConsoleFilter {
 		@Override
 		public void print(boolean b) {
 			String s = String.valueOf(b);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				printToDelegateWithLineBreaks(s);
 				logToFile(s);
@@ -156,6 +218,7 @@ public class ConsoleFilter {
 		@Override
 		public void print(char c) {
 			String s = String.valueOf(c);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				printToDelegateWithLineBreaks(s);
 				logToFile(s);
@@ -165,6 +228,7 @@ public class ConsoleFilter {
 		@Override
 		public void print(int i) {
 			String s = String.valueOf(i);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				printToDelegateWithLineBreaks(s);
 				logToFile(s);
@@ -174,6 +238,7 @@ public class ConsoleFilter {
 		@Override
 		public void print(long l) {
 			String s = String.valueOf(l);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				printToDelegateWithLineBreaks(s);
 				logToFile(s);
@@ -183,6 +248,7 @@ public class ConsoleFilter {
 		@Override
 		public void print(float f) {
 			String s = String.valueOf(f);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				printToDelegateWithLineBreaks(s);
 				logToFile(s);
@@ -192,6 +258,7 @@ public class ConsoleFilter {
 		@Override
 		public void print(double d) {
 			String s = String.valueOf(d);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				printToDelegateWithLineBreaks(s);
 				logToFile(s);
@@ -208,7 +275,8 @@ public class ConsoleFilter {
 
 		@Override
 		public void print(char[] s) {
-			String str = new String(s);
+			String str = safeString(s);
+
 			if (!filterAll && shouldBeDisplayed(str)) {
 				printToDelegateWithLineBreaks(str);
 				logToFile(str);
@@ -218,6 +286,7 @@ public class ConsoleFilter {
 		@Override
 		public void println(boolean x) {
 			String s = String.valueOf(x);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				delegate.println(x);
 				logToFile(s);
@@ -227,6 +296,7 @@ public class ConsoleFilter {
 		@Override
 		public void println(char x) {
 			String s = String.valueOf(x);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				delegate.println(x);
 				logToFile(s);
@@ -236,6 +306,7 @@ public class ConsoleFilter {
 		@Override
 		public void println(int x) {
 			String s = String.valueOf(x);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				delegate.println(x);
 				logToFile(s);
@@ -245,6 +316,7 @@ public class ConsoleFilter {
 		@Override
 		public void println(long x) {
 			String s = String.valueOf(x);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				delegate.println(x);
 				logToFile(s);
@@ -254,6 +326,7 @@ public class ConsoleFilter {
 		@Override
 		public void println(float x) {
 			String s = String.valueOf(x);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				delegate.println(x);
 				logToFile(s);
@@ -263,6 +336,7 @@ public class ConsoleFilter {
 		@Override
 		public void println(double x) {
 			String s = String.valueOf(x);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				delegate.println(x);
 				logToFile(s);
@@ -271,9 +345,10 @@ public class ConsoleFilter {
 
 		@Override
 		public void println(char[] x) {
-			String str = new String(x);
+			String str = safeString(x);
+
 			if (!filterAll && shouldBeDisplayed(str)) {
-				delegate.println(x);
+				delegate.println(str);
 				logToFile(str);
 			}
 		}
@@ -281,47 +356,61 @@ public class ConsoleFilter {
 		@Override
 		public PrintStream append(CharSequence csq) {
 			String s = String.valueOf(csq);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				printToDelegateWithLineBreaks(s);
 				logToFile(s);
 			}
+
 			return this;
 		}
 
 		@Override
 		public PrintStream append(CharSequence csq, int start, int end) {
-			String s = String.valueOf(csq.subSequence(start, end));
+			String base = String.valueOf(csq);
+			String s = base.substring(start, end);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				printToDelegateWithLineBreaks(s);
 				logToFile(s);
 			}
+
 			return this;
 		}
 
 		@Override
 		public PrintStream append(char c) {
 			String s = String.valueOf(c);
+
 			if (!filterAll && shouldBeDisplayed(s)) {
 				printToDelegateWithLineBreaks(s);
 				logToFile(s);
 			}
+
 			return this;
 		}
 
 		private boolean shouldBeDisplayed(String message) {
+			message = safeString(message);
+
 			if (useRegex) {
-				for (Pattern pattern : filterPatterns)
-					if (pattern.matcher(message).find())
+				for (Pattern pattern : filterPatterns) {
+					if (pattern != null && pattern.matcher(message).find()) {
 						return false;
+					}
+				}
+
 				return true;
 			}
 			else {
-				for (String filter : filterStrings)
-					if (message.contains(filter))
+				for (String filter : filterStrings) {
+					if (filter != null && message.contains(filter)) {
 						return false;
+					}
+				}
+
 				return true;
 			}
 		}
 	}
-
 }

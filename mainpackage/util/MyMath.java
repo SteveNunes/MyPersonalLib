@@ -6,7 +6,6 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 public abstract class MyMath {
 
@@ -100,18 +99,6 @@ public abstract class MyMath {
 			n = n.add(n);
 		}
 		return result;
-	}
-
-	public static double getDoubleRandom(double min, double max) {
-		if (min > max)
-			throw new IllegalArgumentException("O valor mínimo não pode ser maior que o valor máximo.");
-		return ThreadLocalRandom.current().nextDouble(min, max + Double.MIN_VALUE);
-	}
-
-	public static long getRandom(long min, long max) {
-		if (min > max)
-			throw new IllegalArgumentException("O valor mínimo não pode ser maior que o valor máximo.");
-		return ThreadLocalRandom.current().nextLong(min, max + 1);
 	}
 
 }

@@ -2,9 +2,9 @@ package util;
 
 import com.sun.jna.Library;
 import com.sun.jna.Native;
+import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.Union;
-import com.sun.jna.Pointer;
 
 public class AlternativeKeyPresser {
 

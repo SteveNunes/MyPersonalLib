@@ -10,7 +10,7 @@ import java.util.function.Function;
 import enums.Direction;
 import javafx.util.Pair;
 import objmoveutils.TileCoord;
-import util.CollectionUtils;
+import util.RandomUtils;
 
 public class PathFinder {
 
@@ -182,7 +182,7 @@ public class PathFinder {
 			if (foundPaths.size() > 1) {
 				foundPaths.sort((p1, p2) -> p1.size() - p2.size());
 				if (distance == PathFinderDistance.RANDOM)
-					directions = new ArrayList<>(CollectionUtils.getRandomItemFromList(foundPaths));
+					directions = new ArrayList<>(RandomUtils.getRandomObjectFromList(foundPaths));
 				else if (distance == PathFinderDistance.SHORTEST)
 					directions = new ArrayList<>(foundPaths.get(0));
 				else if (distance == PathFinderDistance.LONGEST)

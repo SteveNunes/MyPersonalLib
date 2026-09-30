@@ -2,8 +2,11 @@ package util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,14 +58,36 @@ public class IniFile {
 
 	void saveToDisk() {
 		synchronized (this) {
-			if (wasModified && openedIniFiles.containsKey(fileName)) {
-				wasModified = false;
+			if (!wasModified || !openedIniFiles.containsKey(fileName))
+				return;
+			Path temp = null;
+			try {
 				updateFileBuffer();
-				MyFile.writeAllLinesOnFile(fileBuffer, fileName);
+				Path target = Paths.get(fileName).toAbsolutePath();
+				temp = Files.createTempFile(target.getParent(), "ini-", ".tmp");
+				Files.write(temp, fileBuffer, StandardCharsets.UTF_8);
+				try {
+					Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+				}
+				catch (AtomicMoveNotSupportedException e) {
+					Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
+				}
+				wasModified = false;
+			}
+			catch (IOException e) {
+				throw new UncheckedIOException("Não foi possível salvar o INI: " + fileName, e);
+			}
+			finally {
+				if (temp != null) {
+					try {
+						Files.deleteIfExists(temp);
+					}
+					catch (IOException ignored) {}
+				}
 			}
 		}
 	}
-
+	
 	private IniFile(String fileName) {
 		this.fileName = fileName;
 		wasModified = false;

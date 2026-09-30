@@ -22,6 +22,10 @@ public abstract class DurationTimerFX {
 	private static final Map<String, Long> timersTotalCycles = new ConcurrentHashMap<>();
 	private static boolean fxApplicationIsClosed = false;
 
+	public static void createTimer(String timerName, Duration startingDelay) {
+		createTimer(timerName, startingDelay, Duration.ZERO, 1, () -> {}); // -1 for no repeating delay, 1 execution
+	}
+
 	public static void createTimer(String timerName, Duration startingDelay, Runnable runnable) {
 		createTimer(timerName, startingDelay, Duration.ZERO, 1, runnable); // -1 for no repeating delay, 1 execution
 	}

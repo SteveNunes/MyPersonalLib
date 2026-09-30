@@ -9,7 +9,7 @@ import javafx.scene.effect.BlendMode;
 import javafx.scene.effect.Light;
 import javafx.scene.effect.Lighting;
 import objmoveutils.Position;
-import util.MyMath;
+import util.RandomUtils;
 
 public class LightSpot {
 
@@ -27,6 +27,15 @@ public class LightSpot {
 	double maxRadius;
 	double incRadius;
 	Light.Point lightPoint;
+	boolean isVisible;
+
+	public boolean isVisible() {
+		return isVisible;
+	}
+
+	public void setVisible(boolean isVisible) {
+		this.isVisible = isVisible;
+	}
 
 	public LightSpot() {
 		this(0, 0);
@@ -80,14 +89,14 @@ public class LightSpot {
 	public int getX() {
 		int x = (int) position.getX() * 2;
 		if (xVariance != 0)
-			x = (int) MyMath.getRandom(x - xVariance, x + xVariance);
+			x = RandomUtils.getRandom(x - xVariance, x + xVariance);
 		return x;
 	}
 
 	public int getY() {
 		int y = (int) position.getY() * 2;
 		if (yVariance != 0)
-			y = (int) MyMath.getRandom(y - yVariance, y + yVariance);
+			y = RandomUtils.getRandom(y - yVariance, y + yVariance);
 		return y;
 	}
 
@@ -146,6 +155,14 @@ public class LightSpot {
 	public static void removeLightSpotInDarkness(LightSpot spot) {
 		spotsInDarkness.remove(spot);
 	}
+	
+	public static List<LightSpot> getLightSpots() {
+		return spots;
+	}
+
+	public static List<LightSpot> getTempLightSpots() {
+		return tempSpots;
+	}
 
 	public static void setMultipleLightSpotsInDarkness(GraphicsContext gc) {
 		setMultipleLightSpots(gc, true);
@@ -160,11 +177,13 @@ public class LightSpot {
 		Blend blend = null, blend2 = null;
 		for (int n = 0; n < 3; n++)
 			for (LightSpot spot : n == 0 ? spots : n == 1 ? tempSpots : spotsInDarkness) {
-				blend2 = new Blend(blend == null && startWithDarkness ? null : BlendMode.ADD);
-				blend2.setTopInput(new Lighting(spot.getLightPoint()));
-				if (blend != null)
-					blend2.setBottomInput(blend);
-				blend = blend2;
+				if (spot.isVisible()) {
+					blend2 = new Blend(blend == null && startWithDarkness ? null : BlendMode.ADD);
+					blend2.setTopInput(new Lighting(spot.getLightPoint()));
+					if (blend != null)
+						blend2.setBottomInput(blend);
+					blend = blend2;
+				}
 			}
 		gc.applyEffect(blend);
 		gc.restore();

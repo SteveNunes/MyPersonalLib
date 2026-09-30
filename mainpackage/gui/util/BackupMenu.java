@@ -1,6 +1,7 @@
 package gui.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -120,7 +121,12 @@ public class BackupMenu {
 		List<File> dirs = FindFile.findDir(backupDir);
 		dirs.sort((f1, f2) -> f1.getName().compareTo(f2.getName()));
 		while (dirs.size() > maxBackupSize) {
-			MyFile.deleteAllDirsAndFiles(dirs.get(0).getAbsolutePath());
+			try {
+				MyFile.deleteAllDirsAndFiles(dirs.get(0).getAbsolutePath());
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
 			dirs.remove(0);
 		}
 		updateBackupMenuList();

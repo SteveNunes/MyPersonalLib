@@ -142,8 +142,8 @@ public abstract class SoundsFX {
 	
 	public static void stopMp3(String mp3Path) {
 		if (mp3s.containsKey(mp3Path)) {
-			forceStopMp3(mp3s.get(mp3Path));
 			mp3s.remove(mp3Path);
+			forceStopMp3(mp3s.get(mp3Path));
 		}
 	}
 

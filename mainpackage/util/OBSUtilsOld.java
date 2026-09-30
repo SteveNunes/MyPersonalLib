@@ -8,11 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.java_websocket.client.WebSocketClient;
@@ -21,61 +17,38 @@ import org.java_websocket.handshake.ServerHandshake;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-public class OBSUtils {
+public class OBSUtilsOld {
 
-	private static final long IDENTIFY_TIMEOUT_MILLIS = 10_000;
-	private static final long REQUEST_TIMEOUT_MILLIS = 10_000;
-	private static final long RECONNECT_DELAY_MILLIS = 2_000;
-	private static final int REQUEST_MAX_ATTEMPTS = 3;
-
-	private final String ip;
-	private final int port;
+	private WebSocketClient client;
 	private final String password;
-	private final boolean debug;
-	private final URI uri;
-
-	private volatile WebSocketClient client;
+	private boolean debug;
 	private volatile boolean identified;
-	private volatile boolean manualClose;
-
-	private final Object connectionLock = new Object();
-	private final AtomicBoolean reconnectScheduled = new AtomicBoolean(false);
-
-	private final ScheduledExecutorService reconnectExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
-		Thread t = new Thread(r, "OBS-WebSocket-Reconnect");
-		t.setDaemon(true);
-		return t;
-	});
 
 	private final Map<String, CompletableFuture<JsonObject>> pendingRequests = new ConcurrentHashMap<>();
 	private final Map<String, Consumer<String>> mediaEndListeners = new ConcurrentHashMap<>();
 
-	public OBSUtils(String password) throws Exception {
+	public OBSUtilsOld(String password) throws Exception {
 		this(password, false);
 	}
 
-	public OBSUtils(String password, boolean debug) throws Exception {
+	public OBSUtilsOld(String password, boolean debug) throws Exception {
 		this("localhost", 4455, password, debug);
 	}
 
-	public OBSUtils(String ip, int port, String password, boolean debug) throws Exception {
-		this.ip = ip;
-		this.port = port;
+	public OBSUtilsOld(String ip, int port, String password, boolean debug) throws Exception {
 		this.password = password;
 		this.debug = debug;
-		this.uri = new URI("ws://" + ip + ":" + port);
-
-		Misc.addShutdownEvent(this::close);
-
-		connectBlockingAndIdentify();
+		connect(ip, port);
 	}
 
-	private WebSocketClient createClient() {
-		return new WebSocketClient(uri) {
+	private void connect(String ip, int port) throws Exception {
+		URI uri = new URI("ws://" + ip + ":" + port);
+
+		client = new WebSocketClient(uri) {
 			@Override
 			public void onOpen(ServerHandshake handshake) {
 				if (debug)
-					System.out.println("[OBS WebSocket] Conectado em " + ip + ":" + port + ".");
+					System.out.println("[OBS WebSocket] Conectado.");
 			}
 
 			@Override
@@ -83,167 +56,69 @@ public class OBSUtils {
 				if (debug)
 					System.out.println("[OBS WebSocket] Data Received: " + message);
 
-				try {
-					JsonObject json = JsonParser.parseString(message).getAsJsonObject();
+				JsonObject json = JsonParser.parseString(message).getAsJsonObject();
 
-					if (!json.has("op"))
-						return;
+				if (!json.has("op"))
+					return;
 
-					int op = json.get("op").getAsInt();
-					JsonObject d = json.has("d") && json.get("d").isJsonObject() ? json.getAsJsonObject("d") : new JsonObject();
+				int op = json.get("op").getAsInt();
+				JsonObject d = json.has("d") && json.get("d").isJsonObject() ? json.getAsJsonObject("d") : new JsonObject();
 
-					switch (op) {
-						case 0:
-							auth(d);
-							break;
+				switch (op) {
+					case 0:
+						auth(d);
+						break;
 
-						case 2:
-							identified = true;
-							if (debug)
-								System.out.println("[OBS WebSocket] Sessão identificada com sucesso.");
-							break;
+					case 2:
+						identified = true;
+						if (debug)
+							System.out.println("[OBS WebSocket] Sessão identificada com sucesso.");
+						break;
 
-						case 5:
-							handleEvent(d);
-							break;
+					case 5:
+						handleEvent(d);
+						break;
 
-						case 7:
-							handleRequestResponse(d);
-							break;
+					case 7:
+						handleRequestResponse(d);
+						break;
 
-						default:
-							break;
-					}
-				}
-				catch (Exception e) {
-					if (debug)
-						System.err.println("[OBS WebSocket] Erro ao processar mensagem: " + e.getMessage());
-					e.printStackTrace();
+					default:
+						break;
 				}
 			}
 
 			@Override
 			public void onClose(int code, String reason, boolean remote) {
 				identified = false;
-				failAllPendingRequests(new IllegalStateException("OBS WebSocket desconectado. code=" + code + ", reason=" + reason));
+
+				for (CompletableFuture<JsonObject> future : pendingRequests.values())
+					future.completeExceptionally(new IllegalStateException("OBS WebSocket desconectado: " + reason));
+
+				pendingRequests.clear();
+				mediaEndListeners.clear();
 
 				if (debug)
-					System.out.println("[OBS WebSocket] Desconectado. code=" + code + ", remote=" + remote + ", motivo: " + reason);
-
-				if (!manualClose)
-					scheduleReconnect();
+					System.out.println("[OBS WebSocket] Desconectado. Motivo: " + reason);
 			}
 
 			@Override
 			public void onError(Exception ex) {
-				if (debug)
-					System.err.println("[OBS WebSocket] Erro: " + ex.getMessage());
-
-				identified = false;
-				failAllPendingRequests(ex);
-
-				if (!manualClose)
-					scheduleReconnect();
+				ex.printStackTrace();
 			}
 		};
-	}
 
-	private void connectBlockingAndIdentify() throws Exception {
-		synchronized (connectionLock) {
-			if (isReady())
-				return;
+		client.connectBlocking();
+		Misc.addShutdownEvent(() -> close());
 
-			manualClose = false;
-			identified = false;
-
-			WebSocketClient oldClient = client;
-			if (oldClient != null) {
-				try {
-					oldClient.close();
-				}
-				catch (Exception ignored) {}
-			}
-
-			WebSocketClient newClient = createClient();
-			client = newClient;
-
-			if (debug)
-				System.out.println("[OBS WebSocket] Tentando conectar em " + uri + "...");
-
-			boolean connected = newClient.connectBlocking(REQUEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-
-			if (!connected)
-				throw new IllegalStateException("Não foi possível conectar ao OBS WebSocket dentro do tempo limite.");
-
-			waitUntilIdentified(IDENTIFY_TIMEOUT_MILLIS);
-		}
-	}
-
-	private void scheduleReconnect() {
-		if (manualClose)
-			return;
-
-		if (!reconnectScheduled.compareAndSet(false, true))
-			return;
-
-		try {
-			reconnectExecutor.schedule(this::reconnectLoop, RECONNECT_DELAY_MILLIS, TimeUnit.MILLISECONDS);
-		}
-		catch (RejectedExecutionException ignored) {
-			// O executor já foi encerrado pelo close().
-		}
-	}
-
-	private void reconnectLoop() {
-		try {
-			while (!manualClose && !isReady()) {
-				try {
-					connectBlockingAndIdentify();
-
-					if (debug)
-						System.out.println("[OBS WebSocket] Reconectado com sucesso.");
-
-					return;
-				}
-				catch (Exception e) {
-					if (debug)
-						System.err.println("[OBS WebSocket] Falha ao reconectar. Nova tentativa em " + RECONNECT_DELAY_MILLIS + "ms. Motivo: " + e.getMessage());
-
-					sleep(RECONNECT_DELAY_MILLIS);
-				}
-			}
-		}
-		finally {
-			reconnectScheduled.set(false);
-
-			if (!manualClose && !isReady())
-				scheduleReconnect();
-		}
-	}
-
-	private boolean isReady() {
-		WebSocketClient c = client;
-		return c != null && c.isOpen() && identified;
+		waitUntilIdentified(10_000);
 	}
 
 	public void close() {
-		manualClose = true;
-		identified = false;
-
-		failAllPendingRequests(new IllegalStateException("OBS WebSocket foi fechado manualmente."));
-		pendingRequests.clear();
-
-		WebSocketClient c = client;
-		client = null;
-
-		if (c != null) {
-			try {
-				c.close();
-			}
-			catch (Exception ignored) {}
+		if (client != null && !client.isClosed()) {
+			client.close();
+			client = null;
 		}
-
-		reconnectExecutor.shutdownNow();
 	}
 
 	private void auth(JsonObject data) {
@@ -272,10 +147,7 @@ public class OBSUtils {
 				System.out.println("[OBS WebSocket] OBS sem autenticação. Identify enviado sem senha.");
 
 			request.add("d", d);
-
-			WebSocketClient c = client;
-			if (c != null && c.isOpen())
-				c.send(request.toString());
+			client.send(request.toString());
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -301,7 +173,7 @@ public class OBSUtils {
 		else {
 			int code = status.has("code") ? status.get("code").getAsInt() : -1;
 			String comment = status.has("comment") ? status.get("comment").getAsString() : "Sem detalhes";
-			future.completeExceptionally(new OBSRequestException("OBS request falhou. code=" + code + ", comment=" + comment));
+			future.completeExceptionally(new RuntimeException("OBS request falhou. code=" + code + ", comment=" + comment));
 		}
 	}
 
@@ -344,96 +216,36 @@ public class OBSUtils {
 		while (!identified) {
 			if (System.currentTimeMillis() - start > timeoutMillis)
 				throw new IllegalStateException("Tempo esgotado aguardando identificação no OBS WebSocket.");
-
-			WebSocketClient c = client;
-			if (c == null || c.isClosed())
-				throw new IllegalStateException("Conexão fechada antes da identificação no OBS WebSocket.");
-
 			Thread.sleep(25);
 		}
 	}
 
 	private JsonObject sendRequest(String requestType, JsonObject requestData) {
-		RuntimeException lastError = null;
+		try {
+			if (client == null || client.isClosed())
+				throw new IllegalStateException("Cliente OBS WebSocket não está conectado.");
 
-		for (int attempt = 1; attempt <= REQUEST_MAX_ATTEMPTS; attempt++) {
+			waitUntilIdentified(10_000);
+
 			String requestId = UUID.randomUUID().toString();
 			CompletableFuture<JsonObject> future = new CompletableFuture<>();
+			pendingRequests.put(requestId, future);
 
-			try {
-				ensureConnected();
+			JsonObject req = new JsonObject();
+			req.addProperty("op", 6);
 
-				JsonObject req = new JsonObject();
-				req.addProperty("op", 6);
+			JsonObject d = new JsonObject();
+			d.addProperty("requestType", requestType);
+			d.addProperty("requestId", requestId);
+			d.add("requestData", requestData != null ? requestData : new JsonObject());
 
-				JsonObject d = new JsonObject();
-				d.addProperty("requestType", requestType);
-				d.addProperty("requestId", requestId);
-				d.add("requestData", requestData != null ? requestData : new JsonObject());
+			req.add("d", d);
+			client.send(req.toString());
 
-				req.add("d", d);
-
-				pendingRequests.put(requestId, future);
-
-				WebSocketClient c = client;
-				if (c == null || !c.isOpen())
-					throw new IllegalStateException("Cliente OBS WebSocket não está conectado.");
-
-				c.send(req.toString());
-
-				return future.get(REQUEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-			}
-			catch (OBSRequestException e) {
-				pendingRequests.remove(requestId);
-				throw e; // O OBS recebeu e respondeu erro. Reenviar não corrige esse tipo de falha.
-			}
-			catch (Exception e) {
-				pendingRequests.remove(requestId);
-
-				lastError = new RuntimeException("Falha ao enviar request ao OBS: " + requestType + " | tentativa " + attempt + "/" + REQUEST_MAX_ATTEMPTS, e);
-
-				if (debug)
-					System.err.println("[OBS WebSocket] " + lastError.getMessage());
-
-				identified = false;
-				scheduleReconnect();
-
-				if (attempt < REQUEST_MAX_ATTEMPTS)
-					sleep(RECONNECT_DELAY_MILLIS);
-			}
+			return future.get(10, TimeUnit.SECONDS);
 		}
-
-		throw lastError != null ? lastError : new RuntimeException("Erro ao enviar request ao OBS: " + requestType);
-	}
-
-	private void ensureConnected() throws Exception {
-		if (isReady())
-			return;
-
-		connectBlockingAndIdentify();
-	}
-
-	private void failAllPendingRequests(Throwable error) {
-		for (CompletableFuture<JsonObject> future : pendingRequests.values())
-			future.completeExceptionally(error);
-
-		pendingRequests.clear();
-	}
-
-	private void sleep(long millis) {
-		try {
-			Thread.sleep(millis);
-		}
-		catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-		}
-	}
-
-	private static class OBSRequestException extends RuntimeException {
-		private static final long serialVersionUID = 1L;
-
-		private OBSRequestException(String message) {
-			super(message);
+		catch (Exception e) {
+			throw new RuntimeException("Erro ao enviar request ao OBS: " + requestType, e);
 		}
 	}
 

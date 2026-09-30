@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="mainpackage"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk-25">
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk-26">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
@@ -15,14 +15,18 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JNA"/>
 	<classpathentry kind="lib" path="D:/Java/java-libs/j-ogg-vorbis-1.0.6.jar"/>
 	<classpathentry kind="lib" path="D:/Java/java-libs/TextToSpeechGoogle.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JavaFX">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="lib" path="D:/Java/java-libs/sikulixide-2.0.5-win.jar"/>
 	<classpathentry kind="lib" path="D:/Java/java-libs/gson-2.13.2.jar"/>
 	<classpathentry kind="lib" path="D:/Java/java-libs/Java-WebSocket-1.6.0.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Excel Edit"/>
+	<classpathentry kind="lib" path="D:/Java/java-libs/Vosk/vosk-0.3.45.jar"/>
+	<classpathentry kind="lib" path="D:/Java/java-libs/jcodec-0.2.5.jar"/>
+	<classpathentry kind="lib" path="D:/Java/java-libs/jcodec-javase-0.2.5.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/VLCJ (4x)"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JavaFX 27">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -7,11 +7,13 @@ import java.io.IOException;
 import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.swing.JFileChooser;
@@ -197,17 +199,23 @@ public abstract class MyFile {
 		}
 	}
 
-	public static void deleteAllDirsAndFiles(String path) {
-		List<File> files = FindFile.findFile(path, "*", 0);
-		for (File file : files)
-			file.delete();
-		do {
-			files = FindFile.findDir(path, "*", 0);
-			for (File file : files)
-				file.delete();
+	public static void deleteAllDirsAndFiles(String path) throws IOException {
+		Path root = Paths.get(path);
+		if (!Files.exists(root))
+			return;
+		try (var walk = Files.walk(root)) {
+			walk.sorted(Comparator.reverseOrder()).forEach(p -> {
+				try {
+					if (Files.exists(p)) {
+						Files.setAttribute(p, "dos:readonly", false);
+						Files.deleteIfExists(p);
+					}
+				}
+				catch (IOException e) {
+					throw new RuntimeException("Erro ao remover: " + p, e);
+				}
+			});
 		}
-		while (!files.isEmpty());
-		(new File(path)).delete();
 	}
 
 	public static void mkdirs(String absoluteFilePath) {
@@ -219,20 +227,39 @@ public abstract class MyFile {
 	}
 
 	public static void copy(String sourcePath, String destinationPath, boolean replaceOldFile) {
-		Path source = Path.of(sourcePath);
-		Path destination = Path.of(destinationPath);
+		if (sourcePath == null || sourcePath.isBlank())
+			throw new IllegalArgumentException("sourcePath não pode ser nulo ou vazio.");
+
+		if (destinationPath == null || destinationPath.isBlank())
+			throw new IllegalArgumentException("destinationPath não pode ser nulo ou vazio.");
+
 		try {
-			if (replaceOldFile || !Files.exists(destination)) {
-				if (!Files.exists(destination.getParent())) {
-					Files.createDirectories(destination.getParent());
-				}
-				Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
-			}
-			else
-				throw new RuntimeException("O arquivo de destino já existe");
+			Path source = Path.of(sourcePath).normalize();
+			Path destination = Path.of(destinationPath).normalize();
+
+			if (!Files.exists(source))
+				throw new RuntimeException("O arquivo de origem não existe: " + source);
+
+			if (!Files.isRegularFile(source))
+				throw new RuntimeException("A origem não é um arquivo válido: " + source);
+
+			if (Files.exists(destination) && !replaceOldFile)
+				throw new RuntimeException("O arquivo de destino já existe: " + destination);
+
+			Path parent = destination.getParent();
+
+			if (parent != null && Files.notExists(parent))
+				Files.createDirectories(parent);
+
+			Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+
+		}
+		catch (InvalidPathException e) {
+			throw new RuntimeException("Caminho inválido: " + e.getInput(), e);
+
 		}
 		catch (IOException e) {
-			throw new RuntimeException("Erro ao copiar o arquivo: " + e.getMessage());
+			throw new RuntimeException("Erro ao copiar arquivo: " + e.getMessage(), e);
 		}
 	}
 
@@ -253,7 +280,7 @@ public abstract class MyFile {
 	public static String removeInvisibleChars(String string) {
 		return string == null ? null : string.isBlank() ? "" : string.replaceAll("[\\p{C}\\p{Z}&&[^\u0020\t]]", "");
 	}
-	
+
 	public static List<String> readAllLinesFromFile(String filePath) {
 		if (!new File(filePath).exists())
 			return null;

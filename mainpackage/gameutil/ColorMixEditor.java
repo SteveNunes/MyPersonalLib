@@ -448,6 +448,8 @@ public class ColorMixEditor {
 		while (x < w)
 			pw.setColor(x++, 0, transparentColor);
 		ImageUtils.saveImageToFile(image, file.getAbsolutePath());
+		image = PalleteTools.applyColorMixPalleteOnImage(originalSprite, getCurrentPallete());
+		ImageUtils.saveImageToFile(image, file.getAbsolutePath().replace(".png", "2.png"));
 	}
 	
 	private void setZoom(int zoom) {

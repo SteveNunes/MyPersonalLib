@@ -21,6 +21,10 @@ public abstract class FrameTimerFX {
 	private static final Map<String, Long> timersTotalCycles = new ConcurrentHashMap<>();
 	private static boolean fxApplicationIsClosed = false;
 
+	public static void createTimer(String timerName, long startingDelayInFrames) {
+		createTimer(timerName, startingDelayInFrames, -1, 1, () -> {}); // -1 para sem repetição, 1 execução
+	}
+
 	public static void createTimer(String timerName, long startingDelayInFrames, Runnable runnable) {
 		createTimer(timerName, startingDelayInFrames, -1, 1, runnable); // -1 para sem repetição, 1 execução
 	}

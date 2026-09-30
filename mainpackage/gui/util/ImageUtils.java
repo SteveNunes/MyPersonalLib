@@ -11,12 +11,19 @@ import java.awt.image.MultiResolutionImage;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
+
+import org.jcodec.api.awt.AWTSequenceEncoder;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
 
 import drawimage_stuffs.DrawImageEffects;
 import enums.ImageFlip;
@@ -39,6 +46,8 @@ import javafx.scene.effect.MotionBlur;
 import javafx.scene.effect.SepiaTone;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelBuffer;
+import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
@@ -1640,7 +1649,6 @@ public abstract class ImageUtils {
 			return -1;
 		String[] split = text.split("\\{");
 		gc.setLineWidth(1);
-		gc.setStroke(Color.WHITE);
 		gc.setFill(Color.WHITE);
 		gc.setFont(font);
 		Font[] font2 = { font };
@@ -1757,6 +1765,13 @@ public abstract class ImageUtils {
 		return canvas.snapshot(params, outputImage);
 	}
 
+	public static void createVideo(List<BufferedImage> frames, String outputFile, int fps) throws Exception {
+		AWTSequenceEncoder encoder = AWTSequenceEncoder.createSequenceEncoder(new File(outputFile), fps);
+		for (BufferedImage frame : frames)
+			encoder.encodeImage(frame);
+		encoder.finish();
+	}
+	
 	public static WritableImage applyPerspectiveTransform(Image input, Point2D topLeft, Point2D topRight, Point2D bottomLeft, Point2D bottomRight) {
 		int width = (int) input.getWidth();
 		int height = (int) input.getHeight();
@@ -1841,5 +1856,85 @@ public abstract class ImageUtils {
 
 		return x;
 	}
+
+	public static WritableImage removeColor(ByteBuffer source, int width, int height, Color color, int tolerance) {
+		ByteBuffer output = ByteBuffer.allocateDirect(width * height * 4);
+		ByteBuffer src = source.duplicate();
+
+		src.clear();
+		output.put(src);
+		output.flip();
+
+		Mat image = new Mat(height, width, CvType.CV_8UC4, output);
+		Mat mask = new Mat();
+		int r = (int) Math.round(color.getRed() * 255);
+		int g = (int) Math.round(color.getGreen() * 255);
+		int b = (int) Math.round(color.getBlue() * 255);
+
+		Scalar min = new Scalar(Math.max(0, b - tolerance), Math.max(0, g - tolerance), Math.max(0, r - tolerance), 0);
+		Scalar max = new Scalar(Math.min(255, b + tolerance), Math.min(255, g + tolerance), Math.min(255, r + tolerance), 255);
+
+		Core.inRange(image, min, max, mask);
+		image.setTo(new Scalar(0, 0, 0, 0), mask);
+		PixelBuffer<ByteBuffer> pixelBuffer = new PixelBuffer<>(width, height, output, PixelFormat.getByteBgraPreInstance());
+		return new WritableImage(pixelBuffer);
+	}	
+	
+	/**
+	 * Chroma key em uma passagem pela cópia privada do frame RV32 (B,G,R,X).
+	 * Modifica pixels no lugar; nunca passe o buffer nativo compartilhado do VLC.
+	 * tolerance: 0..255, mesma distância por canal do ColorTolerance antigo.
+	 * smoothness: 0..255, largura da transição de transparência (0 = corte seco).
+	 * spillReduction: 0..1000, alcance da redução da cor residual (0 = desligado).
+	 * Controles inspirados no OBS; algoritmo e escala de similaridade próprios.
+	 */
+	public static WritableImage removeColor(byte[] pixels, int width, int height, Color color, int tolerance, int smoothness, int spillReduction) {
+		if (width <= 0 || height <= 0 || pixels.length != Math.multiplyExact(Math.multiplyExact(width, height), 4))
+			throw new IllegalArgumentException("Dimensões inválidas para o frame");
+		int keyR = (int) Math.round(color.getRed() * 255);
+		int keyG = (int) Math.round(color.getGreen() * 255);
+		int keyB = (int) Math.round(color.getBlue() * 255);
+		int threshold = Math.max(0, Math.min(255, tolerance));
+		int feather = Math.max(0, Math.min(255, smoothness));
+		double spillWidth = Math.max(0, Math.min(1000, spillReduction)) * (255.0 / 1000.0);
+		double inverseFeather = feather == 0 ? 0 : 1.0 / feather;
+		double inverseSpill = spillWidth == 0 ? 0 : 1.0 / spillWidth;
+		for (int i = 0; i < pixels.length; i += 4) {
+			int b = pixels[i] & 255;
+			int g = pixels[i + 1] & 255;
+			int r = pixels[i + 2] & 255;
+			// Equivale ao intervalo RGB do filtro anterior e preserva seus INIs.
+			int distance = Math.max(Math.abs(r - keyR), Math.max(Math.abs(g - keyG), Math.abs(b - keyB)));
+			int outside = distance - threshold;
+			if (outside <= 0) {
+				pixels[i] = pixels[i + 1] = pixels[i + 2] = pixels[i + 3] = 0;
+				continue;
+			}
+			int alpha = 255;
+			if (feather > 0 && outside < feather) {
+				double t = outside * inverseFeather;
+				alpha = (int) Math.round(255 * t * t * (3 - 2 * t));
+			}
+			if (spillWidth > 0 && outside < spillWidth) {
+				double t = outside * inverseSpill;
+				double keepColor = t * t * (3 - 2 * t);
+				// Dessatura gradualmente apenas cores próximas da cor-chave.
+				double luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+				r = (int) Math.round(luma + (r - luma) * keepColor);
+				g = (int) Math.round(luma + (g - luma) * keepColor);
+				b = (int) Math.round(luma + (b - luma) * keepColor);
+			}
+			pixels[i] = (byte) b;
+			pixels[i + 1] = (byte) g;
+			pixels[i + 2] = (byte) r;
+			// Ignora X do RV32; o filtro calcula todo o alpha explicitamente.
+			pixels[i + 3] = (byte) alpha;
+		}
+		WritableImage image = new WritableImage(width, height);
+		// BGRA não pré-multiplicado: JavaFX converte ao copiar os pixels.
+		image.getPixelWriter().setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), pixels, 0, width * 4);
+		return image;
+	}
 	
 }
+
